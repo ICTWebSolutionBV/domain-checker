@@ -15,9 +15,14 @@ class Setting extends Model
     public static function get(string $key, mixed $default = null): mixed
     {
         return Cache::remember("setting_{$key}", 3600, function () use ($key, $default) {
-            $value = static::where('key', $key)->value('value');
+            try {
+                $value = static::where('key', $key)->value('value');
 
-            return $value !== null ? $value : $default;
+                return $value !== null ? $value : $default;
+            } catch (\Throwable) {
+                // Table may not exist yet (pending migration) — fall back to default
+                return $default;
+            }
         });
     }
 
