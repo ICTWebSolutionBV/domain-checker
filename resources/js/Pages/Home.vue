@@ -12,7 +12,7 @@ const props = defineProps({
     popularTlds: Array,
 })
 
-const { results, isDone, isChecking, checkedCount, totalCount, check, reset } = useDomainCheck()
+const { results, isDone, isChecking, checkedCount, totalCount, error, check, reset } = useDomainCheck()
 
 const domainInput = ref('')
 const searchedDomain = ref('')
@@ -39,6 +39,9 @@ watch(results, (val) => {
         }
     }
 }, { deep: true })
+
+// Clear error when user starts typing again
+watch(domainInput, () => { if (error.value) error.value = null })
 
 // Auto-check when user types a full domain like "example.nl"
 let autoCheckTimer = null
@@ -222,6 +225,29 @@ function statusConfig(status) {
             <p class="text-gray-500 dark:text-gray-400 text-lg mb-10">
                 Check availability across {{ popularTlds.length }}+ extensions instantly
             </p>
+
+            <!-- Rate limit / error banner -->
+            <Transition
+                enter-active-class="transition-all duration-200 ease-out"
+                enter-from-class="opacity-0 -translate-y-2"
+                enter-to-class="opacity-100 translate-y-0"
+                leave-active-class="transition-all duration-150 ease-in"
+                leave-from-class="opacity-100 translate-y-0"
+                leave-to-class="opacity-0 -translate-y-2"
+            >
+                <div v-if="error" class="max-w-2xl mx-auto mb-4">
+                    <div
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium border"
+                        :class="error === 'rate_limited'
+                            ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300'
+                            : 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'"
+                    >
+                        <component :is="error === 'rate_limited' ? HelpCircle : XCircle" class="w-4 h-4 shrink-0" />
+                        <span v-if="error === 'rate_limited'">Too many requests — please wait a moment before checking again.</span>
+                        <span v-else>Something went wrong. Please try again.</span>
+                    </div>
+                </div>
+            </Transition>
 
             <!-- Search bar -->
             <div class="flex gap-2 max-w-2xl mx-auto">
