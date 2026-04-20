@@ -133,6 +133,14 @@ Replace the default deploy script with:
 cd {SITE_DIRECTORY}
 git pull origin main
 
+# Ensure required directories exist (needed on first deploy)
+mkdir -p bootstrap/cache
+mkdir -p storage/framework/cache/data
+mkdir -p storage/framework/sessions
+mkdir -p storage/framework/views
+mkdir -p storage/logs
+chmod -R 775 storage bootstrap/cache
+
 composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
 
 npm ci
