@@ -139,7 +139,8 @@ mkdir -p storage/framework/cache/data
 mkdir -p storage/framework/sessions
 mkdir -p storage/framework/views
 mkdir -p storage/logs
-chmod -R 775 storage bootstrap/cache
+chmod -R 777 storage      # 777 so both the deploy user and PHP-FPM user can write
+chmod -R 775 bootstrap/cache
 
 # Clear any stale compiled files so PHP can write fresh ones during the build
 php artisan optimize:clear
@@ -152,7 +153,9 @@ npm run build
 php artisan migrate --force
 php artisan config:cache
 php artisan route:cache
-php artisan view:cache
+# view:cache is intentionally omitted — views compile on first request,
+# and view:cache requires storage/framework/views to be writable by the
+# PHP-FPM user which may differ from the deploy user on some Ploi setups.
 php artisan storage:link
 
 echo "Application deployed!"
