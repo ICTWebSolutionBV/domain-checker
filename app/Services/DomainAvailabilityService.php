@@ -14,51 +14,69 @@ class DomainAvailabilityService
     ) {}
 
     /**
-     * Check a batch of TLDs for a given domain name.
-     * Returns ['com' => 'available'|'taken'|'unknown', ...]
+     * Stream check: calls $onResult($tld, $status) for each TLD as the result
+     * becomes available.  Cached hits are emitted first, then live checks run.
      *
-     * When a Realtime Register API key is configured:
-     *   - RTR requests and RDAP requests are fired simultaneously in one pool.
-     *   - RTR result is preferred; RDAP is used if RTR returns null (error / unsupported TLD).
-     *   - If both return null, WHOIS is tried as a last resort.
+     * When RTR is configured all IS commands are pipelined over one TLS socket so
+     * results stream back in parallel — total time ≈ slowest single TLD.
+     * RDAP/WHOIS is used for TLDs the IsProxy service can't resolve.
      *
-     * Without an RTR key the original RDAP → WHOIS chain is used.
-     *
-     * @param  array<string>  $tlds
-     * @return array<string, string>
+     * @param  array<string>                   $tlds
+     * @param  callable(string, string): void  $onResult
      */
-    public function checkBatch(string $domain, array $tlds): array
+    public function streamCheck(string $domain, array $tlds, callable $onResult): void
     {
-        $domain = strtolower(trim($domain));
-        $results = [];
+        $domain   = strtolower(trim($domain));
+        $ttl      = config('domain-checker.cache.result_ttl', 900);
         $uncached = [];
 
+        // Emit cached results immediately
         foreach ($tlds as $tld) {
-            $cacheKey = "domain_check_{$domain}_{$tld}";
-            $cached = Cache::get($cacheKey);
+            $cached = Cache::get("domain_check_{$domain}_{$tld}");
             if ($cached !== null) {
-                $results[$tld] = $cached;
+                $onResult($tld, $cached);
             } else {
                 $uncached[] = $tld;
             }
         }
 
         if (empty($uncached)) {
-            return $results;
+            return;
         }
 
-        $fresh = $this->rtr->isConfigured()
-            ? $this->checkWithIsProxy($domain, $uncached)
-            : $this->checkWithRdap($domain, $uncached);
+        if ($this->rtr->isConfigured()) {
+            // Pipeline ALL IS commands at once — server processes in parallel
+            $fallback = $this->rtr->pipelineStream(
+                $domain,
+                $uncached,
+                function (string $tld, string $status) use ($domain, $ttl, $onResult): void {
+                    Cache::put("domain_check_{$domain}_{$tld}", $status, $ttl);
+                    $onResult($tld, $status);
+                }
+            );
 
-        $ttl = config('domain-checker.cache.result_ttl', 900);
+            // RDAP → WHOIS for TLDs the IsProxy couldn't resolve
+            if (! empty($fallback)) {
+                $this->streamWithRdap($domain, $fallback, $onResult, $ttl);
+            }
+        } else {
+            $this->streamWithRdap($domain, $uncached, $onResult, $ttl);
+        }
+    }
 
-        foreach ($uncached as $tld) {
-            $status = $fresh[$tld] ?? 'unknown';
-            Cache::put("domain_check_{$domain}_{$tld}", $status, $ttl);
+    /**
+     * Check a batch of TLDs for a given domain name (blocking, used for cache fill).
+     * Returns ['com' => 'available'|'taken'|'unknown', ...]
+     *
+     * @param  array<string>  $tlds
+     * @return array<string, string>
+     */
+    public function checkBatch(string $domain, array $tlds): array
+    {
+        $results = [];
+        $this->streamCheck($domain, $tlds, function (string $tld, string $status) use (&$results): void {
             $results[$tld] = $status;
-        }
-
+        });
         return $results;
     }
 
@@ -67,65 +85,23 @@ class DomainAvailabilityService
     // -------------------------------------------------------------------------
 
     /**
-     * Check via Realtime Register IsProxy socket protocol.
-     * IsProxy pipelines all IS commands over one TLS connection — the server
-     * processes them in parallel — making this faster than N RDAP requests.
-     * Any TLD that IsProxy returns null for falls through to RDAP → WHOIS.
+     * RDAP → WHOIS chain, emitting results via $onResult as each TLD resolves.
+     * Processes in batches of 10 for RDAP concurrency, then WHOIS for nulls.
      *
-     * @param  array<string>  $tlds
-     * @return array<string, string>
+     * @param  array<string>                   $tlds
+     * @param  callable(string, string): void  $onResult
      */
-    private function checkWithIsProxy(string $domain, array $tlds): array
+    private function streamWithRdap(string $domain, array $tlds, callable $onResult, int $ttl): void
     {
-        $isProxyResults = $this->rtr->checkBatch($domain, $tlds);
+        foreach (array_chunk($tlds, 10) as $batch) {
+            $rdapResults = $this->rdap->checkBatch($domain, $batch);
 
-        $results       = [];
-        $rdapFallback  = [];
-
-        foreach ($tlds as $tld) {
-            $result = $isProxyResults[$tld] ?? null;
-
-            if ($result !== null) {
-                $results[$tld] = $result;
-            } else {
-                $rdapFallback[] = $tld;
+            foreach ($batch as $tld) {
+                $rdapResult = $rdapResults[$tld] ?? null;
+                $status     = $rdapResult ?? $this->whois->check($domain, $tld) ?? 'unknown';
+                Cache::put("domain_check_{$domain}_{$tld}", $status, $ttl);
+                $onResult($tld, $status);
             }
         }
-
-        // RDAP fallback for TLDs IsProxy couldn't handle
-        if (! empty($rdapFallback)) {
-            $rdapResults = $this->rdap->checkBatch($domain, $rdapFallback);
-
-            foreach ($rdapFallback as $tld) {
-                $rdapResult    = $rdapResults[$tld] ?? null;
-                $results[$tld] = $rdapResult !== null
-                    ? $rdapResult
-                    : $this->whois->check($domain, $tld);
-            }
-        }
-
-        return $results;
     }
-
-    /**
-     * Original RDAP → WHOIS chain used when no RTR key is configured.
-     *
-     * @param  array<string>  $tlds
-     * @return array<string, string>
-     */
-    private function checkWithRdap(string $domain, array $tlds): array
-    {
-        $rdapResults = $this->rdap->checkBatch($domain, $tlds);
-        $results = [];
-
-        foreach ($tlds as $tld) {
-            $rdapResult = $rdapResults[$tld] ?? null;
-            $results[$tld] = $rdapResult !== null
-                ? $rdapResult
-                : $this->whois->check($domain, $tld);
-        }
-
-        return $results;
-    }
-
 }

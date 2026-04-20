@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Services\DomainAvailabilityService;
 use App\Services\TldRepository;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -46,23 +45,25 @@ class DomainCheckController extends Controller
             }, 200, $this->sseHeaders());
         }
 
-        $batchSize = config('domain-checker.batch_size', 10);
-
-        return response()->stream(function () use ($domain, $tlds, $batchSize) {
+        return response()->stream(function () use ($domain, $tlds) {
             set_time_limit(0); // SSE streams can run longer than the default 30s
 
             $total   = count($tlds);
             $checked = 0;
 
-            foreach (array_chunk($tlds, $batchSize) as $batch) {
-                $results = $this->availability->checkBatch($domain, $batch);
-                foreach ($results as $tld => $status) {
+            // streamCheck sends all RTR commands at once (pipelined), emitting each
+            // result via the callback as the server responds — no per-batch blocking.
+            $this->availability->streamCheck(
+                $domain,
+                $tlds,
+                function (string $tld, string $status) use (&$checked, $total): void {
                     $checked++;
                     echo 'data: '.json_encode(['tld' => $tld, 'status' => $status, 'checked' => $checked, 'total' => $total])."\n\n";
                     ob_flush();
                     flush();
                 }
-            }
+            );
+
             echo "data: {\"done\":true}\n\n";
             ob_flush();
             flush();

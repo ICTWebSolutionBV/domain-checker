@@ -8,22 +8,23 @@ use Illuminate\Support\Facades\Log;
 /**
  * Realtime Register IsProxy service.
  *
- * Uses the IsProxy socket protocol (is.yoursrs.com:2001) to check domain
- * availability. All IS commands for a batch are pipelined over a single
- * TLS connection — the server processes them in parallel and sends back
- * asynchronous responses, making this faster than individual RDAP requests.
+ * Opens ONE TLS socket per request, logs in once, and keeps it alive.
  *
- * Protocol flow:
- *   1. TCP connect → STARTTLS → TLS upgrade
- *   2. LOGIN <apikey>  →  "100 Login ok"
- *   3. IS <domain.tld> (send N commands without waiting)
- *   4. Read N responses (arrive as server processes them)
- *   5. QUIT
+ * Key optimisation: pipelineStream() sends ALL IS commands in one shot,
+ * then reads responses as the server processes them in parallel — total
+ * time ≈ slowest single check, not N × avg check.  Each result is
+ * delivered via a callback so the caller can flush SSE events immediately.
  */
 class RealtimeRegisterService
 {
     private const RESPONSE_PATTERN = '#^([\-\w.]+)\s+(available|not available|invalid domain|error)#i';
 
+    /** Persistent socket reused for the lifetime of this service instance */
+    private mixed $socket = null;
+    private bool $loggedIn = false;
+
+    // -------------------------------------------------------------------------
+    // Public API
     // -------------------------------------------------------------------------
 
     public function isConfigured(): bool
@@ -32,32 +33,110 @@ class RealtimeRegisterService
     }
 
     /**
-     * Check a batch of TLDs via IsProxy.
-     * Returns ['com' => 'available'|'taken'|null, ...]
-     * null = unsupported TLD or connection error (fall back to RDAP/WHOIS).
+     * Send ALL IS commands at once, then call $onResult($tld, $status) for
+     * each response as it arrives (server processes in parallel).
+     *
+     * Returns the list of TLDs that could not be resolved (null/error) so the
+     * caller can fall back to RDAP / WHOIS for those.
+     *
+     * @param  array<string>                      $tlds
+     * @param  callable(string, string): void     $onResult
+     * @return array<string>  TLDs that need a fallback check
+     */
+    public function pipelineStream(string $domain, array $tlds, callable $onResult): array
+    {
+        if (! $this->isConfigured() || ! $this->ensureConnected()) {
+            return $tlds; // everything needs a fallback
+        }
+
+        $domainLower = strtolower($domain);
+
+        // Map fullDomain → tld so we can match async responses
+        $pending = [];
+        foreach ($tlds as $tld) {
+            $pending["{$domainLower}.{$tld}"] = $tld;
+        }
+
+        // Fire all IS commands without waiting
+        foreach (array_keys($pending) as $fullDomain) {
+            fwrite($this->socket, "IS {$fullDomain}\r\n");
+        }
+
+        // Read responses as they arrive; call $onResult for each valid one
+        $resolved = [];
+        $fallback  = [];
+        // Give 90 s for the full list — server-side parallel processing is fast
+        $deadline  = time() + 90;
+
+        while (count($resolved) + count($fallback) < count($tlds) && time() < $deadline) {
+            $line = $this->readLine($this->socket);
+
+            if ($line === false || $line === '') {
+                // Socket died — mark remaining as fallback
+                $this->socket   = null;
+                $this->loggedIn = false;
+                break;
+            }
+
+            if (preg_match(self::RESPONSE_PATTERN, $line, $m)) {
+                $responseDomain = strtolower($m[1]);
+                $responseStatus = strtolower($m[2]);
+
+                if (isset($pending[$responseDomain])) {
+                    $tld    = $pending[$responseDomain];
+                    $status = match ($responseStatus) {
+                        'available'     => 'available',
+                        'not available' => 'taken',
+                        default         => null,
+                    };
+
+                    if ($status !== null) {
+                        $resolved[$tld] = true;
+                        $onResult($tld, $status);
+                    } else {
+                        $fallback[] = $tld;
+                    }
+                }
+            }
+        }
+
+        // Any TLDs we never got a response for → fallback
+        foreach ($tlds as $tld) {
+            if (! isset($resolved[$tld]) && ! in_array($tld, $fallback)) {
+                $fallback[] = $tld;
+            }
+        }
+
+        return $fallback;
+    }
+
+    /**
+     * Blocking batch check (used when streaming is not needed, e.g. cache fill).
      *
      * @param  array<string>  $tlds
      * @return array<string, string|null>
      */
     public function checkBatch(string $domain, array $tlds): array
     {
-        $apiKey = $this->apiKey();
+        $results  = [];
+        $fallback = $this->pipelineStream($domain, $tlds, function (string $tld, string $status) use (&$results) {
+            $results[$tld] = $status;
+        });
 
-        if (empty($apiKey)) {
-            return array_fill_keys($tlds, null);
+        foreach ($fallback as $tld) {
+            $results[$tld] = null;
         }
 
-        $socket = $this->connect();
+        return $results;
+    }
 
-        if ($socket === null) {
-            return array_fill_keys($tlds, null);
-        }
-
-        try {
-            return $this->runChecks($socket, $apiKey, $domain, $tlds);
-        } finally {
-            @fwrite($socket, "QUIT\r\n");
-            @fclose($socket);
+    public function __destruct()
+    {
+        if ($this->socket) {
+            @fwrite($this->socket, "QUIT\r\n");
+            @fclose($this->socket);
+            $this->socket   = null;
+            $this->loggedIn = false;
         }
     }
 
@@ -65,25 +144,48 @@ class RealtimeRegisterService
     // Internal helpers
     // -------------------------------------------------------------------------
 
-    /**
-     * Open a plain TCP socket and upgrade to TLS via STARTTLS.
-     * Returns the socket resource on success, or null on failure.
-     *
-     * @return resource|null
-     */
-    private function connect(): mixed
+    private function ensureConnected(): bool
+    {
+        if ($this->socket && $this->loggedIn && ! feof($this->socket)) {
+            return true;
+        }
+
+        if ($this->socket) {
+            @fclose($this->socket);
+            $this->socket   = null;
+            $this->loggedIn = false;
+        }
+
+        $this->socket = $this->openSocket();
+
+        if ($this->socket === null) {
+            return false;
+        }
+
+        fwrite($this->socket, "LOGIN {$this->apiKey()}\r\n");
+        $response = $this->readLine($this->socket);
+
+        if (! str_starts_with((string) $response, '100')) {
+            Log::debug('IsProxy login failed', ['response' => $response]);
+            @fclose($this->socket);
+            $this->socket = null;
+
+            return false;
+        }
+
+        $this->loggedIn = true;
+
+        return true;
+    }
+
+    /** @return resource|null */
+    private function openSocket(): mixed
     {
         $host    = $this->host();
         $port    = $this->port();
         $timeout = config('domain-checker.timeouts.realtime_register', 10);
 
-        $socket = @stream_socket_client(
-            "tcp://{$host}:{$port}",
-            $errno,
-            $errstr,
-            $timeout,
-            STREAM_CLIENT_CONNECT,
-        );
+        $socket = @stream_socket_client("tcp://{$host}:{$port}", $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT);
 
         if (! $socket) {
             Log::debug('IsProxy TCP connect failed', ['host' => $host, 'error' => $errstr]);
@@ -91,25 +193,22 @@ class RealtimeRegisterService
             return null;
         }
 
-        stream_set_timeout($socket, $timeout);
+        stream_set_timeout($socket, 90); // long read timeout for large batches
 
-        // Upgrade to TLS
         fwrite($socket, "STARTTLS\r\n");
         $line = $this->readLine($socket);
 
-        if (! str_starts_with($line, '100')) {
+        if (! str_starts_with((string) $line, '100')) {
             Log::debug('IsProxy STARTTLS failed', ['response' => $line]);
             fclose($socket);
 
             return null;
         }
 
-        // Set SSL options on the stream before upgrading
         stream_context_set_option($socket, 'ssl', 'verify_peer', true);
         stream_context_set_option($socket, 'ssl', 'verify_peer_name', true);
 
         if (stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT) !== true) {
-            // Retry without peer verification (some environments block cert check)
             stream_context_set_option($socket, 'ssl', 'verify_peer', false);
             stream_context_set_option($socket, 'ssl', 'verify_peer_name', false);
 
@@ -124,75 +223,6 @@ class RealtimeRegisterService
         return $socket;
     }
 
-    /**
-     * Login, pipeline all IS commands, read back all responses.
-     *
-     * @param  resource      $socket
-     * @param  array<string> $tlds
-     * @return array<string, string|null>
-     */
-    private function runChecks(mixed $socket, string $apiKey, string $domain, array $tlds): array
-    {
-        // Authenticate
-        fwrite($socket, "LOGIN {$apiKey}\r\n");
-        $loginLine = $this->readLine($socket);
-
-        if (! str_starts_with($loginLine, '100')) {
-            Log::debug('IsProxy login failed', ['response' => $loginLine]);
-
-            return array_fill_keys($tlds, null);
-        }
-
-        // Build a lookup map so we can match responses back to TLDs
-        // The response includes the full domain name, e.g. "example.com available"
-        $domainLower = strtolower($domain);
-        $pending     = [];  // fullDomain → tld
-        foreach ($tlds as $tld) {
-            $pending["{$domainLower}.{$tld}"] = $tld;
-        }
-
-        // Pipeline: send all IS commands without waiting for responses
-        foreach (array_keys($pending) as $fullDomain) {
-            fwrite($socket, "IS {$fullDomain}\r\n");
-        }
-
-        // Read responses until we have all results or the socket times out
-        $results  = [];
-        $deadline = time() + config('domain-checker.timeouts.realtime_register', 10);
-
-        while (count($results) < count($tlds) && time() < $deadline) {
-            $line = $this->readLine($socket);
-
-            if ($line === '' || $line === false) {
-                break;
-            }
-
-            if (preg_match(self::RESPONSE_PATTERN, $line, $m)) {
-                $responseDomain = strtolower($m[1]);
-                $responseStatus = strtolower($m[2]);
-
-                if (isset($pending[$responseDomain])) {
-                    $tld            = $pending[$responseDomain];
-                    $results[$tld]  = match ($responseStatus) {
-                        'available'    => 'available',
-                        'not available' => 'taken',
-                        default        => null,
-                    };
-                }
-            }
-        }
-
-        // Any TLD we didn't get a response for → null (RDAP/WHOIS fallback)
-        foreach ($tlds as $tld) {
-            if (! array_key_exists($tld, $results)) {
-                $results[$tld] = null;
-            }
-        }
-
-        return $results;
-    }
-
-    /** Read a single CRLF-terminated line from the socket. */
     private function readLine(mixed $socket): string|false
     {
         $line = fgets($socket, 4096);
