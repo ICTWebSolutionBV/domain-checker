@@ -40,6 +40,9 @@ Route::middleware('auth')->group(function () {
     Route::put('/settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile');
     Route::put('/settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password');
 
+    // API integrations
+    Route::put('/settings/api', [SettingsController::class, 'updateApiSettings'])->name('settings.api');
+
     // 2FA management
     Route::post('/settings/two-factor/init', [SettingsController::class, 'initTwoFactor'])->name('settings.two-factor.init');
     Route::post('/settings/two-factor/confirm', [SettingsController::class, 'confirmTwoFactor'])->name('settings.two-factor.confirm');

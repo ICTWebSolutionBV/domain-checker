@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -54,6 +55,8 @@ class SettingsController extends Controller
                 'last_used_at' => $p->last_used_at?->diffForHumans(),
                 'created_at' => $p->created_at->format('d M Y'),
             ]),
+            'rtrConfigured' => (bool) Setting::get('realtime_register_api_key'),
+            'rtrBaseUrl' => Setting::get('realtime_register_base_url', 'https://api.yoursrs.com'),
         ]);
     }
 
@@ -173,6 +176,27 @@ class SettingsController extends Controller
         $passkey->delete();
 
         return back()->with('status', 'Passkey removed.');
+    }
+
+    public function updateApiSettings(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'api_key'  => ['nullable', 'string', 'max:500'],
+            'base_url' => ['nullable', 'url', 'max:255'],
+            'clear'    => ['nullable', 'boolean'],
+        ]);
+
+        if ($request->boolean('clear')) {
+            Setting::set('realtime_register_api_key', null);
+        } elseif ($request->filled('api_key')) {
+            Setting::set('realtime_register_api_key', $request->input('api_key'));
+        }
+
+        if ($request->filled('base_url')) {
+            Setting::set('realtime_register_base_url', $request->input('base_url'));
+        }
+
+        return back()->with('status', 'API settings updated.');
     }
 
     private function generateRecoveryCodes(): array

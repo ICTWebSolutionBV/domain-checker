@@ -4,7 +4,7 @@ import { Head, useForm, usePage, Link } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import {
     User, Lock, ShieldCheck, ShieldOff, Fingerprint, Plus, Trash2,
-    Loader2, QrCode, Copy, CheckCheck, Key, RefreshCw
+    Loader2, QrCode, Copy, CheckCheck, Key, RefreshCw, Plug, Eye, EyeOff, X
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -13,6 +13,8 @@ const props = defineProps({
     setupSecret: String,
     recoveryCodes: Array,
     passkeys: Array,
+    rtrConfigured: Boolean,
+    rtrBaseUrl: String,
 })
 
 const page = usePage()
@@ -78,6 +80,28 @@ async function registerPasskey() {
 function deletePasskey(id) {
     if (!confirm('Remove this passkey?')) return
     useForm({}).delete(route('passkeys.destroy', id))
+}
+
+// API integrations
+const apiForm = useForm({
+    api_key: '',
+    base_url: props.rtrBaseUrl || 'https://api.yoursrs.com',
+    clear: false,
+})
+const showApiKey = ref(false)
+
+function saveApiSettings() {
+    apiForm.put(route('settings.api'), {
+        onSuccess: () => { apiForm.api_key = '' },
+    })
+}
+
+function clearApiKey() {
+    if (!confirm('Remove the Realtime Register API key?')) return
+    apiForm.clear = true
+    apiForm.put(route('settings.api'), {
+        onSuccess: () => { apiForm.clear = false },
+    })
 }
 </script>
 
@@ -284,6 +308,104 @@ function deletePasskey(id) {
                             <p v-if="passkeyError" class="text-red-500 text-xs">{{ passkeyError }}</p>
                         </div>
                         <p v-else class="text-sm text-gray-400">Passkeys are not supported in this browser.</p>
+                    </div>
+                </section>
+
+                <!-- API Integrations -->
+                <section class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <Plug class="w-4 h-4 text-gray-400" />
+                            <h2 class="font-semibold text-gray-900 dark:text-white text-sm">API Integrations</h2>
+                        </div>
+                    </div>
+
+                    <div class="p-6 space-y-6">
+                        <!-- Realtime Register -->
+                        <div>
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="text-sm font-medium text-gray-900 dark:text-white">Realtime Register</h3>
+                                        <span
+                                            v-if="rtrConfigured"
+                                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+                                        >
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                                            Connected
+                                        </span>
+                                        <span
+                                            v-else
+                                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700"
+                                        >
+                                            Not configured
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                        When configured, domain checks use the Realtime Register API first (racing with RDAP), giving faster and more authoritative results.
+                                    </p>
+                                </div>
+                                <button
+                                    v-if="rtrConfigured"
+                                    @click="clearApiKey"
+                                    class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 border border-red-200 dark:border-red-800 transition-colors"
+                                >
+                                    <X class="w-3.5 h-3.5" />
+                                    Remove key
+                                </button>
+                            </div>
+
+                            <form @submit.prevent="saveApiSettings" class="space-y-3">
+                                <!-- API Key -->
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                                        {{ rtrConfigured ? 'Replace API key' : 'API key' }}
+                                    </label>
+                                    <div class="relative">
+                                        <Key class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                                        <input
+                                            v-model="apiForm.api_key"
+                                            :type="showApiKey ? 'text' : 'password'"
+                                            :placeholder="rtrConfigured ? 'Enter new key to replace…' : 'ApiKey …'"
+                                            autocomplete="off"
+                                            class="w-full pl-8 pr-10 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                                        />
+                                        <button
+                                            type="button"
+                                            @click="showApiKey = !showApiKey"
+                                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                        >
+                                            <EyeOff v-if="showApiKey" class="w-4 h-4" />
+                                            <Eye v-else class="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                    <p v-if="apiForm.errors.api_key" class="text-red-500 text-xs mt-1">{{ apiForm.errors.api_key }}</p>
+                                </div>
+
+                                <!-- Base URL -->
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                                        API base URL <span class="text-gray-400 font-normal">(production: api.yoursrs.com · test: api.yoursrs-ote.com)</span>
+                                    </label>
+                                    <input
+                                        v-model="apiForm.base_url"
+                                        type="url"
+                                        class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                                    />
+                                    <p v-if="apiForm.errors.base_url" class="text-red-500 text-xs mt-1">{{ apiForm.errors.base_url }}</p>
+                                </div>
+
+                                <div class="flex justify-end pt-1">
+                                    <button
+                                        type="submit"
+                                        :disabled="apiForm.processing || (!apiForm.api_key.trim() && apiForm.base_url === (rtrBaseUrl || 'https://api.yoursrs.com'))"
+                                        class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-colors"
+                                    >
+                                        Save
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </section>
             </div>

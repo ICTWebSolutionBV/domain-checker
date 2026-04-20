@@ -18,9 +18,15 @@ return [
         'result_ttl'    => 900,     // 15 minutes
     ],
 
+    'realtime_register' => [
+        'api_key'  => env('REALTIME_REGISTER_API_KEY', ''),
+        'base_url' => env('REALTIME_REGISTER_URL', 'https://api.yoursrs.com'),
+    ],
+
     'timeouts' => [
-        'rdap'  => 5,
-        'whois' => 8,
+        'rdap'              => 5,
+        'whois'             => 8,
+        'realtime_register' => 5,
     ],
 
     'batch_size' => 10,
