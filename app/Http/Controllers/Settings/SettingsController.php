@@ -56,7 +56,7 @@ class SettingsController extends Controller
                 'created_at' => $p->created_at->format('d M Y'),
             ]),
             'rtrConfigured' => (bool) Setting::get('realtime_register_api_key'),
-            'rtrBaseUrl' => Setting::get('realtime_register_base_url', 'https://api.yoursrs.com'),
+            'rtrHost' => Setting::get('realtime_register_host', 'is.yoursrs.com'),
         ]);
     }
 
@@ -181,9 +181,9 @@ class SettingsController extends Controller
     public function updateApiSettings(Request $request): RedirectResponse
     {
         $request->validate([
-            'api_key'  => ['nullable', 'string', 'max:500'],
-            'base_url' => ['nullable', 'url', 'max:255'],
-            'clear'    => ['nullable', 'boolean'],
+            'api_key' => ['nullable', 'string', 'max:500'],
+            'host'    => ['nullable', 'string', 'max:255'],
+            'clear'   => ['nullable', 'boolean'],
         ]);
 
         if ($request->boolean('clear')) {
@@ -192,8 +192,8 @@ class SettingsController extends Controller
             Setting::set('realtime_register_api_key', $request->input('api_key'));
         }
 
-        if ($request->filled('base_url')) {
-            Setting::set('realtime_register_base_url', $request->input('base_url'));
+        if ($request->filled('host')) {
+            Setting::set('realtime_register_host', $request->input('host'));
         }
 
         return back()->with('status', 'API settings updated.');

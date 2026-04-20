@@ -14,7 +14,7 @@ const props = defineProps({
     recoveryCodes: Array,
     passkeys: Array,
     rtrConfigured: Boolean,
-    rtrBaseUrl: String,
+    rtrHost: String,
 })
 
 const page = usePage()
@@ -85,7 +85,7 @@ function deletePasskey(id) {
 // API integrations
 const apiForm = useForm({
     api_key: '',
-    base_url: props.rtrBaseUrl || 'https://api.yoursrs.com',
+    host: props.rtrHost || 'is.yoursrs.com',
     clear: false,
 })
 const showApiKey = ref(false)
@@ -385,20 +385,20 @@ function clearApiKey() {
                                 <!-- Base URL -->
                                 <div>
                                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
-                                        API base URL <span class="text-gray-400 font-normal">(production: api.yoursrs.com · test: api.yoursrs-ote.com)</span>
+                                        IsProxy host <span class="text-gray-400 font-normal">(production: is.yoursrs.com · test: is.yoursrs-ote.com)</span>
                                     </label>
                                     <input
-                                        v-model="apiForm.base_url"
-                                        type="url"
+                                        v-model="apiForm.host"
+                                        type="text"
                                         class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                                     />
-                                    <p v-if="apiForm.errors.base_url" class="text-red-500 text-xs mt-1">{{ apiForm.errors.base_url }}</p>
+                                    <p v-if="apiForm.errors.host" class="text-red-500 text-xs mt-1">{{ apiForm.errors.host }}</p>
                                 </div>
 
                                 <div class="flex justify-end pt-1">
                                     <button
                                         type="submit"
-                                        :disabled="apiForm.processing || (!apiForm.api_key.trim() && apiForm.base_url === (rtrBaseUrl || 'https://api.yoursrs.com'))"
+                                        :disabled="apiForm.processing || (!apiForm.api_key.trim() && apiForm.host === (rtrHost || 'is.yoursrs.com'))"
                                         class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-colors"
                                     >
                                         Save

@@ -19,14 +19,15 @@ return [
     ],
 
     'realtime_register' => [
-        'api_key'  => env('REALTIME_REGISTER_API_KEY', ''),
-        'base_url' => env('REALTIME_REGISTER_URL', 'https://api.yoursrs.com'),
+        'api_key' => env('REALTIME_REGISTER_API_KEY', ''),
+        'host'    => env('REALTIME_REGISTER_HOST', 'is.yoursrs.com'),
+        'port'    => env('REALTIME_REGISTER_PORT', 2001),
     ],
 
     'timeouts' => [
         'rdap'              => 5,
         'whois'             => 8,
-        'realtime_register' => 5,
+        'realtime_register' => 10,  // includes TLS handshake + batch
     ],
 
     'batch_size' => 10,
