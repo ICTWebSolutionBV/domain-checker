@@ -484,6 +484,10 @@ function statusConfig(status) {
             leave-to-class="translate-y-full opacity-0"
         >
             <div v-if="selectedList.length > 0" class="fixed bottom-0 inset-x-0 z-50 p-4">
+                <!-- Hint line -->
+                <p class="text-center text-xs text-gray-400 dark:text-gray-500 mb-2 hidden sm:block">
+                    Copy selected domains to clipboard — optionally include registration details
+                </p>
                 <div class="max-w-2xl mx-auto bg-gray-900 dark:bg-gray-800 border border-gray-700 dark:border-gray-600 rounded-2xl shadow-2xl shadow-black/30 px-4 py-3 flex items-center gap-3">
                     <div class="flex items-center gap-2 flex-1 min-w-0">
                         <ClipboardList class="w-4 h-4 text-indigo-400 shrink-0" />
@@ -500,6 +504,7 @@ function statusConfig(status) {
                     <button
                         @click="openModal"
                         class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-colors"
+                        title="Copy domains to clipboard and optionally add registration details"
                     >
                         <Copy class="w-4 h-4" />
                         Copy to clipboard
