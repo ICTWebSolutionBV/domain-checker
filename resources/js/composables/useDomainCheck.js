@@ -25,10 +25,16 @@ export function useDomainCheck() {
         abortController = new AbortController()
 
         try {
-            const params = new URLSearchParams({ domain, tlds: tlds.join(',') })
-            const response = await fetch(`/check?${params}`, {
+            // POST so TLDs go in the body — GET URLs with 1500 TLDs exceed server limits
+            const body = new URLSearchParams({ domain, tlds: tlds.join(',') })
+            const response = await fetch('/check', {
+                method: 'POST',
                 signal: abortController.signal,
-                headers: { Accept: 'text/event-stream' },
+                headers: {
+                    'Accept': 'text/event-stream',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body,
             })
 
             if (response.status === 429) {
@@ -71,7 +77,8 @@ export function useDomainCheck() {
                         }
                         if (parsed.tld && parsed.status) {
                             results[parsed.tld] = parsed.status
-                            checkedCount.value++
+                            if (parsed.checked) checkedCount.value = parsed.checked
+                            if (parsed.total)   totalCount.value  = parsed.total
                         }
                     } catch {
                         // ignore malformed events

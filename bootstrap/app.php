@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['theme']);
 
+        // /check is a public read-only SSE endpoint — no CSRF needed
+        $middleware->validateCsrfTokens(except: ['check']);
+
         $middleware->web(append: [
             HandleInertiaRequests::class,
         ]);

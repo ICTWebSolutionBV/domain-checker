@@ -28,7 +28,7 @@ class DomainCheckController extends Controller
     {
         $request->validate([
             'domain' => ['required', 'string', 'max:63', 'regex:/^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?$/'],
-            'tlds' => ['required', 'string'],
+            'tlds'   => ['required', 'string'],
         ]);
 
         $domain = strtolower(trim($request->string('domain')));
@@ -49,10 +49,16 @@ class DomainCheckController extends Controller
         $batchSize = config('domain-checker.batch_size', 10);
 
         return response()->stream(function () use ($domain, $tlds, $batchSize) {
+            set_time_limit(0); // SSE streams can run longer than the default 30s
+
+            $total   = count($tlds);
+            $checked = 0;
+
             foreach (array_chunk($tlds, $batchSize) as $batch) {
                 $results = $this->availability->checkBatch($domain, $batch);
                 foreach ($results as $tld => $status) {
-                    echo 'data: '.json_encode(['tld' => $tld, 'status' => $status])."\n\n";
+                    $checked++;
+                    echo 'data: '.json_encode(['tld' => $tld, 'status' => $status, 'checked' => $checked, 'total' => $total])."\n\n";
                     ob_flush();
                     flush();
                 }

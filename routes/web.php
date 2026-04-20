@@ -23,7 +23,7 @@ Route::middleware('guest')->group(function () {
 
 // Public domain checker
 Route::get('/', [DomainCheckController::class, 'index'])->name('home');
-Route::get('/check', [DomainCheckController::class, 'check'])->middleware('throttle:domain-check')->name('domain.check');
+Route::post('/check', [DomainCheckController::class, 'check'])->middleware('throttle:domain-check')->name('domain.check');
 Route::get('/tlds', [TldController::class, 'index'])->name('tlds.index');
 
 // Authenticated routes
