@@ -106,7 +106,7 @@ const themeLabel = computed(() => {
         <footer class="border-t border-gray-200 dark:border-gray-800 mt-16">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 <p class="text-center text-xs text-gray-400 dark:text-gray-600">
-                    &copy; {{ new Date().getFullYear() }} <a href="https://ictwebsolution.nl" target="_blank" rel="noopener noreferrer" class="hover:text-gray-600 dark:hover:text-gray-400 transition-colors underline underline-offset-2">ICTWebSolution B.V.</a>
+                    &copy; {{ new Date().getFullYear() }} <a href="https://ictwebsolution.nl" target="_blank" rel="noopener noreferrer" class="hover:text-gray-600 dark:hover:text-gray-400 transition-colors">ICTWebSolution B.V.</a> — All Rights Reserved
                 </p>
             </div>
         </footer>
