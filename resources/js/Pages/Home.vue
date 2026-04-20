@@ -27,6 +27,7 @@ const filterMode = ref('all') // 'all' | 'available' | 'taken'
 // Registration modal
 const showModal = ref(false)
 const reg = ref({
+    existingAccount: '',
     companyName: '',
     firstName: '',
     lastName: '',
@@ -207,6 +208,7 @@ async function copyToClipboard() {
     if (hasDetails) {
         lines.push('')
         lines.push('── Registration details ──')
+        if (r.existingAccount) lines.push(`Account:     ${r.existingAccount}`)
         if (r.companyName)  lines.push(`Company:     ${r.companyName}`)
         if (r.firstName || r.lastName) lines.push(`Name:        ${[r.firstName, r.lastName].filter(Boolean).join(' ')}`)
         if (r.street || r.houseNumber) lines.push(`Address:     ${[r.street, r.houseNumber].filter(Boolean).join(' ')}`)
@@ -559,12 +561,29 @@ function statusConfig(status) {
                             <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">Registration details <span class="normal-case font-normal text-gray-400">(optional — added to clipboard)</span></p>
 
                             <div class="space-y-3">
+                                <!-- Existing account -->
+                                <div class="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-xl p-3">
+                                    <label class="block text-xs font-semibold text-indigo-700 dark:text-indigo-400 mb-1">Existing account <span class="font-normal text-indigo-500 dark:text-indigo-500">(optional)</span></label>
+                                    <p class="text-xs text-indigo-500 dark:text-indigo-500 mb-2">Already a customer? Enter the contact name or company so we know which account to register under.</p>
+                                    <div class="relative">
+                                        <UserCircle class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-indigo-400" />
+                                        <input v-model="reg.existingAccount" type="text" placeholder="e.g. John Doe or Example Company" class="w-full pl-8 pr-3 py-2 text-sm bg-white dark:bg-gray-900 border border-indigo-200 dark:border-indigo-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                    </div>
+                                </div>
+
+                                <!-- Divider -->
+                                <div class="flex items-center gap-2 pt-1">
+                                    <div class="h-px flex-1 bg-gray-100 dark:bg-gray-800" />
+                                    <span class="text-xs text-gray-400 shrink-0">New registrant details</span>
+                                    <div class="h-px flex-1 bg-gray-100 dark:bg-gray-800" />
+                                </div>
+
                                 <!-- Company -->
                                 <div>
                                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Company name <span class="text-gray-400">(optional)</span></label>
                                     <div class="relative">
                                         <Building2 class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-                                        <input v-model="reg.companyName" type="text" placeholder="ICT Web Solution B.V." class="w-full pl-8 pr-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                        <input v-model="reg.companyName" type="text" placeholder="Example Company" class="w-full pl-8 pr-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
                                     </div>
                                 </div>
 
@@ -572,11 +591,11 @@ function statusConfig(status) {
                                 <div class="grid grid-cols-2 gap-2">
                                     <div>
                                         <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">First name</label>
-                                        <input v-model="reg.firstName" type="text" placeholder="Kay" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                        <input v-model="reg.firstName" type="text" placeholder="John" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
                                     </div>
                                     <div>
                                         <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Last name</label>
-                                        <input v-model="reg.lastName" type="text" placeholder="van Aarssen" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                        <input v-model="reg.lastName" type="text" placeholder="Doe" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
                                     </div>
                                 </div>
 
@@ -609,7 +628,7 @@ function statusConfig(status) {
                                 </div>
                                 <div>
                                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Email</label>
-                                    <input v-model="reg.email" type="email" placeholder="info@example.com" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                    <input v-model="reg.email" type="email" placeholder="john@example.com" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
                                 </div>
 
                                 <!-- Optional business -->
