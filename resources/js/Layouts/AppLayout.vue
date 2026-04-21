@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
 import { useTheme } from '@/composables/useTheme'
-import { Sun, Moon, SunMoon, Globe, LogIn, Settings, LogOut } from 'lucide-vue-next'
+import { Sun, Moon, SunMoon, Globe, LogIn, Settings, LogOut, Users } from 'lucide-vue-next'
 
 const page = usePage()
 const auth = computed(() => page.props.auth)
@@ -56,6 +56,14 @@ const themeLabel = computed(() => {
 
                     <template v-if="auth.user">
                         <Link
+                            v-if="auth.user.is_admin"
+                            :href="route('admin.users.index')"
+                            class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        >
+                            <Users class="w-4 h-4" />
+                            <span class="hidden sm:inline">Users</span>
+                        </Link>
+                        <Link
                             :href="route('settings')"
                             class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                         >
@@ -86,9 +94,9 @@ const themeLabel = computed(() => {
         </nav>
 
         <!-- Flash messages -->
-        <div v-if="flash.status" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <div v-if="flash.status || flash.success" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
             <div class="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 rounded-xl px-4 py-3 text-sm">
-                {{ flash.status }}
+                {{ flash.success || flash.status }}
             </div>
         </div>
         <div v-if="flash.error" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">

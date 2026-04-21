@@ -118,6 +118,9 @@ onMounted(() => {
                     <input v-model="form.remember" type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
                     Remember me
                 </label>
+                <Link :href="route('password.request')" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
+                    Forgot password?
+                </Link>
             </div>
 
             <button
