@@ -304,7 +304,7 @@ function statusConfig(status) {
                         v-model="domainInput"
                         @keydown="handleKeydown"
                         type="text"
-                        placeholder="yourname"
+                        placeholder="YourDomainName"
                         autocomplete="off"
                         spellcheck="false"
                         class="w-full pl-10 pr-4 py-3.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-2xl text-base text-gray-900 dark:text-white placeholder-gray-400 outline-none transition focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-sm"
