@@ -1,12 +1,12 @@
 # Domain Checker
 
-[![Version](https://img.shields.io/badge/Version-1.0.0-brightgreen?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.2.0-brightgreen?style=flat-square)](CHANGELOG.md)
 [![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white)](https://vuejs.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-A fast, public domain availability checker built with Laravel and Vue.js. Check a name across 46 popular extensions (or the full IANA list of 1,200+) in real time — no paid API needed. Results stream in one by one via Server-Sent Events using the free RDAP protocol with a WHOIS fallback.
+A fast, public domain availability checker built with Laravel and Vue.js. Check a name across 46 popular extensions (or the full IANA list of 1,200+) in real time — results stream in one by one via Server-Sent Events. Supports optional [Realtime Register IsProxy](#realtime-register-isproxy) for faster, parallel lookups with a free RDAP/WHOIS fallback.
 
 > **Disclaimer:** This software is provided "as is", without warranty of any kind. Use at your own risk. The authors are not responsible for any data loss, security breaches, or other damages resulting from the use of this software. Always review the code and configure proper security measures before deploying to production.
 
@@ -37,9 +37,10 @@ A fast, public domain availability checker built with Laravel and Vue.js. Check 
 ### Domain checking
 - **46 popular TLDs** checked by default — `.nl`, `.com`, `.be`, `.de`, `.net`, `.org`, `.io`, `.co`, `.eu`, `.app`, `.dev`, `.ai`, and more.
 - **Full IANA TLD list** — expand to 1,200+ extensions with one click; list is fetched from IANA and cached daily.
-- **RDAP-first** — uses the free [IANA RDAP bootstrap](https://data.iana.org/rdap/dns.json) to find each TLD's authoritative endpoint. HTTP 404 = available, 200 = taken.
+- **Realtime Register IsProxy** (optional) — socket-based parallel lookups over a single persistent TLS connection. All IS commands are sent at once and responses stream back as the server resolves them, making total check time ≈ slowest single TLD regardless of list size.
+- **RDAP-first lookup** — free fallback using the [IANA RDAP bootstrap](https://data.iana.org/rdap/dns.json). HTTP 404 = available, 200 = taken.
 - **WHOIS fallback** — for TLDs without RDAP, a PHP socket queries the authoritative WHOIS server with text-pattern parsing.
-- **Real-time streaming** — results appear one by one via Server-Sent Events; RDAP queries run concurrently in batches of 10.
+- **Real-time streaming** — results appear one by one via Server-Sent Events.
 - **Result caching** — per-domain results cached 15 min; RDAP bootstrap and IANA list cached 24 h.
 
 ### Smart input
@@ -52,6 +53,13 @@ A fast, public domain availability checker built with Laravel and Vue.js. Check 
 - Checkbox-select any available domains.
 - **Select all available** with one click.
 - Sticky clipboard bar slides up showing selected count + "Copy to clipboard" — copies all selected full domain names (one per line) for easy pasting in email or WhatsApp.
+
+### User management
+- **Multi-user support** — admin panel at `/admin/users` to create, edit, and delete user accounts.
+- **Three-tier roles** — `user`, `admin`, `super_admin`. Regular admins can manage users and send invites; only super admins can assign the `super_admin` role.
+- **Email invite flow** — send an invite link with configurable expiry. Invitees set their name and password; they are automatically logged in on acceptance.
+- **Password reset** — admins can trigger password reset emails per user; users can also self-serve via "Forgot password?" on the login page.
+- **2FA reset** — admins can clear a user's TOTP secret and passkeys from the panel.
 
 ### Authentication & security
 - Public checker — no login required.
@@ -96,9 +104,16 @@ php artisan key:generate
 # Configure your database in .env, then run migrations
 php artisan migrate
 
-# Create the first admin user
+# Create the first super admin user
 php artisan tinker
-# >>> \App\Models\User::create(['name' => 'Admin', 'email' => 'admin@example.com', 'password' => bcrypt('password')]);
+>>> \App\Models\User::create([
+...     'first_name' => 'Your',
+...     'last_name'  => 'Name',
+...     'name'       => 'Your Name',
+...     'email'      => 'admin@example.com',
+...     'password'   => bcrypt('your-password'),
+...     'role'       => 'super_admin',
+... ]);
 
 # Build frontend assets
 npm run build
@@ -181,19 +196,105 @@ DB_PASSWORD=your_db_password
 SESSION_DRIVER=database
 CACHE_STORE=database
 QUEUE_CONNECTION=database
+
+MAIL_MAILER=smtp
+MAIL_HOST=your-smtp-host
+MAIL_PORT=587
+MAIL_USERNAME=your-smtp-user
+MAIL_PASSWORD=your-smtp-password
+MAIL_FROM_ADDRESS=noreply@your-domain.com
+MAIL_FROM_NAME="${APP_NAME}"
 ```
 
-### 5. First admin user
+### 5. First super admin user
 
-After the first deploy, create your admin user via the Ploi console or an SSH session:
+After the first deploy, create your super admin via the Ploi console or SSH:
 
 ```bash
 cd {SITE_DIRECTORY}
 php artisan tinker
->>> \App\Models\User::create(['name' => 'Admin', 'email' => 'you@example.com', 'password' => bcrypt('your-password')]);
+>>> \App\Models\User::create([
+...     'first_name' => 'Your',
+...     'last_name'  => 'Name',
+...     'name'       => 'Your Name',
+...     'email'      => 'you@example.com',
+...     'password'   => bcrypt('your-password'),
+...     'role'       => 'super_admin',
+... ]);
 ```
 
 Then log in at `https://your-domain.com/login` and register a passkey or enable 2FA from Settings.
+
+To promote an existing user to super admin:
+
+```bash
+php artisan tinker
+>>> \App\Models\User::where('email', 'you@example.com')->update(['role' => 'super_admin']);
+```
+
+---
+
+## User management
+
+The admin panel is available at `/admin/users` for any user with the `admin` or `super_admin` role.
+
+### Roles
+
+| Role | Can do |
+|---|---|
+| `user` | Use the domain checker, manage own profile and passkeys |
+| `admin` | Everything above + manage users, send invites, reset passwords and 2FA |
+| `super_admin` | Everything above + assign/revoke `super_admin` role, delete super admins |
+
+### Creating users
+
+Two ways to add a user:
+
+1. **Invite** — click the **Invite** button, fill in the email (and optionally name + role + expiry), and click **Send Invite**. The invitee receives an email with a link to set their own password. The link expires after the configured number of hours.
+
+2. **Direct create** — click **Create User**, fill in name, email, password, and role. The account is created immediately; no email is sent.
+
+### Managing existing users
+
+From the users table you can:
+
+- **Edit** — change name, email, or role.
+- **Send password reset** — triggers a standard Laravel password reset email.
+- **Reset 2FA** — clears the user's TOTP secret and all registered passkeys. They will need to re-enroll on next sign-in.
+- **Delete** — permanently removes the account. You cannot delete your own account; only super admins can delete other super admins.
+
+### Pending invites
+
+Invites that have been sent but not yet accepted appear in the **Pending Invites** table below the users list. Each invite shows the invitee email, role, who sent it, and its current status (Pending / Expired). You can **Revoke** a valid invite or **Resend** an expired one with a fresh 72-hour expiry.
+
+---
+
+## Realtime Register IsProxy
+
+[Realtime Register](https://www.realtimeregister.com) offers an IsProxy API for fast parallel domain availability lookups over a single TLS socket connection. When configured, it is used as the primary check source with RDAP/WHOIS as fallback.
+
+### How it works
+
+1. A single TCP connection is opened to `is.yoursrs.com:2001`.
+2. STARTTLS is negotiated and the connection is upgraded to TLS.
+3. The client logs in with `LOGIN <api_key>`.
+4. All `IS <domain>.<tld>` commands are sent in one batch without waiting for responses.
+5. The server processes them in parallel and sends back async responses.
+6. Each result is streamed to the browser immediately via SSE as it arrives.
+
+This makes total check time ≈ slowest single TLD lookup, regardless of how many TLDs are being checked.
+
+### Configuration
+
+Add the API key in **Settings → API Integrations** after logging in. Optionally override the host:
+
+```env
+REALTIME_REGISTER_API_KEY=your-api-key
+REALTIME_REGISTER_HOST=is.yoursrs.com   # default
+REALTIME_REGISTER_PORT=2001             # default
+```
+
+The key requires **IsProxy** access. RDAP and WHOIS are used automatically for any TLD the IsProxy service cannot resolve.
 
 ---
 
@@ -218,6 +319,17 @@ Then log in at `https://your-domain.com/login` and register a passkey or enable 
 | `DB_DATABASE` | _(sqlite file)_ | Database name or SQLite file path. |
 | `DB_USERNAME` / `DB_PASSWORD` | empty | Database credentials. |
 
+### Mail
+
+| Variable | Default | What it does |
+|---|---|---|
+| `MAIL_MAILER` | `log` | Set to `smtp` (or `ses`, `mailgun`, etc.) in production. |
+| `MAIL_HOST` | `127.0.0.1` | SMTP host. |
+| `MAIL_PORT` | `2525` | SMTP port. |
+| `MAIL_USERNAME` / `MAIL_PASSWORD` | empty | SMTP credentials. |
+| `MAIL_FROM_ADDRESS` | `hello@example.com` | From address for all outgoing mail (invites, password resets). |
+| `MAIL_FROM_NAME` | `${APP_NAME}` | From name for all outgoing mail. |
+
 ### Session & cache
 
 | Variable | Default | What it does |
@@ -226,15 +338,23 @@ Then log in at `https://your-domain.com/login` and register a passkey or enable 
 | `SESSION_LIFETIME` | `120` | Idle session timeout in minutes. |
 | `CACHE_STORE` | `database` | Used to cache RDAP bootstrap, TLD list, and domain results. |
 
+### Realtime Register
+
+| Variable | Default | What it does |
+|---|---|---|
+| `REALTIME_REGISTER_API_KEY` | empty | IsProxy API key. Leave empty to use RDAP/WHOIS only. |
+| `REALTIME_REGISTER_HOST` | `is.yoursrs.com` | IsProxy hostname. |
+| `REALTIME_REGISTER_PORT` | `2001` | IsProxy port. |
+
 ### Rate limiting
 
-The domain-check endpoint uses Laravel's named rate limiter `domain-check`: 10 requests/min for guests, 60/min for authenticated users. Adjust in `bootstrap/app.php` if needed.
+The domain-check endpoint uses Laravel's named rate limiter `domain-check`: 10 requests/min for guests, 60/min for authenticated users. Adjust in `AppServiceProvider` if needed.
 
 ---
 
 ## Versioning
 
-Domain Checker follows [Semantic Versioning](https://semver.org/). The current release is **v1.0.0**. All changes are tracked in [CHANGELOG.md](CHANGELOG.md):
+Domain Checker follows [Semantic Versioning](https://semver.org/). The current release is **v1.2.0**. All changes are tracked in [CHANGELOG.md](CHANGELOG.md):
 
 - **Patch (`1.0.x`)** — Bug fixes and small tweaks.
 - **Minor (`1.x.0`)** — New features, backwards-compatible.

@@ -19,6 +19,58 @@ Every push that ships production-visible changes should bump the appropriate seg
 
 _Nothing yet._
 
+---
+
+## [1.2.0] — 2026-04-21
+
+### Added
+- **Multi-user management** — admin panel at `/admin/users` for creating, editing, and deleting user accounts.
+- **Three-tier role system** — `user`, `admin`, and `super_admin`. Admins can manage users; only super admins can assign the `super_admin` role or delete other super admins.
+- **Email invite flow** — admins can send invitation emails with a configurable expiry (1–720 hours). Invitees follow the link, set their name and password, and are auto-logged in. Expired/used/invalid tokens show a clear error page.
+- **Pending invites table** — shows status (Pending / Expired / Used) with Resend and Revoke actions per row; used and fully-onboarded invites are cleaned up automatically.
+- **Send password reset** — admins can trigger a password reset email for any user from the users panel.
+- **Reset 2FA** — admins can clear a user's TOTP secret and all registered passkeys from the users panel.
+- **Password reset flow** — `/forgot-password` → `/reset-password/{token}` with dedicated pages. "Forgot password?" link added to the login page.
+- **Users nav link** — a "Users" link appears in the top navigation bar for admin and super admin users.
+- **`first_name` / `last_name` fields** — users now store separate first and last name fields in addition to the computed `name` column.
+
+### Changed
+- First admin user creation (see Installation) now requires `role`, `first_name`, and `last_name` fields.
+- `HandleInertiaRequests` now shares `role`, `is_admin`, and `is_super_admin` as part of the `auth.user` prop.
+- Flash messages updated to also display `success` key (used by admin actions) alongside the existing `status` and `error` keys.
+
+### Migration required
+```bash
+php artisan migrate
+```
+Adds `first_name`, `last_name`, `role` to the `users` table and creates the `user_invites` table.
+
+---
+
+## [1.1.0] — 2026-04-21
+
+### Added
+- **Realtime Register IsProxy integration** — optional socket-based domain availability API. When an API key is configured in Settings → API Integrations, all domain checks are routed through the IsProxy service first, with RDAP/WHOIS as fallback for unsupported TLDs.
+- **Pipelined socket protocol** — all IS commands for the entire TLD list are sent over a single persistent TLS connection. The server processes them in parallel and streams responses back as they resolve, so total check time ≈ slowest single TLD regardless of list size (previously ~500 ms × number of batches).
+- **`set_time_limit(0)`** in the SSE streaming closure to prevent PHP execution timeout on large TLD lists.
+- **`checked` / `total` counters** in SSE events so the frontend can show accurate progress.
+
+### Changed
+- `/check` endpoint switched from GET to POST — the TLD list is now sent in the request body to avoid URL length limits when checking 1,200+ extensions.
+- Domain check controller updated to call `streamCheck()` directly instead of looping fixed-size batches; results are emitted to the SSE stream as each one resolves.
+- `DomainAvailabilityService` refactored: `checkBatch()` is now a thin wrapper around the new `streamCheck(callback)` method; cached results are flushed immediately before live checks begin.
+- Rate limiter registration moved from `withRouting()->then:` to `AppServiceProvider::boot()` to ensure it is always registered even when the route cache is active.
+- CSRF exemption added for `/check` (public read-only SSE endpoint).
+- Clipboard bar hint text improved.
+
+### Fixed
+- "Something went wrong" error on domain check caused by rate limiter not being registered when route cache was active.
+- "Something went wrong" on All Extensions mode caused by GET URL exceeding server URL length limits with 1,500+ TLD parameters.
+- PHP 30-second execution timeout when checking large TLD lists.
+- Socket TLS upgrade error (`stream_socket_enable_crypto` called with invalid argument) — fixed by using `stream_context_set_option()` before the crypto call instead of passing context as a fourth argument.
+
+---
+
 ## [1.0.0] — 2026-04-20
 
 ### Added
