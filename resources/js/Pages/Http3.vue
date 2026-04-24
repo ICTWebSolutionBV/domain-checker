@@ -13,6 +13,7 @@ const hostInput  = ref(props.initialHost || '')
 const displayUrl = ref('')
 const checks     = ref([])   // { key, status, label, detail }
 const verdict    = ref(null) // { result, h3, summary }
+const serverInfo = ref(null) // { transport, info: { http_version_label, status_code, server_ip, server_port, timing_ms, headers, effective_url } }
 const isChecking = ref(false)
 const error      = ref('')
 
@@ -39,6 +40,7 @@ async function runCheck() {
 
     checks.value  = []
     verdict.value = null
+    serverInfo.value = null
     displayUrl.value = ''
     error.value   = ''
     isChecking.value = true
@@ -105,6 +107,13 @@ function handleEvent(ev) {
             checks.value[idx] = ev
         } else {
             checks.value.push(ev)
+        }
+        return
+    }
+    if (ev.type === 'server_info') {
+        // Prefer HTTP/3 info if it arrives; otherwise keep the baseline.
+        if (!serverInfo.value || ev.transport === 'HTTP/3') {
+            serverInfo.value = ev
         }
         return
     }
@@ -291,6 +300,86 @@ const pendingKeys = computed(() => {
                             <div class="h-3 bg-gray-100 dark:bg-gray-800 rounded w-32 animate-pulse" />
                         </div>
 
+                    </div>
+                </div>
+
+                <!-- Server information (HTTP version, status, timings, headers) -->
+                <div v-if="serverInfo" class="border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-900">
+                    <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between gap-3">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                {{ serverInfo.transport === 'HTTP/3' ? 'HTTP/3 Server Information' : 'Server Information' }}
+                            </p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                                Observed over {{ serverInfo.info.http_version_label }}
+                            </p>
+                        </div>
+                        <span
+                            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"
+                            :class="serverInfo.transport === 'HTTP/3'
+                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200'
+                                : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200'"
+                        >
+                            {{ serverInfo.info.http_version_label }}
+                        </span>
+                    </div>
+
+                    <!-- Summary stats grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-px bg-gray-200 dark:bg-gray-800">
+                        <div v-if="serverInfo.info.status_code" class="bg-white dark:bg-gray-900 p-4">
+                            <p class="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">Status</p>
+                            <p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">{{ serverInfo.info.status_code }}</p>
+                        </div>
+                        <div v-if="serverInfo.info.timing_ms?.total" class="bg-white dark:bg-gray-900 p-4">
+                            <p class="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">Response</p>
+                            <p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">{{ serverInfo.info.timing_ms.total }} ms</p>
+                        </div>
+                        <div v-if="serverInfo.info.timing_ms?.handshake || serverInfo.info.timing_ms?.tls" class="bg-white dark:bg-gray-900 p-4">
+                            <p class="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">
+                                {{ serverInfo.transport === 'HTTP/3' ? 'Handshake' : 'TLS' }}
+                            </p>
+                            <p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">
+                                {{ (serverInfo.info.timing_ms.handshake || serverInfo.info.timing_ms.tls) }} ms
+                            </p>
+                        </div>
+                        <div v-if="serverInfo.info.timing_ms?.dns !== undefined" class="bg-white dark:bg-gray-900 p-4">
+                            <p class="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">DNS</p>
+                            <p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">{{ serverInfo.info.timing_ms.dns }} ms</p>
+                        </div>
+                        <div v-if="serverInfo.info.timing_ms?.connect !== undefined" class="bg-white dark:bg-gray-900 p-4">
+                            <p class="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">Connect</p>
+                            <p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">{{ serverInfo.info.timing_ms.connect }} ms</p>
+                        </div>
+                        <div v-if="serverInfo.info.timing_ms?.ttfb !== undefined" class="bg-white dark:bg-gray-900 p-4">
+                            <p class="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">TTFB</p>
+                            <p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">{{ serverInfo.info.timing_ms.ttfb }} ms</p>
+                        </div>
+                    </div>
+
+                    <!-- Server / URL -->
+                    <div v-if="serverInfo.info.server_ip || serverInfo.info.effective_url" class="px-5 py-3 border-t border-gray-200 dark:border-gray-800 text-xs space-y-1">
+                        <div v-if="serverInfo.info.server_ip" class="flex gap-2">
+                            <span class="text-gray-500 dark:text-gray-400 w-20 shrink-0">Server IP</span>
+                            <span class="font-mono text-gray-900 dark:text-white break-all">
+                                {{ serverInfo.info.server_ip }}<template v-if="serverInfo.info.server_port">:{{ serverInfo.info.server_port }}</template>
+                            </span>
+                        </div>
+                        <div v-if="serverInfo.info.effective_url" class="flex gap-2">
+                            <span class="text-gray-500 dark:text-gray-400 w-20 shrink-0">URL</span>
+                            <span class="font-mono text-gray-900 dark:text-white break-all">{{ serverInfo.info.effective_url }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Response headers -->
+                    <div v-if="serverInfo.info.headers?.length" class="border-t border-gray-200 dark:border-gray-800">
+                        <p class="px-5 pt-4 text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">Response Headers</p>
+                        <div class="divide-y divide-gray-100 dark:divide-gray-800 mt-2">
+                            <div v-for="h in serverInfo.info.headers" :key="h.name + h.value"
+                                class="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-4 px-5 py-2.5 text-xs">
+                                <span class="font-mono text-gray-500 dark:text-gray-400 break-all">{{ h.name }}</span>
+                                <span class="font-mono text-gray-900 dark:text-white break-all">{{ h.value }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

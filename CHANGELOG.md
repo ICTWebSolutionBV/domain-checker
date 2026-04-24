@@ -21,6 +21,17 @@ _Nothing yet._
 
 ---
 
+## [1.5.0] — 2026-04-24
+
+### Added
+- **HTTP/3 server information panel** on the `/http3` page: HTTP version used, status code, server IP/port, DNS / connect / TLS / TTFB / total response timings, and the full list of response headers returned by the origin.
+- Server info is emitted as a new `server_info` SSE event during the check. When curl has QUIC support, the panel prefers data observed over HTTP/3; otherwise it falls back to the HTTP/2 or HTTP/1.1 probe.
+
+### Notes
+- For richer HTTP/3-specific metadata (connection ID, per-packet stats, etc.) the host server needs a curl build linked against `ngtcp2 + nghttp3` or `quiche`. Without it, the panel still reports the server's actual HTTP version and headers, but the numbers come from the HTTP/2/1.1 probe.
+
+---
+
 ## [1.4.1] — 2026-04-24
 
 ### Changed

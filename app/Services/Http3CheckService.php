@@ -57,11 +57,22 @@ class Http3CheckService
             return;
         }
 
-        // ── 5 + 6: HTTP/2 + Alt-Svc ──────────────────────────────────────
-        $h3Advertised = $this->checkHttp2AndAltSvc($url, $emit);
+        // ── 5 + 6: HTTP/2 + Alt-Svc (also collects server_info) ──────────
+        [$h3Advertised, $baselineInfo] = $this->checkHttp2AndAltSvc($url, $emit);
+
+        // Emit the baseline server info (HTTP/2 or HTTP/1.1 response) so we
+        // always have something to show, even when QUIC is unavailable.
+        if ($baselineInfo) {
+            $emit(['type' => 'server_info', 'transport' => $baselineInfo['http_version_label'], 'info' => $baselineInfo]);
+        }
 
         // ── 7: Direct HTTP/3 QUIC ─────────────────────────────────────────
-        $h3Connected = $this->checkHttp3($url, $emit);
+        [$h3Connected, $h3Info] = $this->checkHttp3($url, $emit);
+
+        // Prefer the HTTP/3 server info when we got it.
+        if ($h3Info) {
+            $emit(['type' => 'server_info', 'transport' => 'HTTP/3', 'info' => $h3Info]);
+        }
 
         // ── Verdict ───────────────────────────────────────────────────────
         $h3Supported = $h3Connected || $h3Advertised;
@@ -160,7 +171,10 @@ class Http3CheckService
         return true;
     }
 
-    private function checkHttp2AndAltSvc(string $url, callable $emit): bool
+    /**
+     * @return array{0: bool, 1: array|null} [h3Advertised, serverInfo]
+     */
+    private function checkHttp2AndAltSvc(string $url, callable $emit): array
     {
         $ch = curl_init($url);
         curl_setopt_array($ch, [
@@ -186,22 +200,23 @@ class Http3CheckService
             $emit(['type' => 'check', 'key' => 'http2',  'status' => 'warn', 'label' => 'HTTP/2',             'detail' => 'Could not check — connection error']);
             $emit(['type' => 'check', 'key' => 'altsvc', 'status' => 'fail', 'label' => 'Alt-Svc (h3) Header', 'detail' => 'Could not retrieve response headers']);
 
-            return false;
+            return [false, null];
         }
 
-        // CURL_HTTP_VERSION_2_0 = 3
         $http2 = ($versionUsed === CURL_HTTP_VERSION_2_0);
         $emit([
             'type'   => 'check',
             'key'    => 'http2',
             'status' => $http2 ? 'pass' : 'warn',
             'label'  => 'HTTP/2',
-            'detail' => $http2 ? 'Supported' : 'Not supported (HTTP/3 usually requires HTTP/2)',
+            'detail' => $http2 ? 'Supported' : 'Not supported (server negotiated HTTP/' . $this->versionLabel($versionUsed) . ')',
         ]);
 
-        // Extract Alt-Svc from response headers
-        $altSvc = $this->extractAltSvc($body, (int) $info['header_size']);
+        // Parse the final response's headers.
+        $finalHeaders = $this->parseFinalHeaders($body, (int) $info['header_size']);
 
+        // Alt-Svc detection
+        $altSvc       = $finalHeaders['alt-svc'] ?? '';
         $h3Advertised = (bool) preg_match('/\bh3\b/i', $altSvc);
 
         if ($h3Advertised) {
@@ -212,57 +227,93 @@ class Http3CheckService
             $emit(['type' => 'check', 'key' => 'altsvc', 'status' => 'fail', 'label' => 'Alt-Svc (h3) Header', 'detail' => 'No Alt-Svc header found']);
         }
 
-        return $h3Advertised;
+        $serverInfo = [
+            'http_version_label' => 'HTTP/' . $this->versionLabel($versionUsed),
+            'status_code'        => (int) ($info['http_code'] ?? 0),
+            'server_ip'          => $info['primary_ip'] ?? null,
+            'server_port'        => (int) ($info['primary_port'] ?? 0) ?: null,
+            'effective_url'      => $info['url'] ?? $url,
+            'timing_ms'          => [
+                'dns'       => $this->ms($info['namelookup_time'] ?? 0),
+                'connect'   => $this->ms(($info['connect_time'] ?? 0) - ($info['namelookup_time'] ?? 0)),
+                'tls'       => $this->ms(($info['appconnect_time'] ?? 0) - ($info['connect_time'] ?? 0)),
+                'ttfb'      => $this->ms(($info['starttransfer_time'] ?? 0) - ($info['appconnect_time'] ?: $info['connect_time'] ?? 0)),
+                'total'     => $this->ms($info['total_time'] ?? 0),
+            ],
+            'headers'            => $this->headersToList($finalHeaders),
+        ];
+
+        return [$h3Advertised, $serverInfo];
     }
 
-    private function checkHttp3(string $url, callable $emit): bool
+    /**
+     * @return array{0: bool, 1: array|null} [h3Connected, serverInfo]
+     */
+    private function checkHttp3(string $url, callable $emit): array
     {
         if (! defined('CURL_HTTP_VERSION_3')) {
             $emit(['type' => 'check', 'key' => 'http3', 'status' => 'info', 'label' => 'HTTP/3 Direct (QUIC)', 'detail' => 'curl not compiled with QUIC — using Alt-Svc advertisement as proof']);
 
-            return false;
+            return [false, null];
         }
 
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_3,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HEADER         => false,
-            CURLOPT_NOBODY         => true,
+            CURLOPT_HEADER         => true,
+            CURLOPT_NOBODY         => false,
             CURLOPT_TIMEOUT        => 8,
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_USERAGENT      => 'Mozilla/5.0 DomainChecker/1.0 HTTP3-Probe',
             CURLOPT_FOLLOWLOCATION => false,
         ]);
 
-        $t0    = microtime(true);
-        curl_exec($ch);
-        $ms    = (int) round((microtime(true) - $t0) * 1000);
-        $info  = curl_getinfo($ch);
-        $errno = curl_errno($ch);
-        $error = curl_error($ch);
+        $body        = curl_exec($ch);
+        $info        = curl_getinfo($ch);
+        $errno       = curl_errno($ch);
+        $error       = curl_error($ch);
         $versionUsed = $this->curlHttpVersion($ch);
         curl_close($ch);
 
-        // Confirmed HTTP/3: no error, got a valid response, version = 30
-        if (! $errno && $info['http_code'] >= 100 && $versionUsed === CURL_HTTP_VERSION_3) {
-            $emit(['type' => 'check', 'key' => 'http3', 'status' => 'pass', 'label' => 'HTTP/3 Direct (QUIC)', 'detail' => "Connected via QUIC in {$ms} ms (HTTP/{$this->versionLabel($versionUsed)})"]);
+        $ms = $this->ms($info['total_time'] ?? 0);
 
-            return true;
+        // Confirmed HTTP/3
+        if (! $errno && ($info['http_code'] ?? 0) >= 100 && $versionUsed === CURL_HTTP_VERSION_3) {
+            $emit(['type' => 'check', 'key' => 'http3', 'status' => 'pass', 'label' => 'HTTP/3 Direct (QUIC)', 'detail' => "Connected via QUIC in {$ms} ms (HTTP/3)"]);
+
+            $headers    = $this->parseFinalHeaders((string) $body, (int) ($info['header_size'] ?? 0));
+            $serverInfo = [
+                'http_version_label' => 'HTTP/3',
+                'status_code'        => (int) ($info['http_code'] ?? 0),
+                'server_ip'          => $info['primary_ip'] ?? null,
+                'server_port'        => (int) ($info['primary_port'] ?? 0) ?: null,
+                'effective_url'      => $info['url'] ?? $url,
+                'timing_ms'          => [
+                    'dns'       => $this->ms($info['namelookup_time'] ?? 0),
+                    'connect'   => $this->ms(($info['connect_time'] ?? 0) - ($info['namelookup_time'] ?? 0)),
+                    'handshake' => $this->ms(($info['appconnect_time'] ?? 0) - ($info['connect_time'] ?? 0)),
+                    'ttfb'      => $this->ms(($info['starttransfer_time'] ?? 0) - ($info['appconnect_time'] ?: $info['connect_time'] ?? 0)),
+                    'total'     => $ms,
+                ],
+                'headers'            => $this->headersToList($headers),
+            ];
+
+            return [true, $serverInfo];
         }
 
-        // Connected but server fell back to a lower version
-        if (! $errno && $info['http_code'] >= 100) {
-            $emit(['type' => 'check', 'key' => 'http3', 'status' => 'warn', 'label' => 'HTTP/3 Direct (QUIC)', 'detail' => 'Attempted HTTP/3 but server negotiated ' . $this->versionLabel($versionUsed)]);
+        // Connected but server negotiated a lower version
+        if (! $errno && ($info['http_code'] ?? 0) >= 100) {
+            $emit(['type' => 'check', 'key' => 'http3', 'status' => 'warn', 'label' => 'HTTP/3 Direct (QUIC)', 'detail' => 'Attempted HTTP/3 but server negotiated HTTP/' . $this->versionLabel($versionUsed)]);
 
-            return false;
+            return [false, null];
         }
 
         // Connection failed
         $detail = $error ?: 'QUIC connection failed';
         $emit(['type' => 'check', 'key' => 'http3', 'status' => 'fail', 'label' => 'HTTP/3 Direct (QUIC)', 'detail' => $detail]);
 
-        return false;
+        return [false, null];
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -298,19 +349,56 @@ class Http3CheckService
         ];
     }
 
-    private function extractAltSvc(string $rawResponse, int $headerSize): string
+    /**
+     * Parse the FINAL response block's headers (the last one after any redirects).
+     *
+     * @return array<string, string> lowercased header name => value
+     */
+    private function parseFinalHeaders(string $rawResponse, int $headerSize): array
     {
-        $headers  = substr($rawResponse, 0, $headerSize);
-        $altSvc   = '';
+        $headerBlob = substr($rawResponse, 0, $headerSize);
 
-        foreach (explode("\n", $headers) as $line) {
-            $line = ltrim($line);
-            if (stripos($line, 'alt-svc:') === 0) {
-                $altSvc = trim(substr($line, 8));
+        // Split into individual response blocks; keep only the last non-empty one.
+        $blocks = preg_split('/\r?\n\r?\n/', rtrim($headerBlob));
+        $last   = '';
+        foreach ($blocks as $block) {
+            $block = trim($block);
+            if ($block !== '') {
+                $last = $block;
             }
         }
 
-        return $altSvc;
+        $headers = [];
+        foreach (preg_split('/\r?\n/', $last) as $line) {
+            if (! str_contains($line, ':')) {
+                continue; // status line or empty
+            }
+            [$name, $value] = explode(':', $line, 2);
+            $headers[strtolower(trim($name))] = trim($value);
+        }
+
+        return $headers;
+    }
+
+    /**
+     * Convert a parsed headers map into a preserved-order list for display.
+     *
+     * @param array<string, string> $headers
+     * @return list<array{name: string, value: string}>
+     */
+    private function headersToList(array $headers): array
+    {
+        $list = [];
+        foreach ($headers as $name => $value) {
+            $list[] = ['name' => $name, 'value' => $value];
+        }
+
+        return $list;
+    }
+
+    private function ms(float $seconds): int
+    {
+        return $seconds > 0 ? (int) round($seconds * 1000) : 0;
     }
 
     /** Returns the CURLINFO_HTTP_VERSION value for the last request. */
