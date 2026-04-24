@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\NoHtmlCache;
 use App\Http\Middleware\SuperAdminMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             HandleInertiaRequests::class,
+            NoHtmlCache::class,
         ]);
 
         $middleware->alias([

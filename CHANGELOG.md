@@ -21,6 +21,16 @@ _Nothing yet._
 
 ---
 
+## [1.5.3] — 2026-04-24
+
+### Added
+- **`NoHtmlCache` middleware** applied to every web response. Marks the Inertia HTML shell and Inertia JSON partial responses as `Cache-Control: no-cache, no-store, must-revalidate, private`, so browsers and any CDN in front of the app never hold a stale copy that still references the previous build's asset hashes. Hashed JS/CSS under `/build/*` are served directly by the web server and keep their long-term immutable caching behavior.
+
+### Fixes
+- "Deployed a new version but users still see the old UI" — hard-refresh workaround no longer needed.
+
+---
+
 ## [1.5.2] — 2026-04-24
 
 ### Added
