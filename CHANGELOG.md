@@ -21,6 +21,19 @@ _Nothing yet._
 
 ---
 
+## [1.5.1] — 2026-04-24
+
+### Added
+- **QUIC session strip** at the top of the HTTP/3 server info panel showing **Connection ID**, **Packet RX**, and **Handshake Done** — matching the layout of tools like http3checker.com. Populated when curl is QUIC-capable; the panel stays hidden when we can't negotiate HTTP/3.
+- Primary stats redesigned as three large cards: **HTTP Version**, **Status Code**, **Response Time**.
+- Response headers now render as a proper **Header / Value** table.
+
+### Changed
+- `Http3CheckService` now captures curl's verbose output over a memory stream and parses the Connection ID, ALPN, and TLS cipher from it.
+- `checkHttp3` now emits `quic.handshake_done_ms` and `quic.packet_rx_ms` timings alongside the regular response metrics.
+
+---
+
 ## [1.5.0] — 2026-04-24
 
 ### Added

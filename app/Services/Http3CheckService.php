@@ -257,6 +257,11 @@ class Http3CheckService
             return [false, null];
         }
 
+        // Capture curl's verbose output so we can extract QUIC-specific
+        // details (connection ID, packet timings) when the curl build speaks
+        // the protocol.
+        $verbose = fopen('php://temp', 'w+');
+
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_3,
@@ -267,6 +272,8 @@ class Http3CheckService
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_USERAGENT      => 'Mozilla/5.0 DomainChecker/1.0 HTTP3-Probe',
             CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_VERBOSE        => true,
+            CURLOPT_STDERR         => $verbose,
         ]);
 
         $body        = curl_exec($ch);
@@ -276,24 +283,38 @@ class Http3CheckService
         $versionUsed = $this->curlHttpVersion($ch);
         curl_close($ch);
 
+        rewind($verbose);
+        $verboseText = stream_get_contents($verbose) ?: '';
+        fclose($verbose);
+
         $ms = $this->ms($info['total_time'] ?? 0);
 
         // Confirmed HTTP/3
         if (! $errno && ($info['http_code'] ?? 0) >= 100 && $versionUsed === CURL_HTTP_VERSION_3) {
             $emit(['type' => 'check', 'key' => 'http3', 'status' => 'pass', 'label' => 'HTTP/3 Direct (QUIC)', 'detail' => "Connected via QUIC in {$ms} ms (HTTP/3)"]);
 
-            $headers    = $this->parseFinalHeaders((string) $body, (int) ($info['header_size'] ?? 0));
+            $headers   = $this->parseFinalHeaders((string) $body, (int) ($info['header_size'] ?? 0));
+            $handshake = $this->ms(($info['appconnect_time'] ?? 0) - ($info['connect_time'] ?? 0));
+            $packetRx  = $this->ms(($info['starttransfer_time'] ?? 0) - ($info['appconnect_time'] ?: $info['connect_time'] ?? 0));
+
             $serverInfo = [
                 'http_version_label' => 'HTTP/3',
                 'status_code'        => (int) ($info['http_code'] ?? 0),
                 'server_ip'          => $info['primary_ip'] ?? null,
                 'server_port'        => (int) ($info['primary_port'] ?? 0) ?: null,
                 'effective_url'      => $info['url'] ?? $url,
+                'quic'               => [
+                    'connection_id'    => $this->parseConnectionId($verboseText),
+                    'cipher'           => $this->parseTlsCipher($verboseText),
+                    'alpn'             => $this->parseAlpn($verboseText),
+                    'handshake_done_ms' => $handshake,
+                    'packet_rx_ms'     => $packetRx,
+                ],
                 'timing_ms'          => [
                     'dns'       => $this->ms($info['namelookup_time'] ?? 0),
                     'connect'   => $this->ms(($info['connect_time'] ?? 0) - ($info['namelookup_time'] ?? 0)),
-                    'handshake' => $this->ms(($info['appconnect_time'] ?? 0) - ($info['connect_time'] ?? 0)),
-                    'ttfb'      => $this->ms(($info['starttransfer_time'] ?? 0) - ($info['appconnect_time'] ?: $info['connect_time'] ?? 0)),
+                    'handshake' => $handshake,
+                    'ttfb'      => $packetRx,
                     'total'     => $ms,
                 ],
                 'headers'            => $this->headersToList($headers),
@@ -314,6 +335,38 @@ class Http3CheckService
         $emit(['type' => 'check', 'key' => 'http3', 'status' => 'fail', 'label' => 'HTTP/3 Direct (QUIC)', 'detail' => $detail]);
 
         return [false, null];
+    }
+
+    private function parseConnectionId(string $verbose): ?string
+    {
+        // curl+ngtcp2 prints lines like: "* QUIC connection ID: 0x<hex>"
+        // curl+quiche    prints: "* Connection ID: <hex>"
+        if (preg_match('/(?:QUIC\s+)?[Cc]onnection\s+ID:?\s*(?:0x)?([0-9a-fA-F]{4,})/', $verbose, $m)) {
+            return $m[1];
+        }
+
+        return null;
+    }
+
+    private function parseTlsCipher(string $verbose): ?string
+    {
+        if (preg_match('/SSL connection using TLSv?1?\.?3?,?\s*\w+-?\w*(?:\s*\/\s*([\w-]+))?/i', $verbose, $m) && ! empty($m[1])) {
+            return $m[1];
+        }
+        if (preg_match('/cipher:\s*([A-Z0-9_-]+)/i', $verbose, $m)) {
+            return $m[1];
+        }
+
+        return null;
+    }
+
+    private function parseAlpn(string $verbose): ?string
+    {
+        if (preg_match('/ALPN[^:]*:\s*(?:server\s+accepted\s+)?([a-z0-9\-\.]+)/i', $verbose, $m)) {
+            return $m[1];
+        }
+
+        return null;
     }
 
     // ─────────────────────────────────────────────────────────────────────

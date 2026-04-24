@@ -1,6 +1,6 @@
 # Domain Checker
 
-[![Version](https://img.shields.io/badge/Version-1.5.0-brightgreen?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.5.1-brightgreen?style=flat-square)](CHANGELOG.md)
 [![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white)](https://vuejs.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
@@ -354,8 +354,9 @@ The domain-check endpoint uses Laravel's named rate limiter `domain-check`: 10 r
 
 ## Versioning
 
-Domain Checker follows [Semantic Versioning](https://semver.org/). The current release is **v1.5.0**. All changes are tracked in [CHANGELOG.md](CHANGELOG.md):
+Domain Checker follows [Semantic Versioning](https://semver.org/). The current release is **v1.5.1**. All changes are tracked in [CHANGELOG.md](CHANGELOG.md):
 
+- **1.5.1** — HTTP/3 panel now shows a QUIC session strip (Connection ID, Packet RX, Handshake Done) and a cleaner HTTP Version / Status Code / Response Time summary, plus a Header/Value response-headers table.
 - **1.5.0** — HTTP/3 checker now returns full server info: HTTP version, status, DNS / connect / TLS / TTFB / total timings, server IP, and all response headers. When curl has QUIC built in, the panel shows data observed over HTTP/3.
 - **1.4.1** — IP Lookup history moved to browser-local storage with a 7-day expiry (no longer stored or shared on the server).
 - **1.4.0** — IP Lookup page with geolocation, ASN, reverse DNS, and proxy/hosting signals via ip-api.com.

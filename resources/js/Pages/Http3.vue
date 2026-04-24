@@ -303,6 +303,30 @@ const pendingKeys = computed(() => {
                     </div>
                 </div>
 
+                <!-- QUIC session strip (only shown when we have a real HTTP/3 response) -->
+                <div v-if="serverInfo?.transport === 'HTTP/3' && serverInfo.info.quic" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="rounded-2xl border border-sky-200 dark:border-sky-900 bg-gradient-to-br from-sky-50 to-white dark:from-sky-950/40 dark:to-gray-900 p-4">
+                        <p class="text-[11px] font-bold uppercase tracking-[0.15em] text-sky-600 dark:text-sky-400">Connection ID</p>
+                        <p class="mt-2 font-mono text-sm text-gray-900 dark:text-white truncate">
+                            {{ serverInfo.info.quic.connection_id
+                                ? serverInfo.info.quic.connection_id.slice(0, 12) + (serverInfo.info.quic.connection_id.length > 12 ? '…' : '')
+                                : '—' }}
+                        </p>
+                    </div>
+                    <div class="rounded-2xl border border-sky-200 dark:border-sky-900 bg-gradient-to-br from-sky-50 to-white dark:from-sky-950/40 dark:to-gray-900 p-4">
+                        <p class="text-[11px] font-bold uppercase tracking-[0.15em] text-sky-600 dark:text-sky-400">Packet RX</p>
+                        <p class="mt-2 font-mono text-sm text-gray-900 dark:text-white">
+                            {{ serverInfo.info.quic.packet_rx_ms ?? '—' }}<span class="text-gray-400 dark:text-gray-500 text-xs ml-1">ms</span>
+                        </p>
+                    </div>
+                    <div class="rounded-2xl border border-sky-200 dark:border-sky-900 bg-gradient-to-br from-sky-50 to-white dark:from-sky-950/40 dark:to-gray-900 p-4">
+                        <p class="text-[11px] font-bold uppercase tracking-[0.15em] text-sky-600 dark:text-sky-400">Handshake Done</p>
+                        <p class="mt-2 font-mono text-sm text-gray-900 dark:text-white">
+                            {{ serverInfo.info.quic.handshake_done_ms ?? '—' }}<span class="text-gray-400 dark:text-gray-500 text-xs ml-1">ms</span>
+                        </p>
+                    </div>
+                </div>
+
                 <!-- Server information (HTTP version, status, timings, headers) -->
                 <div v-if="serverInfo" class="border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-900">
                     <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between gap-3">
@@ -324,34 +348,42 @@ const pendingKeys = computed(() => {
                         </span>
                     </div>
 
-                    <!-- Summary stats grid -->
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-px bg-gray-200 dark:bg-gray-800">
-                        <div v-if="serverInfo.info.status_code" class="bg-white dark:bg-gray-900 p-4">
-                            <p class="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">Status</p>
-                            <p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">{{ serverInfo.info.status_code }}</p>
+                    <!-- Primary stats: HTTP Version / Status / Response Time -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-5 bg-gray-50 dark:bg-gray-900/60">
+                        <div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+                            <p class="text-[11px] uppercase tracking-wider text-sky-600 dark:text-sky-400 font-bold">HTTP Version</p>
+                            <p class="mt-2 font-mono text-base text-gray-900 dark:text-white">{{ serverInfo.info.http_version_label }}</p>
                         </div>
-                        <div v-if="serverInfo.info.timing_ms?.total" class="bg-white dark:bg-gray-900 p-4">
-                            <p class="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">Response</p>
-                            <p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">{{ serverInfo.info.timing_ms.total }} ms</p>
+                        <div v-if="serverInfo.info.status_code" class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+                            <p class="text-[11px] uppercase tracking-wider text-sky-600 dark:text-sky-400 font-bold">Status Code</p>
+                            <p class="mt-2 font-mono text-base text-gray-900 dark:text-white">{{ serverInfo.info.status_code }}</p>
                         </div>
-                        <div v-if="serverInfo.info.timing_ms?.handshake || serverInfo.info.timing_ms?.tls" class="bg-white dark:bg-gray-900 p-4">
-                            <p class="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">
+                        <div v-if="serverInfo.info.timing_ms?.total !== undefined" class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+                            <p class="text-[11px] uppercase tracking-wider text-sky-600 dark:text-sky-400 font-bold">Response Time</p>
+                            <p class="mt-2 font-mono text-base text-gray-900 dark:text-white">{{ serverInfo.info.timing_ms.total }} ms</p>
+                        </div>
+                    </div>
+
+                    <!-- Secondary timings -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-px bg-gray-200 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-800">
+                        <div v-if="serverInfo.info.timing_ms?.dns !== undefined" class="bg-white dark:bg-gray-900 p-3.5">
+                            <p class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">DNS</p>
+                            <p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">{{ serverInfo.info.timing_ms.dns }} ms</p>
+                        </div>
+                        <div v-if="serverInfo.info.timing_ms?.connect !== undefined" class="bg-white dark:bg-gray-900 p-3.5">
+                            <p class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">Connect</p>
+                            <p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">{{ serverInfo.info.timing_ms.connect }} ms</p>
+                        </div>
+                        <div v-if="serverInfo.info.timing_ms?.handshake || serverInfo.info.timing_ms?.tls" class="bg-white dark:bg-gray-900 p-3.5">
+                            <p class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">
                                 {{ serverInfo.transport === 'HTTP/3' ? 'Handshake' : 'TLS' }}
                             </p>
                             <p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">
                                 {{ (serverInfo.info.timing_ms.handshake || serverInfo.info.timing_ms.tls) }} ms
                             </p>
                         </div>
-                        <div v-if="serverInfo.info.timing_ms?.dns !== undefined" class="bg-white dark:bg-gray-900 p-4">
-                            <p class="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">DNS</p>
-                            <p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">{{ serverInfo.info.timing_ms.dns }} ms</p>
-                        </div>
-                        <div v-if="serverInfo.info.timing_ms?.connect !== undefined" class="bg-white dark:bg-gray-900 p-4">
-                            <p class="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">Connect</p>
-                            <p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">{{ serverInfo.info.timing_ms.connect }} ms</p>
-                        </div>
-                        <div v-if="serverInfo.info.timing_ms?.ttfb !== undefined" class="bg-white dark:bg-gray-900 p-4">
-                            <p class="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">TTFB</p>
+                        <div v-if="serverInfo.info.timing_ms?.ttfb !== undefined" class="bg-white dark:bg-gray-900 p-3.5">
+                            <p class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">TTFB</p>
                             <p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">{{ serverInfo.info.timing_ms.ttfb }} ms</p>
                         </div>
                     </div>
@@ -372,11 +404,14 @@ const pendingKeys = computed(() => {
 
                     <!-- Response headers -->
                     <div v-if="serverInfo.info.headers?.length" class="border-t border-gray-200 dark:border-gray-800">
-                        <p class="px-5 pt-4 text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">Response Headers</p>
-                        <div class="divide-y divide-gray-100 dark:divide-gray-800 mt-2">
+                        <div class="px-5 py-3 bg-gray-50 dark:bg-gray-900/60 border-b border-gray-200 dark:border-gray-800 grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-4">
+                            <p class="text-[11px] uppercase tracking-[0.15em] text-sky-600 dark:text-sky-400 font-bold">Header</p>
+                            <p class="text-[11px] uppercase tracking-[0.15em] text-sky-600 dark:text-sky-400 font-bold">Value</p>
+                        </div>
+                        <div class="divide-y divide-gray-100 dark:divide-gray-800">
                             <div v-for="h in serverInfo.info.headers" :key="h.name + h.value"
-                                class="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-4 px-5 py-2.5 text-xs">
-                                <span class="font-mono text-gray-500 dark:text-gray-400 break-all">{{ h.name }}</span>
+                                class="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-4 px-5 py-3 text-xs">
+                                <span class="font-mono text-gray-600 dark:text-gray-300 break-all">{{ h.name }}</span>
                                 <span class="font-mono text-gray-900 dark:text-white break-all">{{ h.value }}</span>
                             </div>
                         </div>
