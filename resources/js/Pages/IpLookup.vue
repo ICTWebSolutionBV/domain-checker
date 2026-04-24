@@ -9,14 +9,61 @@ import {
 
 const props = defineProps({
     initialInput: { type: String, default: '' },
-    recent: { type: Array, default: () => [] },
 })
+
+const HISTORY_KEY = 'iplookup:history'
+const HISTORY_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
+const HISTORY_LIMIT = 5
 
 const input = ref(props.initialInput || '')
 const loading = ref(false)
 const error = ref('')
 const result = ref(null)
-const recent = ref(props.recent || [])
+const recent = ref([])
+
+function loadHistory() {
+    try {
+        const raw = localStorage.getItem(HISTORY_KEY)
+        if (!raw) return []
+        const parsed = JSON.parse(raw)
+        if (!Array.isArray(parsed)) return []
+        const cutoff = Date.now() - HISTORY_MAX_AGE_MS
+        return parsed.filter(e => e && typeof e.looked_up_at === 'number' && e.looked_up_at >= cutoff)
+    } catch {
+        return []
+    }
+}
+
+function saveHistory(entries) {
+    try {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(entries))
+    } catch {
+        /* ignore quota / privacy errors */
+    }
+}
+
+function addToHistory(data) {
+    if (!data?.ip || data.private) return
+    const entry = {
+        ip: data.ip,
+        looked_up_at: Date.now(),
+        data: {
+            country: data.country,
+            country_code: data.country_code,
+            city: data.city,
+            isp: data.isp,
+        },
+    }
+    const filtered = recent.value.filter(e => e.ip !== entry.ip)
+    filtered.unshift(entry)
+    recent.value = filtered.slice(0, HISTORY_LIMIT)
+    saveHistory(recent.value)
+}
+
+function clearHistory() {
+    recent.value = []
+    try { localStorage.removeItem(HISTORY_KEY) } catch { /* ignore */ }
+}
 
 async function lookup() {
     const q = input.value.trim()
@@ -47,7 +94,7 @@ async function lookup() {
         }
 
         result.value = body.result
-        if (Array.isArray(body.recent)) recent.value = body.recent
+        addToHistory(body.result)
     } catch (e) {
         error.value = e.message || 'Network error.'
     } finally {
@@ -93,10 +140,11 @@ const mapSrc = computed(() => {
     return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${r.lat},${r.lon}`
 })
 
-function formatRelative(iso) {
-    if (!iso) return ''
-    const d = new Date(iso)
-    const diff = Math.max(0, (Date.now() - d.getTime()) / 1000)
+function formatRelative(value) {
+    if (!value) return ''
+    const t = typeof value === 'number' ? value : new Date(value).getTime()
+    if (!Number.isFinite(t)) return ''
+    const diff = Math.max(0, (Date.now() - t) / 1000)
     if (diff < 60) return 'just now'
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
@@ -104,6 +152,7 @@ function formatRelative(iso) {
 }
 
 onMounted(() => {
+    recent.value = loadHistory()
     if (props.initialInput) lookup()
 })
 </script>
@@ -333,13 +382,22 @@ onMounted(() => {
                 </div>
             </div>
 
-            <!-- Recent history -->
+            <!-- Recent history (stored locally in your browser, expires after 7 days) -->
             <div v-if="recent.length" class="mt-12">
-                <div class="flex items-center gap-2 mb-4">
-                    <History class="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                    <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        Recent lookups
-                    </h2>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <History class="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            Your recent lookups
+                        </h2>
+                    </div>
+                    <button
+                        type="button"
+                        @click="clearHistory"
+                        class="text-xs text-gray-500 dark:text-gray-400 hover:text-rose-600 dark:hover:text-rose-400 transition"
+                    >
+                        Clear
+                    </button>
                 </div>
                 <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-800">
                     <button
@@ -374,7 +432,7 @@ onMounted(() => {
             <div class="mt-12 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 p-6 text-sm text-gray-600 dark:text-gray-400">
                 <p class="font-medium text-gray-900 dark:text-white mb-2">How this works</p>
                 <p>
-                    Geolocation data comes from <a href="https://ip-api.com" target="_blank" rel="noopener" class="text-indigo-600 dark:text-indigo-400 hover:underline">ip-api.com</a>, a free public IP information database. Hostnames are resolved via DNS. Results are cached server-side for one hour per IP. Private and reserved ranges are not geolocated.
+                    Geolocation data comes from <a href="https://ip-api.com" target="_blank" rel="noopener" class="text-indigo-600 dark:text-indigo-400 hover:underline">ip-api.com</a>, a free public IP information database. Hostnames are resolved via DNS. Results are cached server-side for one hour per IP. Private and reserved ranges are not geolocated. Your recent lookups are kept privately in your own browser's localStorage and expire after 7 days — nothing is stored on the server.
                 </p>
             </div>
         </div>

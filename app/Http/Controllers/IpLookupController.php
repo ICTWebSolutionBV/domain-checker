@@ -18,7 +18,6 @@ class IpLookupController extends Controller
     {
         return Inertia::render('IpLookup', [
             'initialInput' => $request->query('q', ''),
-            'recent'       => $this->service->recentHistory(5),
         ]);
     }
 
@@ -44,9 +43,6 @@ class IpLookupController extends Controller
             ], 502);
         }
 
-        return response()->json([
-            'result' => $result,
-            'recent' => $this->service->recentHistory(5),
-        ]);
+        return response()->json(['result' => $result]);
     }
 }

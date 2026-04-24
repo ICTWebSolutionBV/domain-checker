@@ -21,6 +21,23 @@ _Nothing yet._
 
 ---
 
+## [1.4.1] — 2026-04-24
+
+### Changed
+- **IP Lookup history is now private.** Recent lookups are kept in the browser's `localStorage` (per-device, per-browser) and expire automatically after 7 days. Nothing is stored on the server.
+- Added a "Clear" button on the IP Lookup page to wipe local history on demand.
+
+### Removed
+- Server-side `ip_lookups` table (dropped) and the associated global "Recent lookups" list on `/ip`.
+
+### Migration required
+```bash
+php artisan migrate
+```
+Drops the `ip_lookups` table added in 1.4.0.
+
+---
+
 ## [1.4.0] — 2026-04-24
 
 ### Added

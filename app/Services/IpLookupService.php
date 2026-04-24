@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\IpLookup;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -57,8 +55,7 @@ class IpLookupService
     /**
      * Look up enriched information for an IP using ip-api.com.
      *
-     * Results are cached for 1 hour, and each lookup is recorded to the
-     * ip_lookups table for history.
+     * Results are cached for 1 hour per IP.
      */
     public function lookup(string $ip, ?string $hostname = null): ?array
     {
@@ -88,53 +85,18 @@ class IpLookupService
             return null;
         }
 
-        // Record history row (one per lookup, independent of cache hits).
-        $this->recordHistory($ip, $data);
-
-        return $data;
-    }
-
-    /**
-     * Most recent distinct IPs looked up, newest first.
-     *
-     * @return array<int, array{ip: string, data: array, looked_up_at: string}>
-     */
-    public function recentHistory(int $limit = 5): array
-    {
-        // Get the latest row per IP, then take the newest N distinct IPs.
-        $rows = IpLookup::query()
-            ->orderByDesc('looked_up_at')
-            ->limit($limit * 4)
-            ->get();
-
-        $seen = [];
-        $out  = [];
-
-        foreach ($rows as $row) {
-            if (isset($seen[$row->ip])) {
-                continue;
-            }
-            $seen[$row->ip] = true;
-
-            $out[] = [
-                'ip'           => $row->ip,
-                'data'         => $row->data,
-                'looked_up_at' => optional($row->looked_up_at)->toIso8601String(),
-            ];
-
-            if (count($out) >= $limit) {
-                break;
-            }
+        // Hostname from the live request wins over a cached reverse-DNS value.
+        if ($hostname) {
+            $data['hostname'] = $hostname;
         }
 
-        return $out;
+        return $data;
     }
 
     private function fetchFromIpApi(string $ip, ?string $hostname): ?array
     {
         try {
             $response = Http::timeout(6)->get("http://ip-api.com/json/{$ip}", [
-                // All fields we care about, bit-packed per ip-api.com docs.
                 'fields' => 'status,message,continent,continentCode,country,countryCode,region,regionName,city,district,zip,lat,lon,timezone,offset,currency,isp,org,as,asname,reverse,mobile,proxy,hosting,query',
             ]);
 
@@ -179,24 +141,6 @@ class IpLookupService
             Log::warning("IP lookup failed for {$ip}: {$e->getMessage()}");
 
             return null;
-        }
-    }
-
-    private function recordHistory(string $ip, array $data): void
-    {
-        try {
-            IpLookup::create([
-                'ip'           => $ip,
-                'data'         => $data,
-                'looked_up_at' => Carbon::now(),
-            ]);
-
-            // Keep the table small — prune anything older than 30 days.
-            IpLookup::query()
-                ->where('looked_up_at', '<', Carbon::now()->subDays(30))
-                ->delete();
-        } catch (\Throwable $e) {
-            Log::warning("Failed to record IP lookup history for {$ip}: {$e->getMessage()}");
         }
     }
 }
