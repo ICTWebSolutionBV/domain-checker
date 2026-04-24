@@ -45,6 +45,13 @@ async function runCheck() {
     error.value   = ''
     isChecking.value = true
 
+    // Reflect the checked host in the URL so it's shareable / bookmarkable.
+    try {
+        const url = new URL(window.location.href)
+        url.searchParams.set('host', host)
+        window.history.replaceState({}, '', url)
+    } catch { /* ignore */ }
+
     try {
         const response = await fetch(
             route('http3.check') + '?host=' + encodeURIComponent(host),

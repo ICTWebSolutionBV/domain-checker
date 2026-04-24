@@ -74,6 +74,12 @@ async function lookup() {
     result.value = null
 
     try {
+        const url = new URL(window.location.href)
+        url.searchParams.set('q', q)
+        window.history.replaceState({}, '', url)
+    } catch { /* ignore */ }
+
+    try {
         const token = document.querySelector('meta[name="csrf-token"]')?.content
         const res = await fetch('/ip/lookup', {
             method: 'POST',

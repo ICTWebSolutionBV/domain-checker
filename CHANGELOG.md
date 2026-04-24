@@ -21,6 +21,13 @@ _Nothing yet._
 
 ---
 
+## [1.5.2] — 2026-04-24
+
+### Added
+- **Shareable check URLs.** Running an HTTP/3 check now updates the browser URL to `/http3?host=<hostname>`, and running an IP lookup updates it to `/ip?q=<input>`. Copy the URL to share or bookmark the exact result — the Inertia controllers already auto-populate the input and auto-run the check when the query param is present.
+
+---
+
 ## [1.5.1] — 2026-04-24
 
 ### Added
