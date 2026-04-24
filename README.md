@@ -1,6 +1,6 @@
 # Domain Checker
 
-[![Version](https://img.shields.io/badge/Version-1.5.4-brightgreen?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.5.5-brightgreen?style=flat-square)](CHANGELOG.md)
 [![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white)](https://vuejs.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
@@ -354,8 +354,9 @@ The domain-check endpoint uses Laravel's named rate limiter `domain-check`: 10 r
 
 ## Versioning
 
-Domain Checker follows [Semantic Versioning](https://semver.org/). The current release is **v1.5.4**. All changes are tracked in [CHANGELOG.md](CHANGELOG.md):
+Domain Checker follows [Semantic Versioning](https://semver.org/). The current release is **v1.5.5**. All changes are tracked in [CHANGELOG.md](CHANGELOG.md):
 
+- **1.5.5** — Fixes `Undefined array key "appconnect_time"` fatal on the HTTP/3 page: missing curl timing fields now fall back to 0 via `??` instead of `?:`. This was the real reason the stream died after `altsvc` — v1.5.4's try/catch surfaced it.
 - **1.5.4** — HTTP/3 SSE stream hardened against proxy idle-timeouts: flushes nested output buffers, writes an initial `: ping` and `: hb` heartbeats between slow probes, and wraps the pipeline in a try/catch that logs exceptions instead of dying silently. Also uses UTF-8-safe JSON encoding so a bad byte in a response header can't produce empty frames. Fixes the HTTP/3 detail cards not appearing behind the production CDN.
 - **1.5.3** — New `NoHtmlCache` middleware marks every Inertia HTML/JSON response as `Cache-Control: no-cache, no-store, must-revalidate, private`. Hashed JS/CSS under `/build/*` keep their aggressive caching; only the tiny HTML shell is uncached, so every deploy reaches users on their next request.
 - **1.5.2** — HTTP/3 and IP Lookup pages now sync the checked host/IP into the URL (e.g. `/http3?host=example.com`, `/ip?q=8.8.8.8`) so results are shareable and bookmarkable.

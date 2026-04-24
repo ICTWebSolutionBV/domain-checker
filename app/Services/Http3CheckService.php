@@ -229,6 +229,12 @@ class Http3CheckService
             $emit(['type' => 'check', 'key' => 'altsvc', 'status' => 'fail', 'label' => 'Alt-Svc (h3) Header', 'detail' => 'No Alt-Svc header found']);
         }
 
+        $nameLookup = (float) ($info['namelookup_time'] ?? 0);
+        $connect    = (float) ($info['connect_time'] ?? 0);
+        $appConnect = (float) ($info['appconnect_time'] ?? 0);
+        $startXfer  = (float) ($info['starttransfer_time'] ?? 0);
+        $ttfbBase   = $appConnect > 0 ? $appConnect : $connect;
+
         $serverInfo = [
             'http_version_label' => 'HTTP/' . $this->versionLabel($versionUsed),
             'status_code'        => (int) ($info['http_code'] ?? 0),
@@ -236,11 +242,11 @@ class Http3CheckService
             'server_port'        => (int) ($info['primary_port'] ?? 0) ?: null,
             'effective_url'      => $info['url'] ?? $url,
             'timing_ms'          => [
-                'dns'       => $this->ms($info['namelookup_time'] ?? 0),
-                'connect'   => $this->ms(($info['connect_time'] ?? 0) - ($info['namelookup_time'] ?? 0)),
-                'tls'       => $this->ms(($info['appconnect_time'] ?? 0) - ($info['connect_time'] ?? 0)),
-                'ttfb'      => $this->ms(($info['starttransfer_time'] ?? 0) - ($info['appconnect_time'] ?: $info['connect_time'] ?? 0)),
-                'total'     => $this->ms($info['total_time'] ?? 0),
+                'dns'     => $this->ms($nameLookup),
+                'connect' => $this->ms($connect - $nameLookup),
+                'tls'     => $this->ms($appConnect - $connect),
+                'ttfb'    => $this->ms($startXfer - $ttfbBase),
+                'total'   => $this->ms((float) ($info['total_time'] ?? 0)),
             ],
             'headers'            => $this->headersToList($finalHeaders),
         ];
@@ -295,9 +301,14 @@ class Http3CheckService
         if (! $errno && ($info['http_code'] ?? 0) >= 100 && $versionUsed === CURL_HTTP_VERSION_3) {
             $emit(['type' => 'check', 'key' => 'http3', 'status' => 'pass', 'label' => 'HTTP/3 Direct (QUIC)', 'detail' => "Connected via QUIC in {$ms} ms (HTTP/3)"]);
 
-            $headers   = $this->parseFinalHeaders((string) $body, (int) ($info['header_size'] ?? 0));
-            $handshake = $this->ms(($info['appconnect_time'] ?? 0) - ($info['connect_time'] ?? 0));
-            $packetRx  = $this->ms(($info['starttransfer_time'] ?? 0) - ($info['appconnect_time'] ?: $info['connect_time'] ?? 0));
+            $headers    = $this->parseFinalHeaders((string) $body, (int) ($info['header_size'] ?? 0));
+            $nameLookup = (float) ($info['namelookup_time'] ?? 0);
+            $connect    = (float) ($info['connect_time'] ?? 0);
+            $appConnect = (float) ($info['appconnect_time'] ?? 0);
+            $startXfer  = (float) ($info['starttransfer_time'] ?? 0);
+            $ttfbBase   = $appConnect > 0 ? $appConnect : $connect;
+            $handshake  = $this->ms($appConnect - $connect);
+            $packetRx   = $this->ms($startXfer - $ttfbBase);
 
             $serverInfo = [
                 'http_version_label' => 'HTTP/3',
@@ -306,15 +317,15 @@ class Http3CheckService
                 'server_port'        => (int) ($info['primary_port'] ?? 0) ?: null,
                 'effective_url'      => $info['url'] ?? $url,
                 'quic'               => [
-                    'connection_id'    => $this->parseConnectionId($verboseText),
-                    'cipher'           => $this->parseTlsCipher($verboseText),
-                    'alpn'             => $this->parseAlpn($verboseText),
+                    'connection_id'     => $this->parseConnectionId($verboseText),
+                    'cipher'            => $this->parseTlsCipher($verboseText),
+                    'alpn'              => $this->parseAlpn($verboseText),
                     'handshake_done_ms' => $handshake,
-                    'packet_rx_ms'     => $packetRx,
+                    'packet_rx_ms'      => $packetRx,
                 ],
                 'timing_ms'          => [
-                    'dns'       => $this->ms($info['namelookup_time'] ?? 0),
-                    'connect'   => $this->ms(($info['connect_time'] ?? 0) - ($info['namelookup_time'] ?? 0)),
+                    'dns'       => $this->ms($nameLookup),
+                    'connect'   => $this->ms($connect - $nameLookup),
                     'handshake' => $handshake,
                     'ttfb'      => $packetRx,
                     'total'     => $ms,

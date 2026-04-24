@@ -21,6 +21,14 @@ _Nothing yet._
 
 ---
 
+## [1.5.5] — 2026-04-24
+
+### Fixed
+- **"Check aborted: Undefined array key `appconnect_time`"** on the HTTP/3 page. `curl_getinfo()` doesn't always populate `appconnect_time` (older curl builds, or failed TLS handshakes leave the timer unset), and the `?:` fallback we were using doesn't suppress the warning like `??` does. Under Laravel's strict error handler that became a fatal, which is why the stream was silently dying right after `altsvc` before v1.5.4 added the try/catch that surfaced it.
+- All curl timing reads now coerce to float with `??` first, so missing timers fall back cleanly to 0.
+
+---
+
 ## [1.5.4] — 2026-04-24
 
 ### Fixed
