@@ -58,6 +58,7 @@ class Http3CheckService
         }
 
         // ── 5 + 6: HTTP/2 + Alt-Svc (also collects server_info) ──────────
+        $this->heartbeat();
         [$h3Advertised, $baselineInfo] = $this->checkHttp2AndAltSvc($url, $emit);
 
         // Emit the baseline server info (HTTP/2 or HTTP/1.1 response) so we
@@ -67,6 +68,7 @@ class Http3CheckService
         }
 
         // ── 7: Direct HTTP/3 QUIC ─────────────────────────────────────────
+        $this->heartbeat();
         [$h3Connected, $h3Info] = $this->checkHttp3($url, $emit);
 
         // Prefer the HTTP/3 server info when we got it.
@@ -447,6 +449,20 @@ class Http3CheckService
         }
 
         return $list;
+    }
+
+    /**
+     * Emit a blank SSE comment line so proxies with idle-read timeouts
+     * (we sit behind flowguard on production) keep the connection open while
+     * we wait on slow curl probes.
+     */
+    private function heartbeat(): void
+    {
+        echo ": hb\n\n";
+        if (function_exists('ob_get_level') && ob_get_level() > 0) {
+            @ob_flush();
+        }
+        @flush();
     }
 
     private function ms(float $seconds): int

@@ -21,6 +21,15 @@ _Nothing yet._
 
 ---
 
+## [1.5.4] — 2026-04-24
+
+### Fixed
+- **HTTP/3 check stream cutting off after `altsvc` event on production.** The CDN in front of the app (flowguard) was idle-closing the SSE connection while the backend waited on the baseline HTTP/2 probe and the 8-second QUIC probe, so the `server_info`, `http3`, and `done` events never reached the browser and the new detail cards stayed blank.
+- Stream now flushes nested output buffers up-front, writes an initial `: ping` comment to open the pipe, emits `: hb` heartbeat comments between slow probes, and wraps the whole pipeline in a try/catch that logs exceptions and emits a `done` error event instead of dying silently.
+- JSON encoding of SSE payloads now uses `JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR` so a single bad byte in a response header can't produce empty frames.
+
+---
+
 ## [1.5.3] — 2026-04-24
 
 ### Added

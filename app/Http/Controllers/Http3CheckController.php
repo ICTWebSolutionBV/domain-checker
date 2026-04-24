@@ -31,12 +31,48 @@ class Http3CheckController extends Controller
 
         return response()->stream(function () use ($host) {
             set_time_limit(0);
+            ignore_user_abort(false);
 
-            $this->service->check($host, function (array $event): void {
-                echo 'data: ' . json_encode($event) . "\n\n";
-                ob_flush();
+            // Kill any nested output buffers so our writes reach the client
+            // (and any proxy in front of us) immediately. Some deploy setups
+            // enable zlib / output_buffering globally which can swallow SSE.
+            while (ob_get_level() > 0) {
+                @ob_end_flush();
+            }
+
+            $emit = function (array $event): void {
+                $payload = json_encode($event, JSON_PARTIAL_OUTPUT_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
+                if ($payload === false) {
+                    $payload = json_encode(['type' => 'error', 'detail' => 'encoding-failed']);
+                }
+                echo 'data: ' . $payload . "\n\n";
+                // ob_flush() only works if an output buffer exists; flush()
+                // always pushes to SAPI.
+                if (ob_get_level() > 0) {
+                    @ob_flush();
+                }
                 flush();
-            });
+            };
+
+            // Initial heartbeat — opens the pipe through any buffering proxy
+            // before any slow work happens.
+            echo ": ping\n\n";
+            flush();
+
+            try {
+                $this->service->check($host, $emit);
+            } catch (\Throwable $e) {
+                \Log::error('Http3Check stream failed', [
+                    'host'      => $host,
+                    'exception' => $e,
+                ]);
+                $emit([
+                    'type'    => 'done',
+                    'result'  => 'error',
+                    'h3'      => false,
+                    'summary' => 'Check aborted: ' . $e->getMessage(),
+                ]);
+            }
         }, 200, [
             'Content-Type'      => 'text/event-stream',
             'Cache-Control'     => 'no-cache',
