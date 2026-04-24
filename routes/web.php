@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Http3CheckController;
 use App\Http\Controllers\Auth\PasskeyLoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\TwoFactorController;
@@ -38,6 +39,10 @@ Route::post('/invite/{token}', [InviteController::class, 'accept'])->name('invit
 Route::get('/', [DomainCheckController::class, 'index'])->name('home');
 Route::post('/check', [DomainCheckController::class, 'check'])->middleware('throttle:domain-check')->name('domain.check');
 Route::get('/tlds', [TldController::class, 'index'])->name('tlds.index');
+
+// HTTP/3 checker
+Route::get('/http3', [Http3CheckController::class, 'index'])->name('http3');
+Route::get('/http3/check', [Http3CheckController::class, 'check'])->middleware('throttle:http3-check')->name('http3.check');
 
 // Authenticated routes
 Route::middleware('auth')->group(function () {

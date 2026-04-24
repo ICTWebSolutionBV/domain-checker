@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
 import { useTheme } from '@/composables/useTheme'
-import { Sun, Moon, SunMoon, Globe, LogIn, Settings, LogOut, Users } from 'lucide-vue-next'
+import { Sun, Moon, SunMoon, Globe, LogIn, Settings, LogOut, Users, Zap } from 'lucide-vue-next'
 
 const page = usePage()
 const auth = computed(() => page.props.auth)
@@ -44,6 +44,15 @@ const themeLabel = computed(() => {
 
                 <!-- Right side -->
                 <div class="flex items-center gap-2">
+                    <!-- HTTP/3 checker link -->
+                    <Link
+                        :href="route('http3')"
+                        class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                        <Zap class="w-4 h-4" />
+                        <span class="hidden sm:inline">HTTP/3</span>
+                    </Link>
+
                     <!-- Theme toggle -->
                     <button
                         @click="cycleTheme"
