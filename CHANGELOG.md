@@ -21,6 +21,18 @@ _Nothing yet._
 
 ---
 
+## [1.3.0] — 2026-04-24
+
+### Added
+- **HTTP/3 checker** — new `/http3` page that verifies whether a host supports HTTP/3 via DNS, IPv6, HTTPS, TLS 1.3, HTTP/2, Alt-Svc advertisement, and a direct QUIC connection attempt. Results stream in real time via SSE.
+- **HTTP/3 nav link** — "HTTP/3" entry added to the top navigation bar, visible to all visitors (public tool).
+- **Rate limiter `http3-check`** — 30 requests/minute for authenticated users, 60 requests/hour for guests.
+
+### Changed
+- Domain search placeholder updated from `yourname` to `YourDomainName`.
+
+---
+
 ## [1.2.0] — 2026-04-21
 
 ### Added

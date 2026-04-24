@@ -1,6 +1,6 @@
 # Domain Checker
 
-[![Version](https://img.shields.io/badge/Version-1.2.0-brightgreen?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.3.0-brightgreen?style=flat-square)](CHANGELOG.md)
 [![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white)](https://vuejs.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
@@ -354,7 +354,9 @@ The domain-check endpoint uses Laravel's named rate limiter `domain-check`: 10 r
 
 ## Versioning
 
-Domain Checker follows [Semantic Versioning](https://semver.org/). The current release is **v1.2.0**. All changes are tracked in [CHANGELOG.md](CHANGELOG.md):
+Domain Checker follows [Semantic Versioning](https://semver.org/). The current release is **v1.3.0**. All changes are tracked in [CHANGELOG.md](CHANGELOG.md):
+
+- **1.3.0** — HTTP/3 checker page with real-time SSE streaming (DNS, TLS 1.3, HTTP/2, Alt-Svc, QUIC).
 
 - **Patch (`1.0.x`)** — Bug fixes and small tweaks.
 - **Minor (`1.x.0`)** — New features, backwards-compatible.
