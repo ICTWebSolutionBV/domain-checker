@@ -21,6 +21,24 @@ _Nothing yet._
 
 ---
 
+## [1.4.0] — 2026-04-24
+
+### Added
+- **IP Lookup** — new `/ip` page that geolocates any public IPv4/IPv6 address or hostname using [ip-api.com](https://ip-api.com). Shows country, region, city, postal code, coordinates, timezone, currency, ISP, organization, ASN, AS name, and reverse DNS.
+- **Signals** — flags the IP as mobile, proxy/VPN/Tor, or hosting/datacenter.
+- **Embedded map** — OpenStreetMap preview for the IP's coordinates.
+- **Lookup history** — the five most recent distinct IPs looked up globally are shown below the search, clickable to re-run the lookup.
+- **IP Lookup nav link** — "IP Lookup" entry in the top navigation bar, visible to all visitors.
+- **Rate limiter `ip-lookup`** — 45 requests/minute for authenticated users, 60 requests/hour for guests.
+
+### Migration required
+```bash
+php artisan migrate
+```
+Adds the `ip_lookups` table used to record lookup history.
+
+---
+
 ## [1.3.0] — 2026-04-24
 
 ### Added

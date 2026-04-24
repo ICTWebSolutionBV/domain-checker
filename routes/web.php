@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Http3CheckController;
+use App\Http\Controllers\IpLookupController;
 use App\Http\Controllers\Auth\PasskeyLoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\TwoFactorController;
@@ -43,6 +44,10 @@ Route::get('/tlds', [TldController::class, 'index'])->name('tlds.index');
 // HTTP/3 checker
 Route::get('/http3', [Http3CheckController::class, 'index'])->name('http3');
 Route::get('/http3/check', [Http3CheckController::class, 'check'])->middleware('throttle:http3-check')->name('http3.check');
+
+// IP lookup
+Route::get('/ip', [IpLookupController::class, 'index'])->name('ip');
+Route::post('/ip/lookup', [IpLookupController::class, 'lookup'])->middleware('throttle:ip-lookup')->name('ip.lookup');
 
 // Authenticated routes
 Route::middleware('auth')->group(function () {
