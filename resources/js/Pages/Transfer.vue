@@ -272,7 +272,7 @@ const showPreview = ref(false)
                                 />
                             </label>
 
-                            <span class="text-xs text-gray-400 dark:text-gray-500 shrink-0 hidden sm:inline">
+                            <span class="text-xs text-gray-400 dark:text-gray-500 shrink-0 hidden sm:inline ml-2 mr-3">
                                 {{ block.domains.length }} domain{{ block.domains.length === 1 ? '' : 's' }}
                             </span>
                         </div>

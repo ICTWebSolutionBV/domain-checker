@@ -21,6 +21,13 @@ _Nothing yet._
 
 ---
 
+## [1.6.2] — 2026-05-01
+
+### Changed
+- Tiny spacing tweak in the Transfer page group header — added breathing room between the "N domains" count and the trash/chevron buttons so they don't crowd each other.
+
+---
+
 ## [1.6.1] — 2026-05-01
 
 ### Changed
