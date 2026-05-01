@@ -21,6 +21,17 @@ _Nothing yet._
 
 ---
 
+## [1.6.0] — 2026-05-01
+
+### Added
+- **Transfer domains** page at `/transfer`, plus a "Transfer" entry in the top navigation. Public, no login required.
+- **Repeater of registrant blocks.** Each block is a collapsible card with its own list of domains and one shared registrant detail set (existing-account reference, or new registrant fields: company, name, address, phone, email, KVK, VAT ID, optional EPP/auth code, optional notes). The single registrant block applies to every domain inside that block. Add as many blocks as needed via "Add another registrant block" — useful when different domains in the same request need different owners.
+- **Domain chip input** with paste-many, Enter/comma/space to commit, backspace to remove the last chip, and per-domain validation against a hostname regex.
+- **Copy-to-clipboard output** mirroring the existing domain-search pattern: one button assembles a single, neatly formatted plain-text summary (requester header + every block) ready to paste into an email or chat. No data leaves the browser — there is no submission endpoint.
+- **Live preview** toggle so the user can see exactly what will be copied before pressing the button.
+
+---
+
 ## [1.5.5] — 2026-04-24
 
 ### Fixed

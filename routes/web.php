@@ -11,6 +11,7 @@ use App\Http\Controllers\DomainCheckController;
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\TldController;
+use App\Http\Controllers\TransferRequestController;
 use Illuminate\Support\Facades\Route;
 
 // Passkey auth options (must be before guest middleware)
@@ -48,6 +49,9 @@ Route::get('/http3/check', [Http3CheckController::class, 'check'])->middleware('
 // IP lookup
 Route::get('/ip', [IpLookupController::class, 'index'])->name('ip');
 Route::post('/ip/lookup', [IpLookupController::class, 'lookup'])->middleware('throttle:ip-lookup')->name('ip.lookup');
+
+// Transfer request (client-side copy-to-clipboard, no submission)
+Route::get('/transfer', [TransferRequestController::class, 'index'])->name('transfer');
 
 // Authenticated routes
 Route::middleware('auth')->group(function () {
