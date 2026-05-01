@@ -62,13 +62,15 @@ const themeLabel = computed(() => {
                         <span class="hidden sm:inline">IP Lookup</span>
                     </Link>
 
-                    <!-- Transfer domains link -->
+                    <!-- Transfer domains link — highlighted CTA so visitors notice it -->
                     <Link
                         :href="route('transfer')"
-                        class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        class="relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 shadow-sm shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all"
+                        title="Transfer your domains to us"
                     >
                         <ArrowRightLeft class="w-4 h-4" />
-                        <span class="hidden sm:inline">Transfer</span>
+                        <span>Transfer</span>
+                        <span class="absolute -top-1 -right-1 w-2 h-2 bg-amber-400 rounded-full ring-2 ring-white dark:ring-gray-950 animate-pulse" aria-hidden="true"></span>
                     </Link>
 
                     <!-- Theme toggle -->

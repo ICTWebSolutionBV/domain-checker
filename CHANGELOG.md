@@ -21,6 +21,13 @@ _Nothing yet._
 
 ---
 
+## [1.6.3] — 2026-05-01
+
+### Changed
+- **"Transfer" nav link is now a highlighted call-to-action** — emerald/teal gradient pill with a soft glow shadow, white bold text, and a small pulsing amber dot in the corner. Sits next to the muted plain nav links (Domain check, HTTP/3, IP Lookup) so it visibly pops for visitors who land on the site.
+
+---
+
 ## [1.6.2] — 2026-05-01
 
 ### Changed
