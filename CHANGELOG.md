@@ -21,6 +21,16 @@ _Nothing yet._
 
 ---
 
+## [1.6.1] — 2026-05-01
+
+### Changed
+- **Transfer page wording — "block" → "group" everywhere it's user-visible.** The page now talks about "groups of domains" with one set of owner details per group, which reads more naturally than the internal "registrant block" name.
+- **The group-name field now visibly looks like a renameable input.** It has a dashed border, a small pencil icon next to it, an inviting placeholder ("Name this group (e.g. \"My company domains\")"), and brightens on hover/focus — so it's obvious the requester can give each group a meaningful name instead of leaving the auto "Group 1" label.
+- **"Add another registrant block"** button renamed to **"Add domains for another owner"** — clearer about *why* you'd add a second group.
+- New groups now start with a blank label (the placeholder shows the example name) rather than an auto-generated "Block N", which both makes the input look more clearly editable and avoids stale labels when groups are added/removed.
+
+---
+
 ## [1.6.0] — 2026-05-01
 
 ### Added

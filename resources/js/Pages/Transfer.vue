@@ -4,7 +4,7 @@ import { Head } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import {
     ArrowRightLeft, Plus, Trash2, ChevronDown, ChevronUp,
-    Copy, Check, X, UserCircle, Building2, Globe, Info,
+    Copy, Check, X, UserCircle, Building2, Globe, Info, Pencil,
 } from 'lucide-vue-next'
 
 // ── Helpers ──────────────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ function normalizeDomain(raw) {
 }
 
 // ── State ────────────────────────────────────────────────────────────────
-const blocks = ref([blankBlock('Block 1')])
+const blocks = ref([blankBlock('')])
 const requesterName  = ref('')
 const requesterEmail = ref('')
 const requesterNote  = ref('')
@@ -53,18 +53,15 @@ const totalDomains = computed(() => blocks.value.reduce((n, b) => n + b.domains.
 // ── Block / domain management ────────────────────────────────────────────
 function addBlock() {
     blocks.value.forEach(b => (b.open = false))
-    blocks.value.push(blankBlock(`Block ${blocks.value.length + 1}`))
+    blocks.value.push(blankBlock(''))
 }
 
 function removeBlock(i) {
     if (blocks.value.length === 1) {
-        blocks.value[0] = blankBlock('Block 1')
+        blocks.value[0] = blankBlock('')
         return
     }
     blocks.value.splice(i, 1)
-    blocks.value.forEach((b, idx) => {
-        if (b.label.startsWith('Block ')) b.label = `Block ${idx + 1}`
-    })
 }
 
 function toggleBlock(i) {
@@ -110,7 +107,7 @@ function removeDomain(block, idx) {
 // ── Clipboard summary ────────────────────────────────────────────────────
 function blockSummary(block, idx) {
     const lines = []
-    const title = (block.label && block.label.trim()) || `Block ${idx + 1}`
+    const title = (block.label && block.label.trim()) || `Group ${idx + 1}`
     lines.push(`── ${title} — ${block.domains.length} domain(s) ──`)
 
     if (block.domains.length) {
@@ -174,7 +171,7 @@ function buildClipboardText() {
         requesterNote.value.trim().split(/\n/).forEach(l => lines.push(`  ${l}`))
     }
     lines.push('')
-    lines.push(`Total: ${totalDomains.value} domain(s) across ${blocks.value.length} registrant block(s)`)
+    lines.push(`Total: ${totalDomains.value} domain(s) across ${blocks.value.length} group(s)`)
     blocks.value.forEach((b, i) => {
         lines.push('')
         lines.push(blockSummary(b, i))
@@ -220,7 +217,7 @@ const showPreview = ref(false)
                     Transfer domains to us
                 </h1>
                 <p class="text-sm text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
-                    Add the domains you want to transfer, fill in the registrant details once per group, and copy everything to your clipboard in one click. Paste the result into an email or chat to send it our way.
+                    Add the domains you want to transfer, fill in the owner details once per group, and copy everything to your clipboard in one click. Paste the result into an email or chat to send it our way. Need different owners for different domains? Add another group below.
                 </p>
             </div>
 
@@ -254,32 +251,38 @@ const showPreview = ref(false)
                     class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden"
                 >
                     <!-- Header bar -->
-                    <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100 dark:border-gray-800">
-                        <button
-                            @click="toggleBlock(i)"
-                            class="flex items-center gap-2 text-left flex-1 min-w-0 group"
-                            type="button"
-                        >
+                    <div class="flex items-center justify-between gap-3 px-5 py-3 border-b border-gray-100 dark:border-gray-800">
+                        <div class="flex items-center gap-2 flex-1 min-w-0">
                             <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 text-xs font-semibold shrink-0">
                                 {{ i + 1 }}
                             </span>
-                            <input
-                                v-model="block.label"
-                                type="text"
-                                class="bg-transparent text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-0 border-0 px-0 truncate min-w-0 flex-1"
-                                :placeholder="`Block ${i + 1}`"
-                                @click.stop
-                            />
-                            <span class="text-xs text-gray-400 dark:text-gray-500 shrink-0">
+
+                            <!-- Editable label — looks like a real input so it's obvious you can rename it -->
+                            <label
+                                class="group flex items-center gap-1.5 flex-1 min-w-0 px-2 py-1 -mx-2 -my-1 rounded-md border border-dashed border-gray-300 dark:border-gray-700 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/20 focus-within:border-indigo-500 focus-within:bg-white dark:focus-within:bg-gray-900 focus-within:border-solid transition-colors cursor-text"
+                                :title="'Click to rename this group'"
+                            >
+                                <Pencil class="w-3 h-3 text-gray-400 group-hover:text-indigo-500 group-focus-within:text-indigo-500 shrink-0" />
+                                <input
+                                    v-model="block.label"
+                                    type="text"
+                                    class="bg-transparent text-sm font-medium text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-0 border-0 p-0 truncate min-w-0 flex-1"
+                                    :placeholder="`Name this group (e.g. “${i === 0 ? 'My company domains' : 'Client X domains'}”)`"
+                                    maxlength="60"
+                                />
+                            </label>
+
+                            <span class="text-xs text-gray-400 dark:text-gray-500 shrink-0 hidden sm:inline">
                                 {{ block.domains.length }} domain{{ block.domains.length === 1 ? '' : 's' }}
                             </span>
-                        </button>
+                        </div>
+
                         <div class="flex items-center gap-1 shrink-0">
                             <button
                                 @click="removeBlock(i)"
                                 type="button"
                                 class="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors"
-                                :title="blocks.length === 1 ? 'Reset block' : 'Remove block'"
+                                :title="blocks.length === 1 ? 'Clear this group' : 'Remove this group'"
                             >
                                 <Trash2 class="w-4 h-4" />
                             </button>
@@ -301,7 +304,7 @@ const showPreview = ref(false)
                         <div>
                             <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
                                 <Globe class="w-3.5 h-3.5" />
-                                Domains in this block
+                                Domains in this group
                             </p>
                             <div class="flex flex-wrap items-center gap-2 px-2.5 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent">
                                 <span
@@ -338,7 +341,7 @@ const showPreview = ref(false)
                         <!-- Existing account -->
                         <div class="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-xl p-3">
                             <label class="block text-xs font-semibold text-indigo-700 dark:text-indigo-400 mb-1">Existing account <span class="font-normal text-indigo-500 dark:text-indigo-500">(optional)</span></label>
-                            <p class="text-xs text-indigo-500 dark:text-indigo-500 mb-2">Already a customer? Enter the contact name or company so we know which account these domains should land under.</p>
+                            <p class="text-xs text-indigo-500 dark:text-indigo-500 mb-2">Already a customer? Enter the contact name or company so we know which account the domains in this group should land under.</p>
                             <div class="relative">
                                 <UserCircle class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-indigo-400" />
                                 <input v-model="block.existingAccount" type="text" placeholder="e.g. John Doe or Example Company" class="w-full pl-8 pr-3 py-2 text-sm bg-white dark:bg-gray-900 border border-indigo-200 dark:border-indigo-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
@@ -421,13 +424,13 @@ const showPreview = ref(false)
                             </div>
 
                             <div>
-                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Auth / EPP code <span class="text-gray-400">(optional — same code applies to all domains in this block)</span></label>
+                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Auth / EPP code <span class="text-gray-400">(optional — same code applies to every domain in this group)</span></label>
                                 <input v-model="block.authCode" type="text" placeholder="EPP code from current registrar" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono" />
                             </div>
 
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Notes <span class="text-gray-400">(optional)</span></label>
-                                <textarea v-model="block.notes" rows="2" placeholder="Anything specific to this block of domains." class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y"></textarea>
+                                <textarea v-model="block.notes" rows="2" placeholder="Anything specific to the domains in this group." class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y"></textarea>
                             </div>
                         </div>
                     </div>
@@ -440,9 +443,10 @@ const showPreview = ref(false)
                     @click="addBlock"
                     type="button"
                     class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-xl transition-colors"
+                    title="Add another group of domains with different owner details"
                 >
                     <Plus class="w-4 h-4" />
-                    Add another registrant block
+                    Add domains for another owner
                 </button>
             </div>
 
@@ -452,7 +456,7 @@ const showPreview = ref(false)
                     <span class="font-semibold">{{ totalDomains }}</span>
                     domain{{ totalDomains === 1 ? '' : 's' }} across
                     <span class="font-semibold">{{ blocks.length }}</span>
-                    block{{ blocks.length === 1 ? '' : 's' }} ready to copy.
+                    group{{ blocks.length === 1 ? '' : 's' }} ready to copy.
                 </div>
                 <div class="flex items-center gap-2">
                     <button
