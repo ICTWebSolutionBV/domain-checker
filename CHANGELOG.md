@@ -21,6 +21,13 @@ _Nothing yet._
 
 ---
 
+## [1.6.4] — 2026-05-21
+
+### Changed
+- **Dependency maintenance.** Updated all Composer and npm packages to their latest versions within the existing `composer.json` / `package.json` constraints — no version constraints were widened, so this is a non-breaking refresh. Notable bumps: `laravel/framework` 13.5 → 13.11, `laravel/fortify` 1.36 → 1.37, `spatie/laravel-passkeys` 1.7.0 → 1.7.3, `inertiajs/inertia-laravel` 3.0 → 3.1, `@inertiajs/vue3` 3.0 → 3.2, `tailwindcss` 4.2 → 4.3, `vite` 8.0.9 → 8.0.13, `vue` 3.5.32 → 3.5.34. Build and test suite verified green. `composer audit` reports no known vulnerabilities.
+
+---
+
 ## [1.6.3] — 2026-05-01
 
 ### Changed
