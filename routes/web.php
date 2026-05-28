@@ -11,6 +11,7 @@ use App\Http\Controllers\DomainCheckController;
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\TldController;
+use App\Http\Controllers\RedirectCheckController;
 use App\Http\Controllers\TransferRequestController;
 use Illuminate\Support\Facades\Route;
 
@@ -52,6 +53,10 @@ Route::post('/ip/lookup', [IpLookupController::class, 'lookup'])->middleware('th
 
 // Transfer request (client-side copy-to-clipboard, no submission)
 Route::get('/transfer', [TransferRequestController::class, 'index'])->name('transfer');
+
+// Redirect checker
+Route::get('/redirect', [RedirectCheckController::class, 'index'])->name('redirect');
+Route::post('/redirect/check', [RedirectCheckController::class, 'check'])->middleware('throttle:redirect-check')->name('redirect.check');
 
 // Authenticated routes
 Route::middleware('auth')->group(function () {

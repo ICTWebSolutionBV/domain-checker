@@ -30,5 +30,11 @@ class AppServiceProvider extends ServiceProvider
                 ? Limit::perMinute(45)->by($request->user()->id)
                 : Limit::perHour(60)->by($request->ip());
         });
+
+        RateLimiter::for('redirect-check', function (Request $request) {
+            return $request->user()
+                ? Limit::perMinute(30)->by($request->user()->id)
+                : Limit::perHour(60)->by($request->ip());
+        });
     }
 }
