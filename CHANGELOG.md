@@ -21,6 +21,17 @@ _Nothing yet._
 
 ---
 
+## [1.6.5] — 2026-05-26
+
+### Security
+- Patched three Symfony advisories flagged by `composer audit`:
+  - **`symfony/http-foundation`** v8.0.8 → v8.1.0 — [CVE-2026-48736](https://symfony.com/cve-2026-48736): `IpUtils::PRIVATE_SUBNETS` omits IPv6 transition forms (6to4, NAT64, Teredo, IPv4-compatible), enabling SSRF bypass in `NoPrivateNetworkHttpClient`.
+  - **`symfony/routing`** v8.0.12 → v8.1.0 — [CVE-2026-48784](https://symfony.com/cve-2026-48784): `UrlGenerator` dot-segment encoding skips every other chained `../` or `./`, so a generated URL can collapse off-route under RFC 3986 normalization.
+  - **`symfony/polyfill-intl-idn`** v1.37 → v1.38.1 — [CVE-2026-46644](https://symfony.com/cve-2026-46644): accepts `xn--` labels whose Punycode payload decodes to ASCII-only, causing insecure equivalence.
+- `composer audit` now reports zero advisories. Build and test suite verified green.
+
+---
+
 ## [1.6.4] — 2026-05-21
 
 ### Changed

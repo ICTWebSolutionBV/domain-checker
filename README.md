@@ -1,6 +1,6 @@
 # Domain Checker
 
-[![Version](https://img.shields.io/badge/Version-1.6.4-brightgreen?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.6.5-brightgreen?style=flat-square)](CHANGELOG.md)
 [![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white)](https://vuejs.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
@@ -354,8 +354,9 @@ The domain-check endpoint uses Laravel's named rate limiter `domain-check`: 10 r
 
 ## Versioning
 
-Domain Checker follows [Semantic Versioning](https://semver.org/). The current release is **v1.6.4**. All changes are tracked in [CHANGELOG.md](CHANGELOG.md):
+Domain Checker follows [Semantic Versioning](https://semver.org/). The current release is **v1.6.5**. All changes are tracked in [CHANGELOG.md](CHANGELOG.md):
 
+- **1.6.5** — Security: patched three Symfony CVEs (`symfony/http-foundation` SSRF bypass, `symfony/routing` URL-collapse, `symfony/polyfill-intl-idn` Punycode equivalence). `composer audit` now clean.
 - **1.6.4** — Dependency maintenance: all Composer and npm packages updated within existing constraints (Laravel 13.11, Inertia 3.1/3.2, Tailwind 4.3, Vite 8.0.13, etc.). Non-breaking; build and tests verified green.
 - **1.6.3** — "Transfer" nav link is now a highlighted CTA — emerald/teal gradient pill with white bold text, a soft glow shadow, and a small pulsing amber dot — so visitors immediately notice it next to the muted plain nav links.
 - **1.6.2** — Transfer page: small breathing room added between the per-group domain count and the trash/chevron buttons in the group header.
