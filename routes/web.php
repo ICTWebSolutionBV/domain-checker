@@ -7,6 +7,7 @@ use App\Http\Controllers\IpLookupController;
 use App\Http\Controllers\Auth\PasskeyLoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\TwoFactorController;
+use App\Http\Controllers\BulkDomainCheckController;
 use App\Http\Controllers\DomainCheckController;
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\Settings\SettingsController;
@@ -41,6 +42,7 @@ Route::post('/invite/{token}', [InviteController::class, 'accept'])->name('invit
 // Public domain checker
 Route::get('/', [DomainCheckController::class, 'index'])->name('home');
 Route::post('/check', [DomainCheckController::class, 'check'])->middleware('throttle:domain-check')->name('domain.check');
+Route::post('/bulk-check', [BulkDomainCheckController::class, 'check'])->middleware('throttle:domain-check')->name('bulk.check');
 Route::get('/tlds', [TldController::class, 'index'])->name('tlds.index');
 
 // HTTP/3 checker

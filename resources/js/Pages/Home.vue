@@ -3,6 +3,8 @@ import { ref, computed, watch, onUnmounted } from 'vue'
 import { Head } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { useDomainCheck } from '@/composables/useDomainCheck'
+import { useBulkDomainCheck } from '@/composables/useBulkDomainCheck'
+import BulkCheckInput from '@/Components/BulkCheckInput.vue'
 import {
     Search, Globe, CheckCircle, XCircle, HelpCircle, Loader2,
     Copy, Check, ClipboardList, X, UserCircle, Building2
@@ -13,6 +15,17 @@ const props = defineProps({
 })
 
 const { results, isDone, isChecking, checkedCount, totalCount, error, check, reset } = useDomainCheck()
+const {
+    results: bulkResults,
+    isChecking: bulkIsChecking,
+    checkedCount: bulkCheckedCount,
+    totalCount: bulkTotalCount,
+    error: bulkError,
+    check: bulkCheck,
+    reset: bulkReset,
+} = useBulkDomainCheck()
+
+const mode = ref('single') // 'single' | 'bulk'
 
 const domainInput = ref('')
 const searchedDomain = ref('')
@@ -165,6 +178,51 @@ function handleReset() {
     filterMode.value = 'all'
 }
 
+function handleBulkCheck(domains) {
+    selected.value = new Set()
+    bulkCheck(domains)
+}
+
+function handleBulkReset() {
+    bulkReset()
+    selected.value = new Set()
+}
+
+function switchMode(newMode) {
+    if (newMode === mode.value) return
+    mode.value = newMode
+    if (newMode === 'single') handleBulkReset()
+    else handleReset()
+}
+
+const bulkResultEntries = computed(() =>
+    Object.entries(bulkResults).map(([domain, status]) => ({ domain, status }))
+)
+
+const bulkAvailableEntries = computed(() => bulkResultEntries.value.filter(e => e.status === 'available'))
+
+const bulkProgressPercent = computed(() => {
+    if (bulkTotalCount.value === 0) return 0
+    return Math.round((bulkCheckedCount.value / bulkTotalCount.value) * 100)
+})
+
+const allBulkAvailableSelected = computed(() =>
+    bulkAvailableEntries.value.length > 0 &&
+    bulkAvailableEntries.value.every(e => selected.value.has(e.domain))
+)
+
+function toggleSelectAllBulkAvailable() {
+    if (allBulkAvailableSelected.value) {
+        const next = new Set(selected.value)
+        bulkAvailableEntries.value.forEach(e => next.delete(e.domain))
+        selected.value = next
+    } else {
+        const next = new Set(selected.value)
+        bulkAvailableEntries.value.forEach(e => next.add(e.domain))
+        selected.value = next
+    }
+}
+
 function toggleSelect(domain) {
     const next = new Set(selected.value)
     if (next.has(domain)) next.delete(domain)
@@ -269,11 +327,33 @@ function statusConfig(status) {
                 Find your perfect<br>
                 <span class="text-indigo-600 dark:text-indigo-400">domain name</span>
             </h1>
-            <p class="text-gray-500 dark:text-gray-400 text-lg mb-10">
+            <p class="text-gray-500 dark:text-gray-400 text-lg mb-6">
                 Check availability across {{ popularTlds.length }}+ extensions instantly
             </p>
 
-            <!-- Rate limit / error banner -->
+            <!-- Mode toggle -->
+            <div class="flex items-center justify-center gap-2 mb-6">
+                <button
+                    @click="switchMode('single')"
+                    class="px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+                    :class="mode === 'single'
+                        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
+                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
+                >
+                    Single domain
+                </button>
+                <button
+                    @click="switchMode('bulk')"
+                    class="px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+                    :class="mode === 'bulk'
+                        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
+                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
+                >
+                    Bulk check
+                </button>
+            </div>
+
+            <!-- Rate limit / error banner (single mode) -->
             <Transition
                 enter-active-class="transition-all duration-200 ease-out"
                 enter-from-class="opacity-0 -translate-y-2"
@@ -282,7 +362,7 @@ function statusConfig(status) {
                 leave-from-class="opacity-100 translate-y-0"
                 leave-to-class="opacity-0 -translate-y-2"
             >
-                <div v-if="error" class="max-w-2xl mx-auto mb-4">
+                <div v-if="mode === 'single' && error" class="max-w-2xl mx-auto mb-4">
                     <div
                         class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium border"
                         :class="error === 'rate_limited'
@@ -296,65 +376,98 @@ function statusConfig(status) {
                 </div>
             </Transition>
 
-            <!-- Search bar -->
-            <div class="flex gap-2 max-w-2xl mx-auto">
-                <div class="flex-1 relative">
-                    <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                        v-model="domainInput"
-                        @keydown="handleKeydown"
-                        type="text"
-                        placeholder="YourDomainName"
-                        autocomplete="off"
-                        spellcheck="false"
-                        class="w-full pl-10 pr-4 py-3.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-2xl text-base text-gray-900 dark:text-white placeholder-gray-400 outline-none transition focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-sm"
-                    />
+            <!-- Rate limit / error banner (bulk mode) -->
+            <Transition
+                enter-active-class="transition-all duration-200 ease-out"
+                enter-from-class="opacity-0 -translate-y-2"
+                enter-to-class="opacity-100 translate-y-0"
+                leave-active-class="transition-all duration-150 ease-in"
+                leave-from-class="opacity-100 translate-y-0"
+                leave-to-class="opacity-0 -translate-y-2"
+            >
+                <div v-if="mode === 'bulk' && bulkError" class="max-w-2xl mx-auto mb-4">
+                    <div
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium border"
+                        :class="bulkError === 'rate_limited'
+                            ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300'
+                            : 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'"
+                    >
+                        <component :is="bulkError === 'rate_limited' ? HelpCircle : XCircle" class="w-4 h-4 shrink-0" />
+                        <span v-if="bulkError === 'rate_limited'">Too many requests — please wait a moment before checking again.</span>
+                        <span v-else>Something went wrong. Please try again.</span>
+                    </div>
                 </div>
-                <button
-                    @click="handleCheck"
-                    :disabled="isChecking || !domainInput.trim()"
-                    class="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-2xl transition-colors text-sm shadow-sm shadow-indigo-600/20 flex items-center gap-2 whitespace-nowrap"
-                >
-                    <Loader2 v-if="isChecking" class="w-4 h-4 animate-spin" />
-                    <Search v-else class="w-4 h-4" />
-                    {{ isChecking ? 'Checking…' : 'Check' }}
-                </button>
-            </div>
+            </Transition>
 
-            <!-- TLD group selector -->
-            <div class="flex items-center justify-center gap-3 mt-4">
-                <button
-                    @click="selectedGroup = 'popular'"
-                    class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                    :class="selectedGroup === 'popular'
-                        ? 'bg-indigo-600 text-white'
-                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
-                >
-                    Popular ({{ popularTlds.length }})
-                </button>
-                <button
-                    @click="loadAllTlds"
-                    :disabled="loadingAllTlds"
-                    class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5"
-                    :class="selectedGroup === 'all'
-                        ? 'bg-indigo-600 text-white'
-                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
-                >
-                    <Loader2 v-if="loadingAllTlds" class="w-3 h-3 animate-spin" />
-                    All extensions {{ allTldsData.length > 0 ? `(${allTldsData.length})` : '' }}
-                </button>
-                <button
-                    v-if="hasResults"
-                    @click="handleReset"
-                    class="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                >
-                    Clear
-                </button>
-            </div>
+            <!-- Single mode: search bar -->
+            <template v-if="mode === 'single'">
+                <div class="flex gap-2 max-w-2xl mx-auto">
+                    <div class="flex-1 relative">
+                        <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                            v-model="domainInput"
+                            @keydown="handleKeydown"
+                            type="text"
+                            placeholder="YourDomainName"
+                            autocomplete="off"
+                            spellcheck="false"
+                            class="w-full pl-10 pr-4 py-3.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-2xl text-base text-gray-900 dark:text-white placeholder-gray-400 outline-none transition focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-sm"
+                        />
+                    </div>
+                    <button
+                        @click="handleCheck"
+                        :disabled="isChecking || !domainInput.trim()"
+                        class="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-2xl transition-colors text-sm shadow-sm shadow-indigo-600/20 flex items-center gap-2 whitespace-nowrap"
+                    >
+                        <Loader2 v-if="isChecking" class="w-4 h-4 animate-spin" />
+                        <Search v-else class="w-4 h-4" />
+                        {{ isChecking ? 'Checking…' : 'Check' }}
+                    </button>
+                </div>
+
+                <!-- TLD group selector -->
+                <div class="flex items-center justify-center gap-3 mt-4">
+                    <button
+                        @click="selectedGroup = 'popular'"
+                        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                        :class="selectedGroup === 'popular'
+                            ? 'bg-indigo-600 text-white'
+                            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
+                    >
+                        Popular ({{ popularTlds.length }})
+                    </button>
+                    <button
+                        @click="loadAllTlds"
+                        :disabled="loadingAllTlds"
+                        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5"
+                        :class="selectedGroup === 'all'
+                            ? 'bg-indigo-600 text-white'
+                            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
+                    >
+                        <Loader2 v-if="loadingAllTlds" class="w-3 h-3 animate-spin" />
+                        All extensions {{ allTldsData.length > 0 ? `(${allTldsData.length})` : '' }}
+                    </button>
+                    <button
+                        v-if="hasResults"
+                        @click="handleReset"
+                        class="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                        Clear
+                    </button>
+                </div>
+            </template>
+
+            <!-- Bulk mode: textarea input -->
+            <BulkCheckInput
+                v-else
+                :is-checking="bulkIsChecking"
+                @check="handleBulkCheck"
+                @reset="handleBulkReset"
+            />
         </div>
 
-        <!-- Results -->
-        <div v-if="hasResults" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32">
+        <!-- Single-domain results -->
+        <div v-if="hasResults && mode === 'single'" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32">
 
             <!-- Progress bar -->
             <div v-if="isChecking" class="mb-5">
@@ -463,8 +576,86 @@ function statusConfig(status) {
             </div>
         </div>
 
+        <!-- Bulk results -->
+        <div v-if="mode === 'bulk' && bulkResultEntries.length > 0" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32">
+
+            <!-- Progress bar -->
+            <div v-if="bulkIsChecking" class="mb-5">
+                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+                    <span>Checking domains…</span>
+                    <span>{{ bulkCheckedCount }} / {{ bulkTotalCount }}</span>
+                </div>
+                <div class="h-1 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                    <div class="h-full bg-indigo-500 rounded-full transition-all duration-300" :style="{ width: bulkProgressPercent + '%' }" />
+                </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <div class="text-xs text-gray-500 dark:text-gray-400">
+                    {{ bulkResultEntries.length }} {{ bulkResultEntries.length === 1 ? 'domain' : 'domains' }} checked
+                    <span v-if="bulkAvailableEntries.length" class="text-emerald-600 dark:text-emerald-400 font-medium">
+                        · {{ bulkAvailableEntries.length }} available
+                    </span>
+                </div>
+                <button
+                    v-if="bulkAvailableEntries.length > 0"
+                    @click="toggleSelectAllBulkAvailable"
+                    class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                >
+                    {{ allBulkAvailableSelected ? 'Deselect all' : 'Select all available' }}
+                </button>
+            </div>
+
+            <!-- 3-column list grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-0">
+                <div
+                    v-for="entry in bulkResultEntries"
+                    :key="entry.domain"
+                    class="flex items-center gap-3 py-2.5 px-3 rounded-xl border-b border-gray-100 dark:border-gray-800/60 transition-colors"
+                    :class="[
+                        statusConfig(entry.status).rowClass,
+                        selected.has(entry.domain) ? 'bg-indigo-50 dark:bg-indigo-950/30 border-transparent' : '',
+                        entry.status === 'available' ? 'cursor-pointer' : 'cursor-default',
+                    ]"
+                    @click="entry.status === 'available' ? toggleSelect(entry.domain) : null"
+                >
+                    <div class="shrink-0 w-5 h-5">
+                        <div
+                            v-if="entry.status === 'available'"
+                            class="w-5 h-5 rounded border-2 flex items-center justify-center transition-all"
+                            :class="selected.has(entry.domain)
+                                ? 'bg-indigo-600 border-indigo-600'
+                                : 'border-gray-300 dark:border-gray-600 hover:border-indigo-400'"
+                        >
+                            <Check v-if="selected.has(entry.domain)" class="w-3 h-3 text-white" />
+                        </div>
+                        <div v-else class="w-5 h-5" />
+                    </div>
+
+                    <div class="flex-1 min-w-0">
+                        <span class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate block">
+                            {{ entry.domain }}
+                        </span>
+                    </div>
+
+                    <div class="shrink-0">
+                        <span
+                            v-if="entry.status !== 'checking'"
+                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                            :class="statusConfig(entry.status).badgeClass"
+                        >
+                            <component :is="statusConfig(entry.status).icon" class="w-3 h-3" />
+                            {{ statusConfig(entry.status).label }}
+                        </span>
+                        <Loader2 v-else class="w-4 h-4 animate-spin text-gray-400" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Empty state -->
-        <div v-else class="max-w-4xl mx-auto px-4 pb-16 text-center">
+        <div v-if="mode === 'single' && !hasResults" class="max-w-4xl mx-auto px-4 pb-16 text-center">
             <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 opacity-30 select-none pointer-events-none mb-6">
                 <div v-for="tld in popularTlds.slice(0, 12)" :key="tld" class="border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center">
                     <Globe class="w-4 h-4 mx-auto mb-1.5 text-gray-400" />
