@@ -787,8 +787,8 @@ function statusConfig(status) {
 
                     <div class="overflow-y-auto flex-1">
                         <!-- Selected domains -->
-                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800">
-                            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Selected domains</p>
+                        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+                            <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">Selected domains</p>
                             <div class="flex flex-wrap gap-2">
                                 <span
                                     v-for="domain in selectedList"
@@ -802,89 +802,85 @@ function statusConfig(status) {
                         </div>
 
                         <!-- Registration details form -->
-                        <div class="px-6 py-4">
-                            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">Registration details <span class="normal-case font-normal text-gray-400">(required — added to clipboard)</span></p>
+                        <div class="px-6 py-5 space-y-5">
+                            <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Registration details <span class="normal-case font-normal">(required — added to clipboard)</span></p>
 
+                            <!-- Existing account -->
+                            <div class="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4">
+                                <label class="block text-sm font-semibold text-indigo-700 dark:text-indigo-400 mb-0.5">Existing account <span class="font-normal text-indigo-400">(optional)</span></label>
+                                <p class="text-xs text-indigo-500 dark:text-indigo-400 mb-3">Already a customer? Enter your name or company so we link this to the right account.</p>
+                                <div class="relative">
+                                    <UserCircle class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-400" />
+                                    <input v-model="reg.existingAccount" type="text" placeholder="e.g. John Doe or Example Company" class="w-full pl-9 pr-3 py-2.5 text-sm bg-white dark:bg-gray-900 border border-indigo-300 dark:border-indigo-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                </div>
+                            </div>
+
+                            <!-- Personal & company -->
                             <div class="space-y-3">
-                                <!-- Existing account -->
-                                <div class="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-xl p-3">
-                                    <label class="block text-xs font-semibold text-indigo-700 dark:text-indigo-400 mb-1">Existing account <span class="font-normal text-indigo-500 dark:text-indigo-500">(optional)</span></label>
-                                    <p class="text-xs text-indigo-500 dark:text-indigo-500 mb-2">Already a customer? Enter the contact name or company so we know which account to register under.</p>
-                                    <div class="relative">
-                                        <UserCircle class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-indigo-400" />
-                                        <input v-model="reg.existingAccount" type="text" placeholder="e.g. John Doe or Example Company" class="w-full pl-8 pr-3 py-2 text-sm bg-white dark:bg-gray-900 border border-indigo-200 dark:border-indigo-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
-                                    </div>
-                                </div>
-
-                                <!-- Divider -->
-                                <div class="flex items-center gap-2 pt-1">
-                                    <div class="h-px flex-1 bg-gray-100 dark:bg-gray-800" />
-                                    <span class="text-xs text-gray-400 shrink-0">New registrant details</span>
-                                    <div class="h-px flex-1 bg-gray-100 dark:bg-gray-800" />
-                                </div>
-
-                                <!-- Company -->
+                                <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Contact details</p>
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Company name <span class="text-gray-400">(optional)</span></label>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Company name <span class="font-normal text-gray-400">(optional)</span></label>
                                     <div class="relative">
-                                        <Building2 class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-                                        <input v-model="reg.companyName" type="text" placeholder="Example Company" class="w-full pl-8 pr-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                        <Building2 class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                        <input v-model="reg.companyName" type="text" placeholder="Example Company" class="w-full pl-9 pr-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
                                     </div>
                                 </div>
-
-                                <!-- Name -->
-                                <div class="grid grid-cols-2 gap-2">
+                                <div class="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">First name</label>
-                                        <input v-model="reg.firstName" type="text" placeholder="John" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">First name</label>
+                                        <input v-model="reg.firstName" type="text" placeholder="John" class="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Last name</label>
-                                        <input v-model="reg.lastName" type="text" placeholder="Doe" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Last name</label>
+                                        <input v-model="reg.lastName" type="text" placeholder="Doe" class="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
                                     </div>
                                 </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Phone number</label>
+                                    <input v-model="reg.phone" type="tel" placeholder="+31 6 12345678" class="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
+                                    <input v-model="reg.email" type="email" placeholder="john@example.com" class="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                </div>
+                            </div>
 
-                                <!-- Address -->
-                                <div class="grid grid-cols-3 gap-2">
+                            <!-- Address -->
+                            <div class="space-y-3">
+                                <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Address</p>
+                                <div class="grid grid-cols-3 gap-3">
                                     <div class="col-span-2">
-                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Street</label>
-                                        <input v-model="reg.street" type="text" placeholder="Kerkstraat" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Street</label>
+                                        <input v-model="reg.street" type="text" placeholder="Kerkstraat" class="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">House no.</label>
-                                        <input v-model="reg.houseNumber" type="text" placeholder="42A" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">House no.</label>
+                                        <input v-model="reg.houseNumber" type="text" placeholder="42A" class="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
                                     </div>
                                 </div>
-                                <div class="grid grid-cols-2 gap-2">
+                                <div class="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Postal code</label>
-                                        <input v-model="reg.postalCode" type="text" placeholder="1234 AB" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Postal code</label>
+                                        <input v-model="reg.postalCode" type="text" placeholder="1234 AB" class="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">City</label>
-                                        <input v-model="reg.city" type="text" placeholder="Amsterdam" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">City</label>
+                                        <input v-model="reg.city" type="text" placeholder="Amsterdam" class="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
                                     </div>
                                 </div>
+                            </div>
 
-                                <!-- Contact -->
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Phone number</label>
-                                    <input v-model="reg.phone" type="tel" placeholder="+31 6 12345678" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Email</label>
-                                    <input v-model="reg.email" type="email" placeholder="john@example.com" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
-                                </div>
-
-                                <!-- Optional business -->
-                                <div class="grid grid-cols-2 gap-2">
+                            <!-- Business IDs -->
+                            <div class="space-y-3">
+                                <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Business <span class="normal-case font-normal">(optional)</span></p>
+                                <div class="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">KVK <span class="text-gray-400">(optional)</span></label>
-                                        <input v-model="reg.kvk" type="text" placeholder="12345678" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">KVK</label>
+                                        <input v-model="reg.kvk" type="text" placeholder="12345678" class="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">VAT ID <span class="text-gray-400">(optional)</span></label>
-                                        <input v-model="reg.vatId" type="text" placeholder="NL123456789B01" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">VAT ID</label>
+                                        <input v-model="reg.vatId" type="text" placeholder="NL123456789B01" class="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
                                     </div>
                                 </div>
                             </div>
