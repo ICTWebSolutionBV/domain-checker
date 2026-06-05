@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Http3CheckController;
 use App\Http\Controllers\IpLookupController;
+use App\Http\Controllers\MyIpController;
 use App\Http\Controllers\Auth\PasskeyLoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\TwoFactorController;
@@ -52,6 +53,9 @@ Route::get('/http3/check', [Http3CheckController::class, 'check'])->middleware('
 // IP lookup
 Route::get('/ip', [IpLookupController::class, 'index'])->name('ip');
 Route::post('/ip/lookup', [IpLookupController::class, 'lookup'])->middleware('throttle:ip-lookup')->name('ip.lookup');
+
+// My IP
+Route::get('/my-ip', [MyIpController::class, 'index'])->name('my-ip');
 
 // Transfer request (client-side copy-to-clipboard, no submission)
 Route::get('/transfer', [TransferRequestController::class, 'index'])->name('transfer');

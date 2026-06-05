@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
 import { useTheme } from '@/composables/useTheme'
-import { Sun, Moon, SunMoon, Globe, LogIn, Settings, LogOut, Users, Zap, MapPin, ArrowRightLeft, Route } from 'lucide-vue-next'
+import { Sun, Moon, SunMoon, Globe, LogIn, Settings, LogOut, Users, Zap, MapPin, ArrowRightLeft, Route, Wifi } from 'lucide-vue-next'
 
 const page = usePage()
 const auth = computed(() => page.props.auth)
@@ -51,6 +51,15 @@ const themeLabel = computed(() => {
                     >
                         <Zap class="w-4 h-4" />
                         <span class="hidden sm:inline">HTTP/3</span>
+                    </Link>
+
+                    <!-- My IP link -->
+                    <Link
+                        :href="route('my-ip')"
+                        class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                        <Wifi class="w-4 h-4" />
+                        <span class="hidden sm:inline">My IP</span>
                     </Link>
 
                     <!-- IP lookup link -->
