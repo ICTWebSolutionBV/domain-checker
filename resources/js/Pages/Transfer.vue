@@ -41,6 +41,7 @@ function normalizeDomain(raw) {
 }
 
 // ── State ────────────────────────────────────────────────────────────────
+const showHelp = ref(false)
 const blocks = ref([blankBlock('')])
 const requesterName  = ref('')
 const requesterEmail = ref('')
@@ -216,9 +217,51 @@ const showPreview = ref(false)
                 <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight mb-3">
                     Transfer domains to us
                 </h1>
-                <p class="text-sm text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
-                    Add the domains you want to transfer, fill in the owner details once per group, and copy everything to your clipboard in one click. Paste the result into an email or chat to send it our way. Need different owners for different domains? Add another group below.
+                <p class="text-sm text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed mb-4">
+                    Add the domains you want to transfer, fill in the owner details once per group, and copy everything to your clipboard in one click.
                 </p>
+                <!-- How it works toggle -->
+                <button
+                    @click="showHelp = !showHelp"
+                    class="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                >
+                    <Info class="w-3.5 h-3.5" />
+                    {{ showHelp ? 'Hide instructions' : 'How does this work?' }}
+                    <ChevronUp v-if="showHelp" class="w-3.5 h-3.5" />
+                    <ChevronDown v-else class="w-3.5 h-3.5" />
+                </button>
+
+                <!-- Collapsible instructions -->
+                <Transition
+                    enter-active-class="transition-all duration-200 ease-out overflow-hidden"
+                    enter-from-class="max-h-0 opacity-0"
+                    enter-to-class="max-h-96 opacity-100"
+                    leave-active-class="transition-all duration-150 ease-in overflow-hidden"
+                    leave-from-class="max-h-96 opacity-100"
+                    leave-to-class="max-h-0 opacity-0"
+                >
+                    <div v-if="showHelp" class="mt-4 text-left max-w-lg mx-auto bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900 rounded-2xl px-5 py-4">
+                        <p class="text-xs font-semibold text-indigo-700 dark:text-indigo-400 uppercase tracking-wide mb-3">How to transfer domains</p>
+                        <ol class="space-y-2">
+                            <li class="flex items-start gap-2 text-xs text-indigo-700 dark:text-indigo-300">
+                                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">1</span>
+                                <span>Add the domain names you want to transfer to the list below.</span>
+                            </li>
+                            <li class="flex items-start gap-2 text-xs text-indigo-700 dark:text-indigo-300">
+                                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">2</span>
+                                <span>Fill in the current owner's details. Use separate groups if different domains have different owners.</span>
+                            </li>
+                            <li class="flex items-start gap-2 text-xs text-indigo-700 dark:text-indigo-300">
+                                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">3</span>
+                                <span>Click <strong class="font-semibold">Fill in details and request</strong> — everything is copied to your clipboard.</span>
+                            </li>
+                            <li class="flex items-start gap-2 text-xs text-indigo-700 dark:text-indigo-300">
+                                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">4</span>
+                                <span>Paste it into an email, WhatsApp, or chat message and send it to your provider to start the transfer.</span>
+                            </li>
+                        </ol>
+                    </div>
+                </Transition>
             </div>
 
             <!-- Requester card -->
@@ -474,7 +517,7 @@ const showPreview = ref(false)
                     >
                         <Check v-if="copied" class="w-4 h-4" />
                         <Copy v-else class="w-4 h-4" />
-                        {{ copied ? 'Copied!' : 'Copy to clipboard' }}
+                        {{ copied ? 'Copied!' : 'Fill in details and request' }}
                     </button>
                 </div>
             </div>

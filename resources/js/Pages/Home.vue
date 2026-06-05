@@ -39,6 +39,7 @@ const filterMode = ref('all') // 'all' | 'available' | 'taken'
 
 // Registration modal
 const showModal = ref(false)
+const showModalHelp = ref(false)
 const reg = ref({
     existingAccount: '',
     companyName: '',
@@ -727,14 +728,59 @@ function statusConfig(status) {
                                 <ClipboardList class="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                             </div>
                             <div>
-                                <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Copy to clipboard</h2>
+                                <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Fill in details and request</h2>
                                 <p class="text-xs text-gray-500 dark:text-gray-400">Optionally add registration details</p>
                             </div>
                         </div>
-                        <button @click="closeModal" class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
-                            <X class="w-4 h-4" />
-                        </button>
+                        <div class="flex items-center gap-1">
+                            <button
+                                @click="showModalHelp = !showModalHelp"
+                                class="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 rounded-lg transition-colors"
+                                :title="showModalHelp ? 'Hide instructions' : 'How does this work?'"
+                            >
+                                <HelpCircle class="w-4 h-4" />
+                            </button>
+                            <button @click="closeModal" class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                                <X class="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
+
+                    <!-- Collapsible help panel -->
+                    <Transition
+                        enter-active-class="transition-all duration-200 ease-out overflow-hidden"
+                        enter-from-class="max-h-0 opacity-0"
+                        enter-to-class="max-h-96 opacity-100"
+                        leave-active-class="transition-all duration-150 ease-in overflow-hidden"
+                        leave-from-class="max-h-96 opacity-100"
+                        leave-to-class="max-h-0 opacity-0"
+                    >
+                        <div v-if="showModalHelp" class="px-6 py-4 bg-indigo-50 dark:bg-indigo-950/30 border-b border-indigo-100 dark:border-indigo-900">
+                            <p class="text-xs font-semibold text-indigo-700 dark:text-indigo-400 uppercase tracking-wide mb-3">How to order domains</p>
+                            <ol class="space-y-2">
+                                <li class="flex items-start gap-2 text-xs text-indigo-700 dark:text-indigo-300">
+                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">1</span>
+                                    <span>Search for a domain name and check availability across extensions.</span>
+                                </li>
+                                <li class="flex items-start gap-2 text-xs text-indigo-700 dark:text-indigo-300">
+                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">2</span>
+                                    <span>Tick the domains you want to order — they'll appear in the bar at the bottom.</span>
+                                </li>
+                                <li class="flex items-start gap-2 text-xs text-indigo-700 dark:text-indigo-300">
+                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">3</span>
+                                    <span>Click <strong class="font-semibold">Fill in details and request</strong> to open this panel and optionally add your registration details.</span>
+                                </li>
+                                <li class="flex items-start gap-2 text-xs text-indigo-700 dark:text-indigo-300">
+                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">4</span>
+                                    <span>Click <strong class="font-semibold">Copy to clipboard</strong> at the bottom — your domain list and details are now on your clipboard.</span>
+                                </li>
+                                <li class="flex items-start gap-2 text-xs text-indigo-700 dark:text-indigo-300">
+                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">5</span>
+                                    <span>Paste it into an email, WhatsApp, or chat message and send it to your provider to place the order.</span>
+                                </li>
+                            </ol>
+                        </div>
+                    </Transition>
 
                     <div class="overflow-y-auto flex-1">
                         <!-- Selected domains -->
