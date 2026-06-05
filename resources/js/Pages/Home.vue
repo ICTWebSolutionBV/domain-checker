@@ -735,10 +735,13 @@ function statusConfig(status) {
                         <div class="flex items-center gap-1">
                             <button
                                 @click="showModalHelp = !showModalHelp"
-                                class="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 rounded-lg transition-colors"
-                                :title="showModalHelp ? 'Hide instructions' : 'How does this work?'"
+                                class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border rounded-lg transition-colors"
+                                :class="showModalHelp
+                                    ? 'border-indigo-400 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30'
+                                    : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400'"
                             >
-                                <HelpCircle class="w-4 h-4" />
+                                <HelpCircle class="w-3.5 h-3.5" />
+                                How does this work?
                             </button>
                             <button @click="closeModal" class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
                                 <X class="w-4 h-4" />

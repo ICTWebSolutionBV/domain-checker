@@ -223,7 +223,10 @@ const showPreview = ref(false)
                 <!-- How it works toggle -->
                 <button
                     @click="showHelp = !showHelp"
-                    class="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border rounded-lg transition-colors"
+                    :class="showHelp
+                        ? 'border-indigo-400 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30'
+                        : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400'"
                 >
                     <Info class="w-3.5 h-3.5" />
                     {{ showHelp ? 'Hide instructions' : 'How does this work?' }}
