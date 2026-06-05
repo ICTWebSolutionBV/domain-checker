@@ -21,6 +21,16 @@ _Nothing yet._
 
 ---
 
+## [1.9.2] — 2026-06-05
+
+### Changed
+- **Registration modal — UI overhaul for readability.** Inputs now use a white background with clearly visible `gray-300` borders (previously `gray-50/gray-200` — near-invisible on the white modal). Labels bumped to `text-sm font-medium text-gray-700`. Form fields reorganised into three named sections — Contact details, Address, and Business — with uppercase tracking-wide sub-headers as visual anchors. Vertical spacing increased throughout.
+- **Registration details marked as required.** Subtitle, section header, hint text, and help instructions all updated to remove "optional" language — details are needed to process the order.
+- **"Copy to clipboard" button renamed to "Fill in details and request"** in the floating selection bar (Home) and the copy button (Transfer page), to better reflect the intended flow.
+- **Help / how-to instructions added.** A ghost outlined "How does this work?" button in the modal header and on the Transfer page hero expands a collapsible numbered step list explaining the full ordering flow.
+
+---
+
 ## [1.6.5] — 2026-05-26
 
 ### Security
