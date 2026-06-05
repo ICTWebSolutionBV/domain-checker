@@ -25,9 +25,41 @@ _Nothing yet._
 
 ### Changed
 - **Registration modal — UI overhaul for readability.** Inputs now use a white background with clearly visible `gray-300` borders (previously `gray-50/gray-200` — near-invisible on the white modal). Labels bumped to `text-sm font-medium text-gray-700`. Form fields reorganised into three named sections — Contact details, Address, and Business — with uppercase tracking-wide sub-headers as visual anchors. Vertical spacing increased throughout.
-- **Registration details marked as required.** Subtitle, section header, hint text, and help instructions all updated to remove "optional" language — details are needed to process the order.
-- **"Copy to clipboard" button renamed to "Fill in details and request"** in the floating selection bar (Home) and the copy button (Transfer page), to better reflect the intended flow.
+- **Registration details marked as required.** Subtitle, section header, hint text, and help instructions all updated to remove "optional" language.
+- **"Copy to clipboard" button renamed to "Fill in details and request"** in the floating selection bar (Home) and the copy button (Transfer page).
 - **Help / how-to instructions added.** A ghost outlined "How does this work?" button in the modal header and on the Transfer page hero expands a collapsible numbered step list explaining the full ordering flow.
+
+---
+
+## [1.9.1] — 2026-06-04
+
+### Added
+- **Mobile side drawer.** Navigation links collapse into a slide-in drawer on small screens, replacing the previous approach and giving a cleaner mobile experience.
+
+### Fixed
+- **Visitor IP detection.** Correctly resolves the real client IP behind proxies/load balancers.
+- **My IP page now shows both IPv4 and IPv6** addresses when both are available.
+
+---
+
+## [1.9.0] — 2026-06-04
+
+### Added
+- **My IP page.** New `/my-ip` route shows the visitor's current IP address, geolocation data, and browser/device information. Linked from the main navigation.
+
+---
+
+## [1.8.0] — 2026-06-03
+
+### Added
+- **Bulk Check mode.** Toggle on the home page switches to a textarea where users can paste a list of complete domains (e.g. `example.com`, `example.nl`) and check all of them in one go via a dedicated SSE endpoint. Results stream in alongside the existing single-domain results.
+
+---
+
+## [1.7.0] — 2026-06-02
+
+### Added
+- **Redirect Checker tool.** New `/redirects` page traces the full redirect chain of any URL — shows each hop with its status code, location header, and timing. Powered by a dedicated `RedirectCheckService` with configurable max-hops and timeout. Linked from the main navigation.
 
 ---
 
