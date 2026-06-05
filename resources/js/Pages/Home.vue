@@ -698,7 +698,7 @@ function statusConfig(status) {
                         title="Copy domains to clipboard and optionally add registration details"
                     >
                         <Copy class="w-4 h-4" />
-                        Copy to clipboard
+                        Fill in details and request
                     </button>
                 </div>
             </div>
