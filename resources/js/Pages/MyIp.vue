@@ -13,15 +13,42 @@ const props = defineProps({
     result: { type: Object, default: null },
 })
 
-const copied = ref(false)
+const copied = ref(null)
 const browserInfo = ref(null)
+const ipv4 = ref(null)
+const ipv6 = ref(null)
+const ipDetecting = ref(true)
 
-function copyIp() {
-    if (!props.ip) return
-    navigator.clipboard.writeText(props.ip).then(() => {
-        copied.value = true
-        setTimeout(() => { copied.value = false }, 2000)
+function copyIp(ip) {
+    if (!ip) return
+    navigator.clipboard.writeText(ip).then(() => {
+        copied.value = ip
+        setTimeout(() => { copied.value = null }, 2000)
     }).catch(() => {})
+}
+
+async function fetchIp(url) {
+    const controller = new AbortController()
+    const id = setTimeout(() => controller.abort(), 5000)
+    try {
+        const res = await fetch(url, { signal: controller.signal })
+        const data = await res.json()
+        return data?.ip || null
+    } catch {
+        return null
+    } finally {
+        clearTimeout(id)
+    }
+}
+
+async function detectBothIps() {
+    const [v4, v6] = await Promise.all([
+        fetchIp('https://api4.ipify.org?format=json'),
+        fetchIp('https://api6.ipify.org?format=json'),
+    ])
+    ipv4.value = v4
+    ipv6.value = v6
+    ipDetecting.value = false
 }
 
 function countryFlag(code) {
@@ -119,6 +146,7 @@ function detectBrowser() {
 
 onMounted(() => {
     browserInfo.value = detectBrowser()
+    detectBothIps()
 })
 </script>
 
@@ -144,37 +172,70 @@ onMounted(() => {
             <!-- IP hero card -->
             <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden shadow-sm">
                 <div class="p-8 flex flex-col items-center text-center gap-5">
-                    <!-- Flag + IP version pill -->
-                    <div class="flex items-center gap-3">
-                        <span class="text-5xl leading-none">{{ countryFlag(result?.country_code) || '🌐' }}</span>
+                    <!-- Flag -->
+                    <span class="text-5xl leading-none">{{ countryFlag(result?.country_code) || '🌐' }}</span>
+
+                    <!-- Dual IP display (both v4 and v6 detected) -->
+                    <template v-if="!ipDetecting && ipv4 && ipv6">
+                        <div class="w-full max-w-sm space-y-2.5">
+                            <!-- IPv4 row -->
+                            <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50">
+                                <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 w-9 shrink-0 text-left">IPv4</span>
+                                <span class="font-mono text-sm font-bold text-gray-900 dark:text-white flex-1 text-left truncate">{{ ipv4 }}</span>
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <span v-if="!isIPv6" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Current connection" />
+                                    <button @click="copyIp(ipv4)" type="button" class="flex items-center justify-center w-7 h-7 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-gray-900 hover:bg-emerald-50 dark:hover:bg-emerald-950 text-gray-500 dark:text-gray-400 transition-colors" title="Copy IPv4">
+                                        <Check v-if="copied === ipv4" class="w-3.5 h-3.5 text-emerald-500" />
+                                        <Copy v-else class="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- IPv6 row -->
+                            <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/50">
+                                <span class="text-xs font-semibold text-purple-600 dark:text-purple-400 w-9 shrink-0 text-left">IPv6</span>
+                                <span class="font-mono text-xs font-bold text-gray-900 dark:text-white flex-1 text-left truncate">{{ ipv6 }}</span>
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <span v-if="isIPv6" class="w-2 h-2 rounded-full bg-purple-500 animate-pulse" title="Current connection" />
+                                    <button @click="copyIp(ipv6)" type="button" class="flex items-center justify-center w-7 h-7 rounded-lg border border-purple-200 dark:border-purple-800 bg-white dark:bg-gray-900 hover:bg-purple-50 dark:hover:bg-purple-950 text-gray-500 dark:text-gray-400 transition-colors" title="Copy IPv6">
+                                        <Check v-if="copied === ipv6" class="w-3.5 h-3.5 text-emerald-500" />
+                                        <Copy v-else class="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full" :class="isIPv6 ? 'bg-purple-500' : 'bg-emerald-500'" />
+                            Connected via {{ ipVersion }} — geolocation is for this connection
+                        </p>
+                    </template>
+
+                    <!-- Single IP display (only one protocol or still detecting) -->
+                    <template v-else>
                         <span
                             class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border"
                             :class="isIPv6
                                 ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-200 border-purple-200 dark:border-purple-800'
                                 : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800'"
                         >
-                            <span class="w-1.5 h-1.5 rounded-full animate-pulse"
-                                :class="isIPv6 ? 'bg-purple-500' : 'bg-emerald-500'"></span>
+                            <span class="w-1.5 h-1.5 rounded-full animate-pulse" :class="isIPv6 ? 'bg-purple-500' : 'bg-emerald-500'" />
                             {{ ipVersion }}
                         </span>
-                    </div>
-
-                    <!-- IP address -->
-                    <div class="flex items-center gap-3">
-                        <span class="font-mono text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white break-all">
-                            {{ ip || '—' }}
-                        </span>
-                        <button
-                            v-if="ip"
-                            @click="copyIp"
-                            type="button"
-                            class="shrink-0 flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
-                            title="Copy IP"
-                        >
-                            <Check v-if="copied" class="w-4 h-4 text-emerald-500" />
-                            <Copy v-else class="w-4 h-4" />
-                        </button>
-                    </div>
+                        <div class="flex items-center gap-3">
+                            <span class="font-mono text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white break-all">
+                                {{ ip || '—' }}
+                            </span>
+                            <button
+                                v-if="ip"
+                                @click="copyIp(ip)"
+                                type="button"
+                                class="shrink-0 flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
+                                title="Copy IP"
+                            >
+                                <Check v-if="copied === ip" class="w-4 h-4 text-emerald-500" />
+                                <Copy v-else class="w-4 h-4" />
+                            </button>
+                        </div>
+                    </template>
 
                     <!-- Hostname -->
                     <div v-if="result?.hostname" class="text-sm text-gray-500 dark:text-gray-400 font-mono">
@@ -203,14 +264,32 @@ onMounted(() => {
                         </span>
                     </div>
 
-                    <!-- Lookup link -->
-                    <Link
-                        :href="`/ip?q=${encodeURIComponent(ip || '')}`"
-                        class="inline-flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
-                    >
-                        <Search class="w-3.5 h-3.5" />
-                        Full IP Lookup
-                    </Link>
+                    <!-- Lookup links -->
+                    <div class="flex flex-wrap justify-center gap-3">
+                        <Link
+                            :href="`/ip?q=${encodeURIComponent(ip || '')}`"
+                            class="inline-flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                        >
+                            <Search class="w-3.5 h-3.5" />
+                            Full IP Lookup
+                        </Link>
+                        <Link
+                            v-if="!ipDetecting && ipv4 && ipv6 && isIPv6"
+                            :href="`/ip?q=${encodeURIComponent(ipv4)}`"
+                            class="inline-flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 hover:underline"
+                        >
+                            <Search class="w-3.5 h-3.5" />
+                            Lookup IPv4
+                        </Link>
+                        <Link
+                            v-if="!ipDetecting && ipv4 && ipv6 && !isIPv6"
+                            :href="`/ip?q=${encodeURIComponent(ipv6)}`"
+                            class="inline-flex items-center gap-1.5 text-xs text-purple-600 dark:text-purple-400 hover:underline"
+                        >
+                            <Search class="w-3.5 h-3.5" />
+                            Lookup IPv6
+                        </Link>
+                    </div>
                 </div>
 
                 <!-- Map -->
