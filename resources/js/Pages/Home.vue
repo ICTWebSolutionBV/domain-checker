@@ -678,7 +678,7 @@ function statusConfig(status) {
             <div v-if="selectedList.length > 0" class="fixed bottom-0 inset-x-0 z-50 p-4">
                 <!-- Hint line -->
                 <p class="text-center text-xs text-gray-400 dark:text-gray-500 mb-2 hidden sm:block">
-                    Copy selected domains to clipboard — optionally include registration details
+                    Fill in your registration details so we can process your order
                 </p>
                 <div class="max-w-2xl mx-auto bg-gray-900 dark:bg-gray-800 border border-gray-700 dark:border-gray-600 rounded-2xl shadow-2xl shadow-black/30 px-4 py-3 flex items-center gap-3">
                     <div class="flex items-center gap-2 flex-1 min-w-0">
@@ -696,7 +696,7 @@ function statusConfig(status) {
                     <button
                         @click="openModal"
                         class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-colors"
-                        title="Copy domains to clipboard and optionally add registration details"
+                        title="Fill in registration details and copy to clipboard"
                     >
                         <Copy class="w-4 h-4" />
                         Fill in details and request
@@ -729,7 +729,7 @@ function statusConfig(status) {
                             </div>
                             <div>
                                 <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Fill in details and request</h2>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Optionally add registration details</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Add your details so we can process your order</p>
                             </div>
                         </div>
                         <div class="flex items-center gap-1">
@@ -771,7 +771,7 @@ function statusConfig(status) {
                                 </li>
                                 <li class="flex items-start gap-2 text-xs text-indigo-700 dark:text-indigo-300">
                                     <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">3</span>
-                                    <span>Click <strong class="font-semibold">Fill in details and request</strong> to open this panel and optionally add your registration details.</span>
+                                    <span>Click <strong class="font-semibold">Fill in details and request</strong> to open this panel and fill in your registration details.</span>
                                 </li>
                                 <li class="flex items-start gap-2 text-xs text-indigo-700 dark:text-indigo-300">
                                     <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">4</span>
@@ -803,7 +803,7 @@ function statusConfig(status) {
 
                         <!-- Registration details form -->
                         <div class="px-6 py-4">
-                            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">Registration details <span class="normal-case font-normal text-gray-400">(optional — added to clipboard)</span></p>
+                            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">Registration details <span class="normal-case font-normal text-gray-400">(required — added to clipboard)</span></p>
 
                             <div class="space-y-3">
                                 <!-- Existing account -->
