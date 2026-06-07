@@ -30,6 +30,7 @@ class BulkDnsController extends Controller
 
         $type    = (string) $request->input('type');
         $results = [];
+        $ips     = [];
 
         foreach ((array) $request->input('domains') as $raw) {
             $domain = strtolower(trim((string) $raw));
@@ -44,11 +45,18 @@ class BulkDnsController extends Controller
             $ip      = $this->service->resolveIp($domain);
             $records = $this->service->lookupRecords($domain, $type);
 
-            $results[] = [
-                'domain'  => $domain,
-                'ip'      => $ip,
-                'records' => $records,
-            ];
+            $results[] = ['domain' => $domain, 'ip' => $ip, 'records' => $records];
+
+            if ($ip) {
+                $ips[] = $ip;
+            }
+        }
+
+        // Batch geo lookup with up to 4 concurrent workers
+        $geoMap = $this->service->lookupGeoBatch($ips);
+
+        foreach ($results as &$row) {
+            $row['geo'] = $row['ip'] ? ($geoMap[$row['ip']] ?? null) : null;
         }
 
         return response()->json(['results' => $results]);

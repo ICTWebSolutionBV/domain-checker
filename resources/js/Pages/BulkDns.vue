@@ -2,16 +2,17 @@
 import { ref, computed } from 'vue'
 import { Head } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
-import { Search, Loader2, Copy, Check, X, AlertTriangle, Globe2, ChevronDown } from 'lucide-vue-next'
+import { Search, Loader2, Copy, Check, X, AlertTriangle, Globe2, Eye, EyeOff } from 'lucide-vue-next'
 
 const DNS_TYPES = ['MX', 'NS', 'TXT', 'A', 'AAAA', 'CNAME']
 
-const textarea = ref('')
+const textarea  = ref('')
 const selectedType = ref('MX')
-const loading = ref(false)
-const error = ref('')
-const results = ref([])
-const copied = ref(false)
+const loading   = ref(false)
+const error     = ref('')
+const results   = ref([])
+const copied    = ref(false)
+const showGeo   = ref(true)
 
 const hasResults = computed(() => results.value.length > 0)
 
@@ -29,7 +30,7 @@ async function runLookup() {
     if (!domains.length || loading.value) return
 
     loading.value = true
-    error.value = ''
+    error.value   = ''
     results.value = []
 
     try {
@@ -48,11 +49,9 @@ async function runLookup() {
         const body = await res.json().catch(() => ({}))
 
         if (!res.ok) {
-            if (res.status === 429) {
-                error.value = 'Too many requests — please wait a moment and try again.'
-            } else {
-                error.value = body.message || 'Lookup failed. Please try again.'
-            }
+            error.value = res.status === 429
+                ? 'Too many requests — please wait a moment and try again.'
+                : (body.message || 'Lookup failed. Please try again.')
             return
         }
 
@@ -66,24 +65,39 @@ async function runLookup() {
 
 function reset() {
     results.value = []
-    error.value = ''
+    error.value   = ''
 }
 
-function formatRecords(records) {
-    if (!records || !records.length) return []
-    return records.map(r => {
-        if (r.priority !== undefined) return `${r.value} (pri: ${r.priority})`
-        return r.value
-    })
+function countryFlag(code) {
+    if (!code || code.length !== 2) return ''
+    const base = 0x1f1e6
+    const A = 'A'.charCodeAt(0)
+    return String.fromCodePoint(
+        base + code.toUpperCase().charCodeAt(0) - A,
+        base + code.toUpperCase().charCodeAt(1) - A,
+    )
+}
+
+function ipLookupUrl(ip) {
+    return `/ip?q=${encodeURIComponent(ip)}`
 }
 
 async function copyTable() {
-    const header = ['Domain', 'IP', selectedType.value].join('\t')
-    const rows = results.value.map(row => [
-        row.domain,
-        row.ip ?? '—',
-        formatRecords(row.records).join(', ') || '—',
-    ].join('\t'))
+    const geoHeaders = showGeo.value ? ['Country', 'Region', 'City', 'ISP', 'ASN'] : []
+    const header = ['Domain', 'IP', ...geoHeaders, selectedType.value].join('\t')
+    const rows = results.value.map(row => {
+        const geo = showGeo.value ? [
+            row.geo?.country ?? '—',
+            row.geo?.region  ?? '—',
+            row.geo?.city    ?? '—',
+            row.geo?.isp     ?? '—',
+            row.geo?.asn     ?? '—',
+        ] : []
+        const recs = (row.records ?? []).map(r =>
+            r.priority !== undefined ? `${r.value} (pri: ${r.priority})` : r.value
+        ).join(', ') || '—'
+        return [row.domain, row.ip ?? '—', ...geo, recs].join('\t')
+    })
     await navigator.clipboard.writeText([header, ...rows].join('\n'))
     copied.value = true
     setTimeout(() => { copied.value = false }, 2000)
@@ -94,7 +108,7 @@ async function copyTable() {
     <AppLayout>
         <Head title="Bulk DNS Lookup" />
 
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
             <!-- Hero -->
             <div class="text-center mb-10">
@@ -105,7 +119,7 @@ async function copyTable() {
                     Bulk DNS Lookup
                 </h1>
                 <p class="mt-3 text-sm text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
-                    Look up MX, NS, TXT, A, AAAA, or CNAME records for multiple domains at once.
+                    Look up MX, NS, TXT, A, AAAA, or CNAME records for multiple domains at once — with IP geolocation.
                 </p>
             </div>
 
@@ -204,23 +218,40 @@ async function copyTable() {
             >
                 <div v-if="hasResults && !loading">
                     <!-- Toolbar -->
-                    <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center justify-between mb-3 gap-3 flex-wrap">
                         <p class="text-sm text-gray-500 dark:text-gray-400">
                             <span class="font-medium text-gray-900 dark:text-white">{{ results.length }}</span>
                             domain{{ results.length !== 1 ? 's' : '' }} &middot;
                             <span class="font-mono font-medium text-indigo-600 dark:text-indigo-400">{{ selectedType }}</span> records
                         </p>
-                        <button
-                            @click="copyTable"
-                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                            :class="copied
-                                ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400'
-                                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
-                        >
-                            <Check v-if="copied" class="w-3.5 h-3.5" />
-                            <Copy v-else class="w-3.5 h-3.5" />
-                            {{ copied ? 'Copied!' : 'Copy as TSV' }}
-                        </button>
+
+                        <div class="flex items-center gap-2">
+                            <!-- Geo toggle -->
+                            <button
+                                @click="showGeo = !showGeo"
+                                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border"
+                                :class="showGeo
+                                    ? 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400'
+                                    : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
+                            >
+                                <Eye v-if="showGeo" class="w-3.5 h-3.5" />
+                                <EyeOff v-else class="w-3.5 h-3.5" />
+                                {{ showGeo ? 'Hide geo' : 'Show geo' }}
+                            </button>
+
+                            <!-- Copy -->
+                            <button
+                                @click="copyTable"
+                                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                :class="copied
+                                    ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400'
+                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
+                            >
+                                <Check v-if="copied" class="w-3.5 h-3.5" />
+                                <Copy v-else class="w-3.5 h-3.5" />
+                                {{ copied ? 'Copied!' : 'Copy as TSV' }}
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Table -->
@@ -233,8 +264,25 @@ async function copyTable() {
                                             Domain
                                         </th>
                                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                                            IP (A)
+                                            IP
                                         </th>
+                                        <template v-if="showGeo">
+                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                                Country
+                                            </th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                                Region
+                                            </th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                                City
+                                            </th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                                ISP
+                                            </th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                                ASN
+                                            </th>
+                                        </template>
                                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 whitespace-nowrap font-mono">
                                             {{ selectedType }}
                                         </th>
@@ -251,11 +299,43 @@ async function copyTable() {
                                             {{ row.domain }}
                                         </td>
 
-                                        <!-- IP -->
-                                        <td class="px-4 py-3 font-mono text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                                            <span v-if="row.ip">{{ row.ip }}</span>
+                                        <!-- IP (linked to IP lookup) -->
+                                        <td class="px-4 py-3 whitespace-nowrap">
+                                            <a
+                                                v-if="row.ip"
+                                                :href="ipLookupUrl(row.ip)"
+                                                class="font-mono text-indigo-600 dark:text-indigo-400 hover:underline"
+                                            >{{ row.ip }}</a>
                                             <span v-else class="text-gray-300 dark:text-gray-600">—</span>
                                         </td>
+
+                                        <!-- Geo columns -->
+                                        <template v-if="showGeo">
+                                            <!-- Country -->
+                                            <td class="px-4 py-3 whitespace-nowrap">
+                                                <span v-if="row.geo?.country" class="flex items-center gap-1.5 text-gray-700 dark:text-gray-300">
+                                                    <span class="text-base leading-none">{{ countryFlag(row.geo.country_code) }}</span>
+                                                    {{ row.geo.country }}
+                                                </span>
+                                                <span v-else class="text-gray-300 dark:text-gray-600">—</span>
+                                            </td>
+                                            <!-- Region -->
+                                            <td class="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                                                {{ row.geo?.region || '—' }}
+                                            </td>
+                                            <!-- City -->
+                                            <td class="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                                                {{ row.geo?.city || '—' }}
+                                            </td>
+                                            <!-- ISP -->
+                                            <td class="px-4 py-3 text-gray-600 dark:text-gray-400">
+                                                {{ row.geo?.isp || '—' }}
+                                            </td>
+                                            <!-- ASN -->
+                                            <td class="px-4 py-3 font-mono text-gray-500 dark:text-gray-500 whitespace-nowrap">
+                                                {{ row.geo?.asn || '—' }}
+                                            </td>
+                                        </template>
 
                                         <!-- DNS records -->
                                         <td class="px-4 py-3">
@@ -266,22 +346,18 @@ async function copyTable() {
                                                         :key="i"
                                                         class="font-mono text-xs leading-relaxed"
                                                     >
-                                                        <!-- MX: show priority badge -->
                                                         <template v-if="selectedType === 'MX'">
                                                             <span class="inline-flex items-center gap-1.5">
-                                                                <span class="inline-block px-1.5 py-0.5 rounded text-xs font-semibold bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400 font-mono">{{ rec.priority }}</span>
+                                                                <span class="inline-block px-1.5 py-0.5 rounded text-xs font-semibold bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400">{{ rec.priority }}</span>
                                                                 <span class="text-gray-700 dark:text-gray-300">{{ rec.value }}</span>
                                                             </span>
                                                         </template>
-                                                        <!-- TXT: truncate long strings -->
                                                         <template v-else-if="selectedType === 'TXT'">
                                                             <span class="text-gray-700 dark:text-gray-300 break-all">{{ rec.value }}</span>
                                                         </template>
-                                                        <!-- A/AAAA: IP highlight -->
                                                         <template v-else-if="selectedType === 'A' || selectedType === 'AAAA'">
-                                                            <span class="text-indigo-600 dark:text-indigo-400">{{ rec.value }}</span>
+                                                            <a :href="ipLookupUrl(rec.value)" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ rec.value }}</a>
                                                         </template>
-                                                        <!-- NS/CNAME -->
                                                         <template v-else>
                                                             <span class="text-gray-700 dark:text-gray-300">{{ rec.value }}</span>
                                                         </template>
@@ -298,7 +374,7 @@ async function copyTable() {
 
                     <!-- Footer note -->
                     <p class="mt-3 text-xs text-gray-400 dark:text-gray-600 text-center">
-                        Results cached for 5 minutes · DNS data may lag behind live propagation
+                        DNS cached 5 min · Geo cached 1 h · 4 concurrent geo workers · Data may lag behind live propagation
                     </p>
                 </div>
             </Transition>
