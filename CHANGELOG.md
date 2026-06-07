@@ -21,6 +21,20 @@ _Nothing yet._
 
 ---
 
+## [1.10.0] — 2026-06-07
+
+### Added
+- **Bulk DNS Lookup tool** — new `/dns` page (linked from the main navigation) that resolves MX, NS, TXT, A, AAAA, or CNAME records for up to 100 domains at once.
+- **IP geolocation columns** — Country (with emoji flag), Region, City, ISP, and ASN are fetched alongside each domain's DNS records using ip-api.com's batch endpoint. Geo results are cached server-side for 1 hour; DNS records for 5 minutes.
+- **4 concurrent geo workers** — IPs are split into up to 4 chunks and dispatched to ip-api.com in parallel via `Http::pool()`, keeping batch lookups fast regardless of list size.
+- **Show / Hide geo toggle** — Eye button in the results toolbar collapses all five geo columns for a clean DNS-only view.
+- **IP links** — resolved IPs in the IP column and in A/AAAA record cells link directly to the IP Lookup page (`/ip?q=<ip>`), opening in a new tab.
+- **Instant record-type refresh** — switching the record-type selector (MX → NS → TXT, etc.) while results are on screen immediately re-runs the lookup without clearing the domain list or geo data.
+- **Copy as TSV** — toolbar button copies the full results table (including geo columns, respecting the current show/hide state) as tab-separated values ready to paste into Excel or a spreadsheet.
+- **Rate limiter `dns-bulk`** — 30 requests/minute for authenticated users, 5 requests/minute for guests.
+
+---
+
 ## [1.9.2] — 2026-06-05
 
 ### Changed
