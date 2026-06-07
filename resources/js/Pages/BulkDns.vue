@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Head } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { Search, Loader2, Copy, Check, X, AlertTriangle, Globe2, Eye, EyeOff } from 'lucide-vue-next'
@@ -24,6 +24,8 @@ const parsedDomains = computed(() => {
         .filter(Boolean)
     return [...new Set(lines)]
 })
+
+watch(selectedType, () => { if (hasResults.value) runLookup() })
 
 async function runLookup() {
     const domains = parsedDomains.value
