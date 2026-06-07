@@ -304,6 +304,8 @@ async function copyTable() {
                                             <a
                                                 v-if="row.ip"
                                                 :href="ipLookupUrl(row.ip)"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
                                                 class="font-mono text-indigo-600 dark:text-indigo-400 hover:underline"
                                             >{{ row.ip }}</a>
                                             <span v-else class="text-gray-300 dark:text-gray-600">—</span>
@@ -356,7 +358,7 @@ async function copyTable() {
                                                             <span class="text-gray-700 dark:text-gray-300 break-all">{{ rec.value }}</span>
                                                         </template>
                                                         <template v-else-if="selectedType === 'A' || selectedType === 'AAAA'">
-                                                            <a :href="ipLookupUrl(rec.value)" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ rec.value }}</a>
+                                                            <a :href="ipLookupUrl(rec.value)" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ rec.value }}</a>
                                                         </template>
                                                         <template v-else>
                                                             <span class="text-gray-700 dark:text-gray-300">{{ rec.value }}</span>
