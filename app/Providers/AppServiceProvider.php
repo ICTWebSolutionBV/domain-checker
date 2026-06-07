@@ -36,5 +36,11 @@ class AppServiceProvider extends ServiceProvider
                 ? Limit::perMinute(30)->by($request->user()->id)
                 : Limit::perHour(60)->by($request->ip());
         });
+
+        RateLimiter::for('dns-bulk', function (Request $request) {
+            return $request->user()
+                ? Limit::perMinute(30)->by($request->user()->id)
+                : Limit::perMinute(5)->by($request->ip());
+        });
     }
 }

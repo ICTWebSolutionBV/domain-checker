@@ -8,6 +8,7 @@ use App\Http\Controllers\MyIpController;
 use App\Http\Controllers\Auth\PasskeyLoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\TwoFactorController;
+use App\Http\Controllers\BulkDnsController;
 use App\Http\Controllers\BulkDomainCheckController;
 use App\Http\Controllers\DomainCheckController;
 use App\Http\Controllers\InviteController;
@@ -63,6 +64,10 @@ Route::get('/transfer', [TransferRequestController::class, 'index'])->name('tran
 // Redirect checker
 Route::get('/redirect', [RedirectCheckController::class, 'index'])->name('redirect');
 Route::post('/redirect/check', [RedirectCheckController::class, 'check'])->middleware('throttle:redirect-check')->name('redirect.check');
+
+// Bulk DNS lookup
+Route::get('/dns', [BulkDnsController::class, 'index'])->name('dns-bulk');
+Route::post('/dns/lookup', [BulkDnsController::class, 'lookup'])->middleware('throttle:dns-bulk')->name('dns-bulk.lookup');
 
 // Authenticated routes
 Route::middleware('auth')->group(function () {

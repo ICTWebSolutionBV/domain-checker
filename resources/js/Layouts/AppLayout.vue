@@ -2,7 +2,7 @@
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { Link, usePage, router } from '@inertiajs/vue3'
 import { useTheme } from '@/composables/useTheme'
-import { Sun, Moon, SunMoon, Globe, LogIn, Settings, LogOut, Users, Zap, MapPin, ArrowRightLeft, Route, Wifi, Menu, X } from 'lucide-vue-next'
+import { Sun, Moon, SunMoon, Globe, Globe2, LogIn, Settings, LogOut, Users, Zap, MapPin, ArrowRightLeft, Route, Wifi, Menu, X } from 'lucide-vue-next'
 
 const page = usePage()
 const auth = computed(() => page.props.auth)
@@ -69,6 +69,10 @@ onUnmounted(() => {
                     <Link :href="route('redirect')" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                         <Route class="w-4 h-4" />
                         <span>Redirects</span>
+                    </Link>
+                    <Link :href="route('dns-bulk')" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                        <Globe2 class="w-4 h-4" />
+                        <span>DNS</span>
                     </Link>
                     <Link :href="route('transfer')" class="relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 shadow-sm shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all" title="Transfer your domains to us">
                         <ArrowRightLeft class="w-4 h-4" />
@@ -151,6 +155,10 @@ onUnmounted(() => {
                     <Link :href="route('redirect')" class="flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:scale-[0.98]">
                         <Route class="w-5 h-5 text-indigo-500 shrink-0" />
                         Redirect Checker
+                    </Link>
+                    <Link :href="route('dns-bulk')" class="flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:scale-[0.98]">
+                        <Globe2 class="w-5 h-5 text-indigo-500 shrink-0" />
+                        Bulk DNS Lookup
                     </Link>
 
                     <!-- Transfer CTA -->
