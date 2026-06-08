@@ -24,7 +24,7 @@ class BulkDnsController extends Controller
     {
         $request->validate([
             'domains'   => ['required', 'array', 'min:1', 'max:100'],
-            'domains.*' => ['required', 'string', 'max:2048'],
+            'domains.*' => ['nullable', 'string', 'max:2048'],
             'type'      => ['required', Rule::in(['MX', 'NS', 'TXT', 'A', 'AAAA', 'CNAME'])],
         ]);
 
