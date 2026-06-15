@@ -162,7 +162,6 @@ function handleCheck() {
         pinnedTld.value = ''
     }
     searchedDomain.value = domain
-    selected.value = new Set()
     filterMode.value = 'all'
     check(domain, currentTlds.value)
 }
