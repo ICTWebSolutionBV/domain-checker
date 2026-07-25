@@ -59,6 +59,16 @@ const currentTlds = computed(() =>
     selectedGroup.value === 'popular' ? props.popularTlds : allTldsData.value
 )
 
+// The TLD the user explicitly typed must always be checked, even when it is not
+// part of the selected group — otherwise the one domain they actually asked
+// about is the only one missing from the results (e.g. ".nu" is not popular).
+// Checked first so the headline answer resolves before the rest of the list.
+const tldsToCheck = computed(() =>
+    pinnedTld.value && !currentTlds.value.includes(pinnedTld.value)
+        ? [pinnedTld.value, ...currentTlds.value]
+        : currentTlds.value
+)
+
 // Auto-select the pinned TLD as soon as it comes back "available"
 watch(results, (val) => {
     if (pinnedTld.value && val[pinnedTld.value] === 'available') {
@@ -114,6 +124,56 @@ const filteredEntries = computed(() => {
 
 const availableEntries = computed(() => resultEntries.value.filter(e => e.status === 'available'))
 
+// The exact domain the user typed, surfaced as a headline above the grid so the
+// answer to "is bergop.nu taken?" never has to be hunted for among 46 cards.
+const pinnedEntry = computed(() => {
+    if (!pinnedTld.value) return null
+    const status = results[pinnedTld.value]
+    if (!status) return null
+    return { tld: pinnedTld.value, status, domain: `${searchedDomain.value}.${pinnedTld.value}` }
+})
+
+const pinnedSummary = computed(() => {
+    switch (pinnedEntry.value?.status) {
+        case 'available':
+            return {
+                icon: CheckCircle,
+                wrapper: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-400 dark:border-emerald-700',
+                text: 'text-emerald-900 dark:text-emerald-100',
+                badge: 'bg-emerald-600 text-white',
+                note: 'Good news — this domain is free to register.',
+                label: 'Available',
+            }
+        case 'taken':
+            return {
+                icon: XCircle,
+                wrapper: 'bg-red-50 dark:bg-red-950/30 border-red-400 dark:border-red-700',
+                text: 'text-red-900 dark:text-red-100',
+                badge: 'bg-red-600 text-white',
+                note: 'This domain is already registered — see the alternatives below.',
+                label: 'Taken',
+            }
+        case 'checking':
+            return {
+                icon: Loader2,
+                wrapper: 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700',
+                text: 'text-gray-900 dark:text-white',
+                badge: 'bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
+                note: 'Checking this domain…',
+                label: 'Checking…',
+            }
+        default:
+            return {
+                icon: HelpCircle,
+                wrapper: 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700',
+                text: 'text-gray-900 dark:text-white',
+                badge: 'bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
+                note: 'We could not determine the status of this domain.',
+                label: 'Unknown',
+            }
+    }
+})
+
 const statusCounts = computed(() => {
     const counts = { available: 0, taken: 0, unknown: 0, checking: 0 }
     Object.values(results).forEach(s => { counts[s] = (counts[s] || 0) + 1 })
@@ -163,7 +223,7 @@ function handleCheck() {
     }
     searchedDomain.value = domain
     filterMode.value = 'all'
-    check(domain, currentTlds.value)
+    check(domain, tldsToCheck.value)
 }
 
 function handleKeydown(e) {
@@ -477,6 +537,45 @@ function statusConfig(status) {
                 </div>
                 <div class="h-1 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
                     <div class="h-full bg-indigo-500 rounded-full transition-all duration-300" :style="{ width: progressPercent + '%' }" />
+                </div>
+            </div>
+
+            <!-- Headline result for the exact domain the user typed -->
+            <div
+                v-if="pinnedEntry"
+                class="flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-4 mb-6 rounded-2xl border-2 shadow-sm"
+                :class="pinnedSummary.wrapper"
+            >
+                <component
+                    :is="pinnedSummary.icon"
+                    class="w-8 h-8 shrink-0"
+                    :class="[pinnedSummary.text, pinnedEntry.status === 'checking' ? 'animate-spin' : '']"
+                />
+                <div class="flex-1 min-w-0">
+                    <div class="text-xl sm:text-2xl font-bold tracking-tight truncate" :class="pinnedSummary.text">
+                        {{ pinnedEntry.domain }}
+                    </div>
+                    <p class="text-sm mt-0.5" :class="pinnedSummary.text">
+                        {{ pinnedSummary.note }}
+                    </p>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                    <span
+                        class="px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap"
+                        :class="pinnedSummary.badge"
+                    >
+                        {{ pinnedSummary.label }}
+                    </span>
+                    <button
+                        v-if="pinnedEntry.status === 'available'"
+                        @click="toggleSelect(pinnedEntry.domain)"
+                        class="px-3 py-1.5 rounded-xl text-sm font-medium transition-colors whitespace-nowrap"
+                        :class="selected.has(pinnedEntry.domain)
+                            ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                            : 'border border-emerald-500 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40'"
+                    >
+                        {{ selected.has(pinnedEntry.domain) ? 'Selected' : 'Select' }}
+                    </button>
                 </div>
             </div>
 
