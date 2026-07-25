@@ -1,6 +1,6 @@
 # Domain Checker
 
-[![Version](https://img.shields.io/badge/Version-1.9.2-brightgreen?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.10.1-brightgreen?style=flat-square)](CHANGELOG.md)
 [![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white)](https://vuejs.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
@@ -354,8 +354,10 @@ The domain-check endpoint uses Laravel's named rate limiter `domain-check`: 10 r
 
 ## Versioning
 
-Domain Checker follows [Semantic Versioning](https://semver.org/). The current release is **v1.9.2**. All changes are tracked in [CHANGELOG.md](CHANGELOG.md):
+Domain Checker follows [Semantic Versioning](https://semver.org/). The current release is **v1.10.1**. All changes are tracked in [CHANGELOG.md](CHANGELOG.md):
 
+- **1.10.1** — Security: Guzzle 7.12.1 → 7.15.1, patching four upstream advisories in the outbound HTTP client (URL credentials reaching origins, host-only cookie scope, response cookie admission, URI fragments in `Referer` on redirects). Also PHPUnit 12 → 13, a Composer/npm refresh, and the now-obsolete `brick/math` pin and `shell-quote` override removed. No user-facing changes.
+- **1.10.0** — Bulk DNS Lookup tool at `/dns`: resolves MX, NS, TXT, A, AAAA, or CNAME for up to 100 domains at once, with IP geolocation columns (country, region, city, ISP, ASN) via 4 concurrent ip-api.com workers, a show/hide geo toggle, IP links through to the IP Lookup page, instant record-type refresh, and Copy as TSV.
 - **1.9.2** — Modal UI overhaul: readable labels, visible input borders, grouped form sections, required registration details, renamed "Fill in details and request" button, collapsible help instructions on Home and Transfer.
 - **1.6.5** — Security: patched three Symfony CVEs (`symfony/http-foundation` SSRF bypass, `symfony/routing` URL-collapse, `symfony/polyfill-intl-idn` Punycode equivalence). `composer audit` now clean.
 - **1.6.4** — Dependency maintenance: all Composer and npm packages updated within existing constraints (Laravel 13.11, Inertia 3.1/3.2, Tailwind 4.3, Vite 8.0.13, etc.). Non-breaking; build and tests verified green.

@@ -21,6 +21,30 @@ _Nothing yet._
 
 ---
 
+## [1.10.1] — 2026-07-25
+
+No user-facing behaviour changes. Maintenance release covering dependency
+security fixes and test-tooling upgrades.
+
+### Security
+- **Guzzle updated 7.12.1 → 7.15.1**, picking up four upstream advisory fixes in the HTTP client that backs every outbound request (RDAP registries, ip-api.com, IANA). Redirect following is left at Laravel's default throughout `RdapService`, `BulkDnsService`, `IpLookupService` and `TldRepository`, which is the surface two of these cover:
+  - `GHSA-94pj-82f3-465w` — prevent first-class and proxy URL credentials from reaching origins (7.14.2).
+  - `GHSA-wm3w-8rrp-j577` — preserve host-only cookie scope and require explicit persistence markers (7.15.1).
+  - `GHSA-f283-ghqc-fg79` — bound response cookie admission and generated `Cookie` headers (7.15.1).
+  - `GHSA-h95v-h523-3mw8` — exclude URI fragments from `Referer` headers generated for redirects (7.15.1).
+- `composer audit` and `npm audit` both report no advisories.
+
+### Changed
+- **Composer `php` constraint raised `^8.3` → `^8.4`.** This corrects a stale manifest rather than dropping support: the README has documented PHP 8.4+ as a requirement for some time, and `laravel/framework` v13.22.0 pulls symfony 8.x (`php >=8.4.1`), so the committed lock could not install on 8.3 regardless. Deployment requirements are unchanged.
+- **PHPUnit 12 → 13** (`^12.5.12` → `^13.2`). Dev-only; `phpunit.xml` needed no migration and runs clean with `--display-deprecations --display-warnings`.
+- **Dependency refresh** — `laravel/framework` 13.20.0 → 13.22.0, `laravel/fortify` 1.37.2 → 1.37.3, `laravel/serializable-closure` 2.0.13 → 2.0.15, `concurrently` 10.0.3 → 10.0.4, `postcss` 8.5.23, `es-toolkit` 1.50.0.
+
+### Removed
+- **`brick/math: ^0.17` pin.** Added in 8c60e59 to avoid a conflict between `laravel/framework`'s `^0.17` cap and `ramsey/uuid`'s inclusive `<=0.18` bound. Framework v13.22.0 now accepts `^0.18`, as do `cbor-php`, `pki-framework` and `cose-lib`, so the pin had become the only constraint holding the package back (now 0.18.0).
+- **`shell-quote` npm override.** `GHSA-395f-4hp3-45gv` covers `<=1.8.4` and `concurrently` 10.0.4 pins an already-patched 1.9.0, so the override fixed nothing while hoisting a floating `^1.10.0` over concurrently's tested pin.
+
+---
+
 ## [1.10.0] — 2026-06-07
 
 ### Added
