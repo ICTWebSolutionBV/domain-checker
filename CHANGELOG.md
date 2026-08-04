@@ -21,6 +21,28 @@ _Nothing yet._
 
 ---
 
+## [1.10.2] — 2026-08-04
+
+No user-facing behaviour changes. Maintenance release covering two fresh Guzzle
+advisories and a routine dependency refresh.
+
+### Security
+- **Guzzle updated 7.15.1 → 7.15.2**, patching two advisories published 2026-08-03 against the HTTP client behind every outbound request (`RdapService`, `BulkDnsService`, `IpLookupService`, `TldRepository`):
+  - `GHSA-v5mv-p594-2x33` / `CVE-2026-69246` (high) — a noncanonical host (trailing dot, mixed case, encoded forms) could bypass host-based checks. Reachable in principle via the redirects these services follow at Laravel's defaults, since a redirect target's host is what such checks compare.
+  - `GHSA-f7vp-7xgx-4w4r` / `CVE-2026-69245` (medium) — a noncanonical cookie domain retained subdomain scope. Low practical exposure here: no cookie jar is enabled on any of the four services, so cookies are neither persisted nor replayed across hosts.
+  - Both advisories also cover Guzzle 8.0.0; the tree stays on the 7.x line (`laravel/framework` requires `^7.8.2`), so 7.15.2 is the patched release rather than 8.0.1.
+- `composer audit` and `npm audit` both report no advisories.
+
+### Changed
+- **Composer refresh** — `laravel/framework` 13.22.0 → 13.23.0, `inertiajs/inertia-laravel` 3.1.1 → 3.2.1, `league/commonmark` 2.8.3 → 2.9.0, symfony components 8.1.x → 8.1.2/8.1.3, `symfony/polyfill-*` 1.38.x → 1.41.0. Dev-only: `laravel/pint` 1.29.3 → 1.30.3, `phpunit/phpunit` 13.2.5 → 13.2.6, `phpunit/php-code-coverage` 14.2.3 → 14.2.4, `sebastian/cli-parser` 5.0.0 → 5.0.1, `sebastian/recursion-context` 8.0.0 → 8.0.1.
+- **npm refresh** — `vite` 8.1.5 → 8.2.0 (rolldown 1.1.5 → 1.2.2, lightningcss 1.33.0), `axios` 1.18.1 → 1.19.0, `@vueuse/core` 14.3.0 → 14.4.0, `postcss` 8.5.23 → 8.5.25.
+- Major bumps available but not taken, since nothing in the tree requires them: `guzzlehttp/guzzle` 8.0.1 and its `promises`/`psr7`/`uri-template` 2.x–3.x siblings, `brick/math` 0.19.0, `hamcrest/hamcrest-php` 3.0.0.
+
+### Verified
+- `php artisan test` — 2 passed, and `npm run build` completes clean on Vite 8.2.0.
+
+---
+
 ## [1.10.1] — 2026-07-25
 
 No user-facing behaviour changes. Maintenance release covering dependency
