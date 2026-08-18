@@ -37,24 +37,24 @@ class UserController extends Controller
 
         return Inertia::render('Admin/Users/Index', [
             'users' => User::latest()->get()->map(fn ($user) => [
-                'id'         => $user->id,
-                'name'       => $user->name,
-                'email'      => $user->email,
-                'role'       => $user->role,
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
                 'created_at' => $user->created_at->toISOString(),
                 'two_factor' => [
-                    'totp_enabled'    => $user->hasTotpEnabled(),
+                    'totp_enabled' => $user->hasTotpEnabled(),
                     'passkeys_enabled' => $user->hasPasskeysEnabled(),
                 ],
             ]),
             'invites' => UserInvite::with('inviter')->latest()->get()->map(fn ($invite) => [
-                'id'         => $invite->id,
-                'email'      => $invite->email,
-                'role'       => $invite->role,
-                'inviter'    => $invite->inviter?->name,
+                'id' => $invite->id,
+                'email' => $invite->email,
+                'role' => $invite->role,
+                'inviter' => $invite->inviter?->name,
                 'expires_at' => $invite->expires_at->toISOString(),
-                'used_at'    => $invite->used_at?->toISOString(),
-                'is_valid'   => $invite->isValid(),
+                'used_at' => $invite->used_at?->toISOString(),
+                'is_valid' => $invite->isValid(),
             ]),
             'assignableRoles' => $this->assignableRoles($request),
         ]);
@@ -71,19 +71,19 @@ class UserController extends Controller
     {
         $data = $request->validate([
             'first_name' => ['required', 'string', 'max:100'],
-            'last_name'  => ['nullable', 'string', 'max:100'],
-            'email'      => ['required', 'email', 'unique:users'],
-            'password'   => ['required', Password::defaults(), 'confirmed'],
-            'role'       => ['required', 'in:'.implode(',', $this->assignableRoles($request))],
+            'last_name' => ['nullable', 'string', 'max:100'],
+            'email' => ['required', 'email', 'unique:users'],
+            'password' => ['required', Password::defaults(), 'confirmed'],
+            'role' => ['required', 'in:'.implode(',', $this->assignableRoles($request))],
         ]);
 
         User::create([
             'first_name' => $data['first_name'],
-            'last_name'  => $data['last_name'] ?? null,
-            'name'       => trim($data['first_name'].' '.($data['last_name'] ?? '')),
-            'email'      => $data['email'],
-            'password'   => Hash::make($data['password']),
-            'role'       => $data['role'],
+            'last_name' => $data['last_name'] ?? null,
+            'name' => trim($data['first_name'].' '.($data['last_name'] ?? '')),
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'role' => $data['role'],
         ]);
 
         return redirect()->route('admin.users.index')->with('success', 'User created.');
@@ -91,13 +91,15 @@ class UserController extends Controller
 
     public function edit(User $user, Request $request)
     {
+        $this->authorizeSuperAdminTarget($request, $user);
+
         return Inertia::render('Admin/Users/Edit', [
             'editUser' => [
-                'id'         => $user->id,
+                'id' => $user->id,
                 'first_name' => $user->first_name ?? '',
-                'last_name'  => $user->last_name ?? '',
-                'email'      => $user->email,
-                'role'       => $user->role ?? 'user',
+                'last_name' => $user->last_name ?? '',
+                'email' => $user->email,
+                'role' => $user->role ?? 'user',
             ],
             'assignableRoles' => $this->assignableRoles($request),
         ]);
@@ -105,26 +107,23 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
-        $assignable = $this->assignableRoles($request);
+        $this->authorizeSuperAdminTarget($request, $user);
 
-        // Prevent regular admins from demoting an existing super admin.
-        if ($user->isSuperAdmin() && ! in_array('super_admin', $assignable, true)) {
-            $assignable[] = 'super_admin';
-        }
+        $assignable = $this->assignableRoles($request);
 
         $data = $request->validate([
             'first_name' => ['required', 'string', 'max:100'],
-            'last_name'  => ['nullable', 'string', 'max:100'],
-            'email'      => ['required', 'email', 'unique:users,email,'.$user->id],
-            'role'       => ['required', 'in:'.implode(',', $assignable)],
+            'last_name' => ['nullable', 'string', 'max:100'],
+            'email' => ['required', 'email', 'unique:users,email,'.$user->id],
+            'role' => ['required', 'in:'.implode(',', $assignable)],
         ]);
 
         $user->update([
             'first_name' => $data['first_name'],
-            'last_name'  => $data['last_name'] ?? null,
-            'name'       => trim($data['first_name'].' '.($data['last_name'] ?? '')),
-            'email'      => $data['email'],
-            'role'       => $data['role'],
+            'last_name' => $data['last_name'] ?? null,
+            'name' => trim($data['first_name'].' '.($data['last_name'] ?? '')),
+            'email' => $data['email'],
+            'role' => $data['role'],
         ]);
 
         return redirect()->route('admin.users.index')->with('success', 'User updated.');
@@ -132,12 +131,10 @@ class UserController extends Controller
 
     public function destroy(User $user, Request $request)
     {
+        $this->authorizeSuperAdminTarget($request, $user);
+
         if ($user->id === $request->user()->id) {
             return back()->with('error', 'You cannot delete your own account.');
-        }
-
-        if ($user->isSuperAdmin() && ! $request->user()->isSuperAdmin()) {
-            return back()->with('error', 'Only a super admin can delete a super admin.');
         }
 
         $user->delete();
@@ -148,21 +145,21 @@ class UserController extends Controller
     public function storeInvite(Request $request)
     {
         $data = $request->validate([
-            'email'        => ['required', 'email'],
-            'first_name'   => ['nullable', 'string', 'max:100'],
-            'last_name'    => ['nullable', 'string', 'max:100'],
-            'role'         => ['required', 'in:'.implode(',', $this->assignableRoles($request))],
+            'email' => ['required', 'email'],
+            'first_name' => ['nullable', 'string', 'max:100'],
+            'last_name' => ['nullable', 'string', 'max:100'],
+            'role' => ['required', 'in:'.implode(',', $this->assignableRoles($request))],
             'expires_hours' => ['required', 'integer', 'min:1', 'max:720'],
         ]);
 
         $invite = UserInvite::create([
-            'email'        => $data['email'],
-            'first_name'   => $data['first_name'] ?? null,
-            'last_name'    => $data['last_name'] ?? null,
-            'token'        => Str::random(64),
-            'role'         => $data['role'],
-            'invited_by'   => $request->user()->id,
-            'expires_at'   => now()->addHours($data['expires_hours']),
+            'email' => $data['email'],
+            'first_name' => $data['first_name'] ?? null,
+            'last_name' => $data['last_name'] ?? null,
+            'token' => Str::random(64),
+            'role' => $data['role'],
+            'invited_by' => $request->user()->id,
+            'expires_at' => now()->addHours($data['expires_hours']),
         ]);
 
         Mail::to($invite->email)->send(new UserInviteMail($invite));
@@ -170,8 +167,10 @@ class UserController extends Controller
         return back()->with('success', 'Invite sent.');
     }
 
-    public function destroyInvite(UserInvite $invite)
+    public function destroyInvite(UserInvite $invite, Request $request)
     {
+        $this->authorizeSuperAdminInvite($request, $invite);
+
         $invite->delete();
 
         return back()->with('success', 'Invite revoked.');
@@ -179,6 +178,8 @@ class UserController extends Controller
 
     public function resendInvite(Request $request, UserInvite $invite)
     {
+        $this->authorizeSuperAdminInvite($request, $invite);
+
         if ($invite->isUsed()) {
             return back()->with('error', 'Invite has already been used.');
         }
@@ -188,7 +189,7 @@ class UserController extends Controller
         ]);
 
         $invite->update([
-            'token'      => Str::random(64),
+            'token' => Str::random(64),
             'expires_at' => now()->addHours($data['expires_hours'] ?? 72),
             'invited_by' => $request->user()->id,
         ]);
@@ -198,8 +199,10 @@ class UserController extends Controller
         return back()->with('success', 'Invite resent.');
     }
 
-    public function sendPasswordReset(User $user)
+    public function sendPasswordReset(User $user, Request $request)
     {
+        $this->authorizeSuperAdminTarget($request, $user);
+
         $status = PasswordBroker::sendResetLink(['email' => $user->email]);
 
         if ($status === PasswordBroker::RESET_LINK_SENT) {
@@ -211,19 +214,35 @@ class UserController extends Controller
 
     public function resetTwoFactor(User $user, Request $request)
     {
+        $this->authorizeSuperAdminTarget($request, $user);
+
         if ($user->id === $request->user()->id) {
             return back()->with('error', 'Use your settings to change your own 2FA settings.');
         }
 
         // Clear TOTP 2FA + passkeys
         $user->forceFill([
-            'two_factor_secret'         => null,
+            'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
-            'two_factor_confirmed_at'   => null,
+            'two_factor_confirmed_at' => null,
         ])->save();
 
         $user->passkeys()->delete();
 
         return back()->with('success', "Two-factor settings reset for {$user->email}.");
+    }
+
+    private function authorizeSuperAdminTarget(Request $request, User $user): void
+    {
+        if ($user->isSuperAdmin() && ! $request->user()?->isSuperAdmin()) {
+            abort(403, 'Only a super admin can manage a super admin.');
+        }
+    }
+
+    private function authorizeSuperAdminInvite(Request $request, UserInvite $invite): void
+    {
+        if ($invite->role === 'super_admin' && ! $request->user()?->isSuperAdmin()) {
+            abort(403, 'Only a super admin can manage a super admin invite.');
+        }
     }
 }

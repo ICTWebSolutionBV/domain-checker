@@ -9,17 +9,18 @@ class WhoisService
     private const IANA_WHOIS = 'whois.iana.org';
 
     private const NOT_FOUND_PATTERNS = [
-        'no match',
-        'not found',
-        'no entries found',
-        'no data found',
-        'status: free',
-        'domain not found',
-        'object does not exist',
-        'this domain name has not been registered',
-        '% no entries found',
-        'no information available',
-        'available',
+        '/\bno match\b/i',
+        '/\bnot found\b/i',
+        '/\bno entries found\b/i',
+        '/\bno data found\b/i',
+        '/\bstatus:\s*free\b/i',
+        '/\bdomain not found\b/i',
+        '/\bobject does not exist\b/i',
+        '/\bthis domain name has not been registered\b/i',
+        '/%\s*no entries found\b/i',
+        '/\bno information available\b/i',
+        '/\bdomain is available\b/i',
+        '/\bavailable for registration\b/i',
     ];
 
     /**
@@ -95,14 +96,14 @@ class WhoisService
     {
         $lower = strtolower($response);
 
-        foreach (self::NOT_FOUND_PATTERNS as $pattern) {
-            if (str_contains($lower, $pattern)) {
-                return 'available';
-            }
-        }
-
         if (str_contains($lower, 'domain:') || str_contains($lower, 'registrar:') || str_contains($lower, 'creation date:')) {
             return 'taken';
+        }
+
+        foreach (self::NOT_FOUND_PATTERNS as $pattern) {
+            if (preg_match($pattern, $response)) {
+                return 'available';
+            }
         }
 
         return 'unknown';

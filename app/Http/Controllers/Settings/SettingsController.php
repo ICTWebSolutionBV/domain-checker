@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Models\User;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -29,7 +28,7 @@ class SettingsController extends Controller
         $recoveryCodes = null;
 
         if (session('show_two_factor_qr')) {
-            $google2fa = new Google2FA();
+            $google2fa = new Google2FA;
             $secret = session('two_factor_secret_setup');
             $qrCodeSvg = $google2fa->getQRCodeUrl(
                 config('app.name'),
@@ -62,7 +61,7 @@ class SettingsController extends Controller
 
     public function initTwoFactor(Request $request): RedirectResponse
     {
-        $google2fa = new Google2FA();
+        $google2fa = new Google2FA;
         $secret = $google2fa->generateSecretKey();
 
         $request->session()->put('two_factor_secret_setup', $secret);
@@ -81,7 +80,7 @@ class SettingsController extends Controller
             return back()->withErrors(['code' => 'Setup session expired. Please start again.']);
         }
 
-        $google2fa = new Google2FA();
+        $google2fa = new Google2FA;
 
         if (! $google2fa->verifyKey($secret, $request->input('code'))) {
             return back()->withErrors(['code' => 'Invalid code. Please try again.']);
@@ -94,6 +93,7 @@ class SettingsController extends Controller
         $user->forceFill([
             'two_factor_secret' => encrypt($secret),
             'two_factor_recovery_codes' => encrypt(json_encode($recoveryCodes)),
+            'two_factor_confirmed_at' => now(),
         ])->save();
 
         $request->session()->forget(['two_factor_secret_setup', 'show_two_factor_qr']);
@@ -111,6 +111,7 @@ class SettingsController extends Controller
         $user->forceFill([
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
+            'two_factor_confirmed_at' => null,
         ])->save();
 
         return redirect()->route('settings')->with('status', 'Two-factor authentication disabled.');
@@ -182,8 +183,8 @@ class SettingsController extends Controller
     {
         $request->validate([
             'api_key' => ['nullable', 'string', 'max:500'],
-            'host'    => ['nullable', 'string', 'max:255'],
-            'clear'   => ['nullable', 'boolean'],
+            'host' => ['nullable', 'string', 'max:255'],
+            'clear' => ['nullable', 'boolean'],
         ]);
 
         if ($request->boolean('clear')) {

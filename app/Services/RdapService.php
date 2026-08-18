@@ -24,7 +24,6 @@ class RdapService
         try {
             $url = "{$server}/domain/{$domain}.{$tld}";
             $response = Http::timeout(config('domain-checker.timeouts.rdap', 5))
-                ->withoutVerifying()
                 ->get($url);
 
             if ($response->status() === 404) {
@@ -68,7 +67,7 @@ class RdapService
             $responses = Http::pool(function ($pool) use ($domain, $tldsWithServer, $servers, $timeout) {
                 foreach ($tldsWithServer as $tld) {
                     $url = "{$servers[$tld]}/domain/{$domain}.{$tld}";
-                    $pool->as($tld)->timeout($timeout)->withoutVerifying()->get($url);
+                    $pool->as($tld)->timeout($timeout)->get($url);
                 }
             });
         } catch (\Exception $e) {
@@ -80,6 +79,7 @@ class RdapService
         foreach ($tlds as $tld) {
             if (! isset($servers[$tld]) || $servers[$tld] === null) {
                 $results[$tld] = null;
+
                 continue;
             }
 
