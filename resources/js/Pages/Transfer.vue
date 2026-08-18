@@ -223,13 +223,15 @@ const showPreview = ref(false)
                 <!-- How it works toggle -->
                 <button
                     @click="showHelp = !showHelp"
-                    class="ui-btn ui-btn-sm font-medium"
-                    :class="showHelp ? 'ui-btn-accent' : 'ui-btn-secondary'"
+                    class="ui-btn font-semibold"
+                    :class="showHelp ? 'ui-btn-help-on' : 'ui-btn-help'"
+                    :aria-expanded="showHelp"
                 >
-                    <Info class="w-3.5 h-3.5" />
+                    <Info class="w-4 h-4 shrink-0" />
                     {{ showHelp ? 'Hide instructions' : 'How does this work?' }}
-                    <ChevronUp v-if="showHelp" class="w-3.5 h-3.5" />
-                    <ChevronDown v-else class="w-3.5 h-3.5" />
+                    <ChevronUp v-if="showHelp" class="w-4 h-4 shrink-0" />
+                    <ChevronDown v-else class="w-4 h-4 shrink-0" />
+                    <span v-if="!showHelp" class="ui-attention-dot ring-canvas" aria-hidden="true"></span>
                 </button>
 
                 <!-- Collapsible instructions -->

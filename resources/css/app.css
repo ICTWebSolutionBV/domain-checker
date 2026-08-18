@@ -215,6 +215,28 @@
                hover:bg-indigo-100 dark:hover:bg-indigo-950/50 hover:border-indigo-300 dark:hover:border-indigo-700;
     }
 
+    /* Help / "how does this work" toggle — deliberately more visible than a
+       secondary button so a stuck user can find it, without competing with the
+       indigo primary action. */
+    .ui-btn-help {
+        @apply relative bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300
+               border border-indigo-300 dark:border-indigo-800
+               hover:bg-indigo-100 dark:hover:bg-indigo-950/60
+               hover:border-indigo-400 dark:hover:border-indigo-700
+               hover:text-indigo-800 dark:hover:text-indigo-200;
+    }
+
+    .ui-btn-help-on {
+        @apply relative bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-200
+               border border-indigo-400 dark:border-indigo-700
+               hover:bg-indigo-200/70 dark:hover:bg-indigo-950/80;
+    }
+
+    /* Attention dot on the help toggle, same language as the nav Transfer badge. */
+    .ui-attention-dot {
+        @apply absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-400 ring-2 animate-pulse;
+    }
+
     .ui-btn-danger {
         @apply bg-red-600 text-white hover:bg-red-700;
     }

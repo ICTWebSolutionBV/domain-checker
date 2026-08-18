@@ -817,10 +817,10 @@ function statusConfig(status) {
                 <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeModal" />
 
                 <!-- Modal panel -->
-                <div class="relative w-full max-w-lg bg-surface rounded-2xl shadow-overlay border border-hairline dark:border-gray-700 overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="relative w-full max-w-2xl bg-surface rounded-2xl shadow-overlay border border-hairline dark:border-gray-700 overflow-hidden max-h-[90vh] flex flex-col">
 
                     <!-- Header -->
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-hairline shrink-0">
+                    <div class="flex items-center justify-between gap-4 px-6 sm:px-8 py-4 border-b border-hairline shrink-0">
                         <div class="flex items-center gap-2.5">
                             <div class="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg flex items-center justify-center">
                                 <ClipboardList class="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
@@ -833,12 +833,14 @@ function statusConfig(status) {
                         <div class="flex items-center gap-1">
                             <button
                                 @click="showModalHelp = !showModalHelp"
-                                class="ui-btn ui-btn-sm px-2.5 py-1.5 font-medium"
-                                :class="showModalHelp ? 'ui-btn-accent' : 'ui-btn-secondary'"
+                                class="ui-btn ui-btn-sm px-3 py-1.5 font-semibold"
+                                :class="showModalHelp ? 'ui-btn-help-on' : 'ui-btn-help'"
+                                :aria-expanded="showModalHelp"
                             >
-                                <HelpCircle class="w-3.5 h-3.5" />
+                                <HelpCircle class="w-4 h-4 shrink-0" />
                                 <span class="hidden sm:inline">How does this work?</span>
-                                <span class="sr-only sm:hidden">How does this work?</span>
+                                <span class="sm:hidden">Help</span>
+                                <span v-if="!showModalHelp" class="ui-attention-dot ring-surface" aria-hidden="true"></span>
                             </button>
                             <button @click="closeModal" class="ui-icon-btn" aria-label="Close">
                                 <X class="w-4 h-4" />
@@ -855,7 +857,7 @@ function statusConfig(status) {
                         leave-from-class="max-h-96 opacity-100"
                         leave-to-class="max-h-0 opacity-0"
                     >
-                        <div v-if="showModalHelp" class="px-6 py-4 bg-indigo-50 dark:bg-indigo-950/30 border-b border-indigo-100 dark:border-indigo-900">
+                        <div v-if="showModalHelp" class="px-6 sm:px-8 py-4 bg-indigo-50 dark:bg-indigo-950/30 border-b border-indigo-100 dark:border-indigo-900">
                             <p class="ui-section-title text-indigo-700 dark:text-indigo-400 mb-3">How to order domains</p>
                             <ol class="space-y-2">
                                 <li class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
@@ -884,7 +886,7 @@ function statusConfig(status) {
 
                     <div class="overflow-y-auto flex-1">
                         <!-- Selected domains -->
-                        <div class="px-6 py-4 border-b border-hairline">
+                        <div class="px-6 sm:px-8 py-4 border-b border-hairline">
                             <p class="ui-section-title mb-2.5">Selected domains</p>
                             <div class="flex flex-wrap gap-2">
                                 <span
@@ -899,7 +901,7 @@ function statusConfig(status) {
                         </div>
 
                         <!-- Registration details form -->
-                        <div class="px-6 py-5 space-y-5">
+                        <div class="px-6 sm:px-8 py-6 space-y-6">
                             <p class="ui-section-title">Registration details <span class="normal-case font-normal">(required — added to clipboard)</span></p>
 
                             <!-- Existing account -->
@@ -932,13 +934,15 @@ function statusConfig(status) {
                                         <input v-model="reg.lastName" type="text" placeholder="Doe" class="ui-input" />
                                     </div>
                                 </div>
-                                <div>
-                                    <label class="ui-label text-sm">Phone number</label>
-                                    <input v-model="reg.phone" type="tel" placeholder="+31 6 12345678" class="ui-input" />
-                                </div>
-                                <div>
-                                    <label class="ui-label text-sm">Email</label>
-                                    <input v-model="reg.email" type="email" placeholder="john@example.com" class="ui-input" />
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="ui-label text-sm">Phone number</label>
+                                        <input v-model="reg.phone" type="tel" placeholder="+31 6 12345678" class="ui-input" />
+                                    </div>
+                                    <div>
+                                        <label class="ui-label text-sm">Email</label>
+                                        <input v-model="reg.email" type="email" placeholder="john@example.com" class="ui-input" />
+                                    </div>
                                 </div>
                             </div>
 
@@ -985,7 +989,7 @@ function statusConfig(status) {
                     </div>
 
                     <!-- Footer -->
-                    <div class="px-6 py-4 border-t border-hairline bg-gray-50/80 dark:bg-gray-900 shrink-0 flex items-center justify-between gap-3">
+                    <div class="px-6 sm:px-8 py-4 border-t border-hairline bg-gray-50/80 dark:bg-gray-900 shrink-0 flex items-center justify-between gap-3">
                         <p class="ui-help">Fields left empty are omitted from the clipboard.</p>
                         <button
                             @click="copyToClipboard"

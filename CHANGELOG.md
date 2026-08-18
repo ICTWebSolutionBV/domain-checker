@@ -21,6 +21,16 @@ _Nothing yet._
 
 ---
 
+## [1.11.1] — 2026-08-18
+
+Follow-up polish on the 1.11.0 light-theme pass.
+
+### Changed
+- **"How does this work?" is now a proper help affordance** instead of a quiet secondary button, so users who are stuck can actually find it. Indigo-tinted pill with an indigo border and semibold label, a pulsing amber dot while the instructions are collapsed (same badge language as the nav Transfer link), and a deeper tinted state while they are open. Applied identically on `/transfer` and in the registration modal via the shared `.ui-btn-help` / `.ui-btn-help-on` / `.ui-attention-dot` classes. The toggle also exposes `aria-expanded` now, and shortens to "Help" in the modal on narrow screens.
+- **Registration modal is wider on desktop** — `max-w-lg` → `max-w-2xl` (512 → 672 px) with roomier `sm:px-8` gutters, so it fills more of a desktop screen and stops feeling cramped. Phone and email now sit side by side at `sm` and up (matching first/last name), which uses the extra width instead of stretching lone fields and cuts the amount of scrolling. Mobile is unchanged: the panel is still width-capped by the viewport and those fields still stack.
+
+---
+
 ## [1.11.0] — 2026-08-18
 
 Light-mode design-system pass. Dark mode intentionally unchanged.
