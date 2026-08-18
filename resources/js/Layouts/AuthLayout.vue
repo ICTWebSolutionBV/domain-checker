@@ -26,7 +26,7 @@ defineProps({
             </div>
 
             <!-- Card -->
-            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 border border-gray-200 dark:border-gray-800">
+            <div class="ui-card shadow-overlay p-6">
                 <h2 v-if="title" class="text-lg font-semibold text-gray-900 dark:text-white mb-5">{{ title }}</h2>
                 <slot />
             </div>

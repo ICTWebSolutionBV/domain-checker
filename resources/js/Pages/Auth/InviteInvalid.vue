@@ -26,7 +26,7 @@ const msg = messages[props.reason] ?? messages.not_found
             <h1 class="text-2xl font-bold text-white mb-2">{{ msg.title }}</h1>
             <p class="text-gray-400 text-sm mb-6">{{ msg.body }}</p>
             <Link :href="route('login')"
-                class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors text-sm">
+                class="ui-btn ui-btn-primary px-5">
                 Go to sign in
             </Link>
         </div>

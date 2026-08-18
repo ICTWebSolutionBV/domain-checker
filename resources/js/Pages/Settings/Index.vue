@@ -114,7 +114,7 @@ function clearApiKey() {
 
             <div class="space-y-6">
                 <!-- Profile -->
-                <section class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+                <section class="ui-card overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3">
                         <User class="w-4 h-4 text-gray-400" />
                         <h2 class="font-semibold text-gray-900 dark:text-white text-sm">Profile</h2>
@@ -122,18 +122,18 @@ function clearApiKey() {
                     <form @submit.prevent="profileForm.put(route('settings.profile'))" class="p-6 space-y-4">
                         <div class="grid sm:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Name</label>
-                                <input v-model="profileForm.name" type="text" required class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" />
-                                <p v-if="profileForm.errors.name" class="text-red-500 text-xs mt-1">{{ profileForm.errors.name }}</p>
+                                <label class="ui-label">Name</label>
+                                <input v-model="profileForm.name" type="text" required class="ui-input" />
+                                <p v-if="profileForm.errors.name" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ profileForm.errors.name }}</p>
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Email</label>
-                                <input v-model="profileForm.email" type="email" required class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" />
-                                <p v-if="profileForm.errors.email" class="text-red-500 text-xs mt-1">{{ profileForm.errors.email }}</p>
+                                <label class="ui-label">Email</label>
+                                <input v-model="profileForm.email" type="email" required class="ui-input" />
+                                <p v-if="profileForm.errors.email" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ profileForm.errors.email }}</p>
                             </div>
                         </div>
                         <div class="flex justify-end">
-                            <button type="submit" :disabled="profileForm.processing" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors">
+                            <button type="submit" :disabled="profileForm.processing" class="ui-btn ui-btn-primary px-4 py-2">
                                 Save changes
                             </button>
                         </div>
@@ -141,30 +141,30 @@ function clearApiKey() {
                 </section>
 
                 <!-- Password -->
-                <section class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+                <section class="ui-card overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3">
                         <Lock class="w-4 h-4 text-gray-400" />
                         <h2 class="font-semibold text-gray-900 dark:text-white text-sm">Password</h2>
                     </div>
                     <form @submit.prevent="passwordForm.put(route('settings.password'), { onSuccess: () => passwordForm.reset() })" class="p-6 space-y-4">
                         <div>
-                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Current password</label>
-                            <input v-model="passwordForm.current_password" type="password" autocomplete="current-password" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" />
-                            <p v-if="passwordForm.errors.current_password" class="text-red-500 text-xs mt-1">{{ passwordForm.errors.current_password }}</p>
+                            <label class="ui-label">Current password</label>
+                            <input v-model="passwordForm.current_password" type="password" autocomplete="current-password" class="ui-input" />
+                            <p v-if="passwordForm.errors.current_password" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ passwordForm.errors.current_password }}</p>
                         </div>
                         <div class="grid sm:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">New password</label>
-                                <input v-model="passwordForm.password" type="password" autocomplete="new-password" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" />
-                                <p v-if="passwordForm.errors.password" class="text-red-500 text-xs mt-1">{{ passwordForm.errors.password }}</p>
+                                <label class="ui-label">New password</label>
+                                <input v-model="passwordForm.password" type="password" autocomplete="new-password" class="ui-input" />
+                                <p v-if="passwordForm.errors.password" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ passwordForm.errors.password }}</p>
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Confirm password</label>
-                                <input v-model="passwordForm.password_confirmation" type="password" autocomplete="new-password" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" />
+                                <label class="ui-label">Confirm password</label>
+                                <input v-model="passwordForm.password_confirmation" type="password" autocomplete="new-password" class="ui-input" />
                             </div>
                         </div>
                         <div class="flex justify-end">
-                            <button type="submit" :disabled="passwordForm.processing" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors">
+                            <button type="submit" :disabled="passwordForm.processing" class="ui-btn ui-btn-primary px-4 py-2">
                                 Update password
                             </button>
                         </div>
@@ -172,7 +172,7 @@ function clearApiKey() {
                 </section>
 
                 <!-- Two-Factor Authentication -->
-                <section class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+                <section class="ui-card overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <ShieldCheck class="w-4 h-4 text-gray-400" />
@@ -207,11 +207,11 @@ function clearApiKey() {
                                     inputmode="numeric"
                                     maxlength="6"
                                     placeholder="000000"
-                                    class="w-full px-3 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-sm text-center tracking-[0.5em] font-mono outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                                    class="ui-input py-3 text-center tracking-[0.5em] font-mono"
                                     :class="totpForm.errors.code ? 'border-red-400' : ''"
                                 />
                                 <p v-if="totpForm.errors.code" class="text-red-500 text-xs text-center">{{ totpForm.errors.code }}</p>
-                                <button type="submit" :disabled="totpForm.processing || totpForm.code.length < 6" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors">
+                                <button type="submit" :disabled="totpForm.processing || totpForm.code.length < 6" class="ui-btn ui-btn-primary w-full">
                                     Activate two-factor authentication
                                 </button>
                             </form>
@@ -239,20 +239,20 @@ function clearApiKey() {
                             <p class="text-sm text-gray-600 dark:text-gray-400">Two-factor authentication is active. Your account is protected with TOTP authentication.</p>
                             <form @submit.prevent="disableForm.post(route('settings.two-factor.disable'))">
                                 <div class="flex gap-3">
-                                    <input v-model="disableForm.password" type="password" placeholder="Confirm with your password" class="flex-1 px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition" />
+                                    <input v-model="disableForm.password" type="password" placeholder="Confirm with your password" class="ui-input flex-1 focus:ring-2 focus:ring-red-500 focus:border-red-500" />
                                     <button type="submit" :disabled="disableForm.processing" class="px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors flex items-center gap-2">
                                         <ShieldOff class="w-4 h-4" />
                                         Disable
                                     </button>
                                 </div>
-                                <p v-if="disableForm.errors.password" class="text-red-500 text-xs mt-1">{{ disableForm.errors.password }}</p>
+                                <p v-if="disableForm.errors.password" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ disableForm.errors.password }}</p>
                             </form>
                         </div>
 
                         <!-- 2FA disabled state -->
                         <div v-else>
                             <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Add an extra layer of security to your account. You'll need an authenticator app like Google Authenticator or Authy.</p>
-                            <Link :href="route('settings.two-factor.init')" method="post" as="button" class="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors">
+                            <Link :href="route('settings.two-factor.init')" method="post" as="button" class="ui-btn ui-btn-primary">
                                 <ShieldCheck class="w-4 h-4" />
                                 Enable two-factor authentication
                             </Link>
@@ -261,11 +261,11 @@ function clearApiKey() {
                 </section>
 
                 <!-- Passkeys -->
-                <section class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+                <section class="ui-card overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3">
                         <Fingerprint class="w-4 h-4 text-gray-400" />
                         <h2 class="font-semibold text-gray-900 dark:text-white text-sm">Passkeys</h2>
-                        <span class="ml-auto text-xs text-gray-400">{{ passkeys.length }} registered</span>
+                        <span class="ml-auto text-xs text-gray-500 dark:text-gray-400">{{ passkeys.length }} registered</span>
                     </div>
                     <div class="p-6 space-y-4">
                         <!-- Existing passkeys -->
@@ -275,7 +275,7 @@ function clearApiKey() {
                                     <Key class="w-4 h-4 text-gray-400" />
                                     <div>
                                         <p class="text-sm font-medium text-gray-900 dark:text-white">{{ pk.name }}</p>
-                                        <p class="text-xs text-gray-400">Added {{ pk.created_at }} <span v-if="pk.last_used_at">· Last used {{ pk.last_used_at }}</span></p>
+                                        <p class="ui-help">Added {{ pk.created_at }} <span v-if="pk.last_used_at">· Last used {{ pk.last_used_at }}</span></p>
                                     </div>
                                 </div>
                                 <button @click="deletePasskey(pk.id)" class="p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors">
@@ -293,12 +293,12 @@ function clearApiKey() {
                                     @keydown.enter="registerPasskey"
                                     type="text"
                                     placeholder="Name this passkey (e.g. MacBook)"
-                                    class="flex-1 px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                                    class="ui-input flex-1"
                                 />
                                 <button
                                     @click="registerPasskey"
                                     :disabled="passkeyLoading || !passkeyName.trim()"
-                                    class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors flex items-center gap-2"
+                                    class="ui-btn ui-btn-primary"
                                 >
                                     <Loader2 v-if="passkeyLoading" class="w-4 h-4 animate-spin" />
                                     <Plus v-else class="w-4 h-4" />
@@ -307,12 +307,12 @@ function clearApiKey() {
                             </div>
                             <p v-if="passkeyError" class="text-red-500 text-xs">{{ passkeyError }}</p>
                         </div>
-                        <p v-else class="text-sm text-gray-400">Passkeys are not supported in this browser.</p>
+                        <p v-else class="text-sm text-gray-500 dark:text-gray-400">Passkeys are not supported in this browser.</p>
                     </div>
                 </section>
 
                 <!-- API Integrations -->
-                <section class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+                <section class="ui-card overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <Plug class="w-4 h-4 text-gray-400" />
@@ -358,7 +358,7 @@ function clearApiKey() {
                             <form @submit.prevent="saveApiSettings" class="space-y-3">
                                 <!-- API Key -->
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                                    <label class="ui-label">
                                         {{ rtrConfigured ? 'Replace API key' : 'API key' }}
                                     </label>
                                     <div class="relative">
@@ -368,7 +368,7 @@ function clearApiKey() {
                                             :type="showApiKey ? 'text' : 'password'"
                                             :placeholder="rtrConfigured ? 'Enter new key to replace…' : 'ApiKey …'"
                                             autocomplete="off"
-                                            class="w-full pl-8 pr-10 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                                            class="ui-input pl-8 pr-10 font-mono"
                                         />
                                         <button
                                             type="button"
@@ -379,27 +379,27 @@ function clearApiKey() {
                                             <Eye v-else class="w-4 h-4" />
                                         </button>
                                     </div>
-                                    <p v-if="apiForm.errors.api_key" class="text-red-500 text-xs mt-1">{{ apiForm.errors.api_key }}</p>
+                                    <p v-if="apiForm.errors.api_key" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ apiForm.errors.api_key }}</p>
                                 </div>
 
                                 <!-- Base URL -->
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
-                                        IsProxy host <span class="text-gray-400 font-normal">(production: is.yoursrs.com · test: is.yoursrs-ote.com)</span>
+                                    <label class="ui-label">
+                                        IsProxy host <span class="ui-label-hint">(production: is.yoursrs.com · test: is.yoursrs-ote.com)</span>
                                     </label>
                                     <input
                                         v-model="apiForm.host"
                                         type="text"
-                                        class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                                        class="ui-input font-mono"
                                     />
-                                    <p v-if="apiForm.errors.host" class="text-red-500 text-xs mt-1">{{ apiForm.errors.host }}</p>
+                                    <p v-if="apiForm.errors.host" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ apiForm.errors.host }}</p>
                                 </div>
 
                                 <div class="flex justify-end pt-1">
                                     <button
                                         type="submit"
                                         :disabled="apiForm.processing || (!apiForm.api_key.trim() && apiForm.host === (rtrHost || 'is.yoursrs.com'))"
-                                        class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-colors"
+                                        class="ui-btn ui-btn-primary px-4 py-2"
                                     >
                                         Save
                                     </button>

@@ -126,11 +126,11 @@ async function copyTable() {
             </div>
 
             <!-- Input panel -->
-            <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 mb-6 shadow-sm">
+            <div class="ui-card p-6 mb-6">
                 <div class="flex flex-col sm:flex-row gap-6">
                     <!-- Textarea -->
                     <div class="flex-1">
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+                        <label class="ui-section-title block mb-2">
                             Domains <span class="normal-case font-normal">(one per line, max 100)</span>
                         </label>
                         <textarea
@@ -139,7 +139,7 @@ async function copyTable() {
                             placeholder="example.com&#10;google.nl&#10;github.com"
                             spellcheck="false"
                             autocomplete="off"
-                            class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white placeholder-gray-400 font-mono resize-y focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                            class="ui-input px-4 py-3 font-mono resize-y"
                         />
                         <p class="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
                             {{ parsedDomains.length }} domain{{ parsedDomains.length !== 1 ? 's' : '' }} detected
@@ -149,7 +149,7 @@ async function copyTable() {
                     <!-- Controls -->
                     <div class="sm:w-52 flex flex-col gap-4">
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+                            <label class="ui-section-title block mb-2">
                                 Record type
                             </label>
                             <div class="grid grid-cols-3 gap-1.5">
@@ -170,7 +170,7 @@ async function copyTable() {
                         <button
                             @click="runLookup"
                             :disabled="loading || !parsedDomains.length"
-                            class="mt-auto flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors shadow-sm shadow-indigo-600/20 text-sm"
+                            class="ui-btn ui-btn-primary mt-auto px-6 py-3"
                         >
                             <Loader2 v-if="loading" class="w-4 h-4 animate-spin" />
                             <Search v-else class="w-4 h-4" />
@@ -180,7 +180,7 @@ async function copyTable() {
                         <button
                             v-if="hasResults && !loading"
                             @click="reset"
-                            class="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-gray-200 dark:border-gray-700"
+                            class="ui-btn ui-btn-secondary px-6"
                         >
                             <X class="w-4 h-4" />
                             Clear results
@@ -257,31 +257,31 @@ async function copyTable() {
                     </div>
 
                     <!-- Table -->
-                    <div class="rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-900 shadow-sm">
+                    <div class="ui-card overflow-hidden">
                         <div class="overflow-x-auto">
                             <table class="w-full text-sm">
                                 <thead>
                                     <tr class="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/60">
-                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                        <th class="ui-section-title px-4 py-3 text-left whitespace-nowrap">
                                             Domain
                                         </th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                        <th class="ui-section-title px-4 py-3 text-left whitespace-nowrap">
                                             IP
                                         </th>
                                         <template v-if="showGeo">
-                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                            <th class="ui-section-title px-4 py-3 text-left whitespace-nowrap">
                                                 Country
                                             </th>
-                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                            <th class="ui-section-title px-4 py-3 text-left whitespace-nowrap">
                                                 Region
                                             </th>
-                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                            <th class="ui-section-title px-4 py-3 text-left whitespace-nowrap">
                                                 City
                                             </th>
-                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                            <th class="ui-section-title px-4 py-3 text-left whitespace-nowrap">
                                                 ISP
                                             </th>
-                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                            <th class="ui-section-title px-4 py-3 text-left whitespace-nowrap">
                                                 ASN
                                             </th>
                                         </template>

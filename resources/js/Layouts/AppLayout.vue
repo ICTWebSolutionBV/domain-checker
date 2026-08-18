@@ -36,13 +36,13 @@ onUnmounted(() => {
 <template>
     <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-200">
         <!-- Dot grid background -->
-        <div class="fixed inset-0 -z-10 pointer-events-none overflow-hidden bg-white dark:bg-gray-950" aria-hidden="true">
+        <div class="fixed inset-0 -z-10 pointer-events-none overflow-hidden bg-canvas" aria-hidden="true">
             <div class="absolute inset-0 dot-grid" />
-            <div class="absolute inset-x-0 bottom-0 h-96 bg-gradient-to-t from-white dark:from-gray-950 to-transparent" />
-            <div class="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white dark:from-gray-950 to-transparent" />
+            <div class="absolute inset-x-0 bottom-0 h-96 bg-gradient-to-t from-canvas to-transparent" />
+            <div class="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-canvas to-transparent" />
         </div>
         <!-- Navbar -->
-        <nav class="border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm sticky top-0 z-50">
+        <nav class="border-b border-hairline bg-white/85 dark:bg-gray-950/80 backdrop-blur-md sticky top-0 z-50 shadow-[0_1px_2px_0_rgb(15_23_42_/_0.04)] dark:shadow-none">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
                 <!-- Logo -->
                 <Link :href="route('home')" class="flex items-center gap-2.5 font-semibold text-gray-900 dark:text-white hover:opacity-80 transition-opacity">
@@ -126,7 +126,7 @@ onUnmounted(() => {
         <Transition enter-active-class="transition-transform duration-250 ease-out" enter-from-class="translate-x-full" enter-to-class="translate-x-0" leave-active-class="transition-transform duration-200 ease-in" leave-from-class="translate-x-0" leave-to-class="translate-x-full">
             <div v-if="menuOpen" class="fixed top-0 right-0 h-full w-72 bg-white dark:bg-gray-900 z-50 sm:hidden shadow-2xl flex flex-col">
                 <!-- Drawer header -->
-                <div class="flex items-center justify-between px-5 h-14 border-b border-gray-200 dark:border-gray-800 shrink-0">
+                <div class="flex items-center justify-between px-5 h-14 border-b border-hairline shrink-0">
                     <Link :href="route('home')" class="flex items-center gap-2.5 font-semibold text-gray-900 dark:text-white" @click="menuOpen = false">
                         <div class="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
                             <Globe class="w-4 h-4 text-white" />
@@ -218,10 +218,10 @@ onUnmounted(() => {
         </main>
 
         <!-- Footer -->
-        <footer class="border-t border-gray-200 dark:border-gray-800 mt-16">
+        <footer class="border-t border-hairline mt-16">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                <p class="text-center text-xs text-gray-400 dark:text-gray-600">
-                    &copy; {{ new Date().getFullYear() }} <a href="https://ictwebsolution.nl" target="_blank" rel="noopener noreferrer" class="hover:text-gray-600 dark:hover:text-gray-400 transition-colors">ICTWebSolution B.V.</a> — All Rights Reserved
+                <p class="text-center text-xs text-gray-500 dark:text-gray-600">
+                    &copy; {{ new Date().getFullYear() }} <a href="https://ictwebsolution.nl" target="_blank" rel="noopener noreferrer" class="font-medium hover:text-gray-900 dark:hover:text-gray-400 transition-colors">ICTWebSolution B.V.</a> — All Rights Reserved
                 </p>
             </div>
         </footer>

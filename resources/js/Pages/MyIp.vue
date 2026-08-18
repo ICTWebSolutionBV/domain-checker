@@ -170,7 +170,7 @@ onMounted(() => {
             </div>
 
             <!-- IP hero card -->
-            <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden shadow-sm">
+            <div class="ui-card overflow-hidden">
                 <div class="p-8 flex flex-col items-center text-center gap-5">
                     <!-- Flag -->
                     <span class="text-5xl leading-none">{{ countryFlag(result?.country_code) || '🌐' }}</span>
@@ -313,8 +313,8 @@ onMounted(() => {
             <div v-if="result && !result.private" class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
 
                 <!-- Location -->
-                <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-                    <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">
+                <div class="ui-card p-5">
+                    <div class="ui-section-title flex items-center gap-2 mb-4">
                         <MapPin class="w-4 h-4" /> Location
                     </div>
                     <dl class="space-y-2.5 text-sm">
@@ -322,7 +322,7 @@ onMounted(() => {
                             <dt class="text-gray-500 dark:text-gray-400">Country</dt>
                             <dd class="text-gray-900 dark:text-white text-right font-medium">
                                 {{ result.country || '—' }}
-                                <span v-if="result.country_code" class="text-gray-400">({{ result.country_code }})</span>
+                                <span v-if="result.country_code" class="text-gray-500 dark:text-gray-400">({{ result.country_code }})</span>
                             </dd>
                         </div>
                         <div class="flex justify-between gap-4">
@@ -349,8 +349,8 @@ onMounted(() => {
                 </div>
 
                 <!-- Network -->
-                <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-                    <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">
+                <div class="ui-card p-5">
+                    <div class="ui-section-title flex items-center gap-2 mb-4">
                         <Network class="w-4 h-4" /> Network
                     </div>
                     <dl class="space-y-2.5 text-sm">
@@ -394,8 +394,8 @@ onMounted(() => {
 
             <!-- Browser info (client-side) -->
             <div v-if="browserInfo" class="mt-4">
-                <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-                    <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">
+                <div class="ui-card p-5">
+                    <div class="ui-section-title flex items-center gap-2 mb-4">
                         <Monitor class="w-4 h-4" /> Your Device &amp; Browser
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -440,7 +440,7 @@ onMounted(() => {
             </div>
 
             <!-- Info note -->
-            <div class="mt-8 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 p-5 text-sm text-gray-600 dark:text-gray-400">
+            <div class="mt-8 ui-panel-muted dark:bg-gray-900/50 rounded-2xl p-5 text-sm text-gray-600 dark:text-gray-400">
                 <p class="font-medium text-gray-900 dark:text-white mb-1.5">How this works</p>
                 <p>
                     Your IP address is detected from your HTTP request and looked up using

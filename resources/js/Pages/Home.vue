@@ -387,18 +387,18 @@ function statusConfig(status) {
                 Find your perfect<br>
                 <span class="text-indigo-600 dark:text-indigo-400">domain name</span>
             </h1>
-            <p class="text-gray-500 dark:text-gray-400 text-lg mb-6">
+            <p class="text-gray-600 dark:text-gray-400 text-lg mb-6">
                 Check availability across {{ popularTlds.length }}+ extensions instantly
             </p>
 
             <!-- Mode toggle -->
-            <div class="flex items-center justify-center gap-2 mb-6">
+            <div class="ui-surface-light inline-flex items-center justify-center gap-1 mb-6 p-1 rounded-2xl">
                 <button
                     @click="switchMode('single')"
                     class="px-4 py-2 rounded-xl text-sm font-medium transition-colors"
                     :class="mode === 'single'
                         ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
-                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'"
                 >
                     Single domain
                 </button>
@@ -407,7 +407,7 @@ function statusConfig(status) {
                     class="px-4 py-2 rounded-xl text-sm font-medium transition-colors"
                     :class="mode === 'bulk'
                         ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
-                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'"
                 >
                     Bulk check
                 </button>
@@ -471,13 +471,13 @@ function statusConfig(status) {
                             placeholder="YourDomainName"
                             autocomplete="off"
                             spellcheck="false"
-                            class="w-full pl-10 pr-4 py-3.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-2xl text-base text-gray-900 dark:text-white placeholder-gray-400 outline-none transition focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-sm"
+                            class="ui-input pl-10 pr-4 py-3.5 rounded-2xl text-base shadow-card dark:bg-gray-900"
                         />
                     </div>
                     <button
                         @click="handleCheck"
                         :disabled="isChecking || !domainInput.trim()"
-                        class="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-2xl transition-colors text-sm shadow-sm shadow-indigo-600/20 flex items-center gap-2 whitespace-nowrap"
+                        class="ui-btn ui-btn-primary px-6 py-3.5 rounded-2xl"
                     >
                         <Loader2 v-if="isChecking" class="w-4 h-4 animate-spin" />
                         <Search v-else class="w-4 h-4" />
@@ -491,8 +491,8 @@ function statusConfig(status) {
                         @click="selectedGroup = 'popular'"
                         class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                         :class="selectedGroup === 'popular'
-                            ? 'bg-indigo-600 text-white'
-                            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
+                            ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'"
                     >
                         Popular ({{ popularTlds.length }})
                     </button>
@@ -501,8 +501,8 @@ function statusConfig(status) {
                         :disabled="loadingAllTlds"
                         class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5"
                         :class="selectedGroup === 'all'
-                            ? 'bg-indigo-600 text-white'
-                            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
+                            ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'"
                     >
                         <Loader2 v-if="loadingAllTlds" class="w-3 h-3 animate-spin" />
                         All extensions {{ allTldsData.length > 0 ? `(${allTldsData.length})` : '' }}
@@ -510,7 +510,7 @@ function statusConfig(status) {
                     <button
                         v-if="hasResults"
                         @click="handleReset"
-                        class="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        class="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                     >
                         Clear
                     </button>
@@ -625,7 +625,7 @@ function statusConfig(status) {
             </div>
 
             <!-- 3-column list grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-0">
+            <div class="ui-surface-light rounded-2xl p-2 sm:p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-0">
                 <div
                     v-for="(entry, index) in filteredEntries"
                     :key="entry.tld"
@@ -707,7 +707,7 @@ function statusConfig(status) {
             </div>
 
             <!-- 3-column list grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-0">
+            <div class="ui-surface-light rounded-2xl p-2 sm:p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-0">
                 <div
                     v-for="entry in bulkResultEntries"
                     :key="entry.domain"
@@ -761,7 +761,7 @@ function statusConfig(status) {
                     <div class="font-mono text-xs text-gray-500">.{{ tld }}</div>
                 </div>
             </div>
-            <p class="text-sm text-gray-400 dark:text-gray-500">Enter a domain name above to check availability</p>
+            <p class="text-sm text-gray-500 dark:text-gray-500">Enter a domain name above to check availability</p>
         </div>
 
         <!-- Sticky clipboard bar -->
@@ -775,10 +775,10 @@ function statusConfig(status) {
         >
             <div v-if="selectedList.length > 0" class="fixed bottom-0 inset-x-0 z-50 p-4">
                 <!-- Hint line -->
-                <p class="text-center text-xs text-gray-400 dark:text-gray-500 mb-2 hidden sm:block">
+                <p class="text-center text-xs font-medium text-gray-600 dark:text-gray-500 mb-2 hidden sm:block">
                     Fill in your registration details so we can process your order
                 </p>
-                <div class="max-w-2xl mx-auto bg-gray-900 dark:bg-gray-800 border border-gray-700 dark:border-gray-600 rounded-2xl shadow-2xl shadow-black/30 px-4 py-3 flex items-center gap-3">
+                <div class="max-w-2xl mx-auto bg-gray-900 dark:bg-gray-800 border border-gray-700 dark:border-gray-600 rounded-2xl shadow-overlay px-4 py-3 flex items-center gap-3">
                     <div class="flex items-center gap-2 flex-1 min-w-0">
                         <ClipboardList class="w-4 h-4 text-indigo-400 shrink-0" />
                         <span class="text-sm font-medium text-white">
@@ -793,7 +793,7 @@ function statusConfig(status) {
                     </button>
                     <button
                         @click="openModal"
-                        class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-colors"
+                        class="ui-btn ui-btn-primary px-4 py-2 focus-visible:ring-offset-gray-900"
                         title="Fill in registration details and copy to clipboard"
                     >
                         <Copy class="w-4 h-4" />
@@ -817,31 +817,30 @@ function statusConfig(status) {
                 <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeModal" />
 
                 <!-- Modal panel -->
-                <div class="relative w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="relative w-full max-w-lg bg-surface rounded-2xl shadow-overlay border border-hairline dark:border-gray-700 overflow-hidden max-h-[90vh] flex flex-col">
 
                     <!-- Header -->
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800 shrink-0">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-hairline shrink-0">
                         <div class="flex items-center gap-2.5">
                             <div class="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg flex items-center justify-center">
                                 <ClipboardList class="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                             </div>
                             <div>
                                 <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Fill in details and request</h2>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Add your details so we can process your order</p>
+                                <p class="ui-help">Add your details so we can process your order</p>
                             </div>
                         </div>
                         <div class="flex items-center gap-1">
                             <button
                                 @click="showModalHelp = !showModalHelp"
-                                class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border rounded-lg transition-colors"
-                                :class="showModalHelp
-                                    ? 'border-indigo-400 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30'
-                                    : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400'"
+                                class="ui-btn ui-btn-sm px-2.5 py-1.5 font-medium"
+                                :class="showModalHelp ? 'ui-btn-accent' : 'ui-btn-secondary'"
                             >
                                 <HelpCircle class="w-3.5 h-3.5" />
-                                How does this work?
+                                <span class="hidden sm:inline">How does this work?</span>
+                                <span class="sr-only sm:hidden">How does this work?</span>
                             </button>
-                            <button @click="closeModal" class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                            <button @click="closeModal" class="ui-icon-btn" aria-label="Close">
                                 <X class="w-4 h-4" />
                             </button>
                         </div>
@@ -857,26 +856,26 @@ function statusConfig(status) {
                         leave-to-class="max-h-0 opacity-0"
                     >
                         <div v-if="showModalHelp" class="px-6 py-4 bg-indigo-50 dark:bg-indigo-950/30 border-b border-indigo-100 dark:border-indigo-900">
-                            <p class="text-xs font-semibold text-indigo-700 dark:text-indigo-400 uppercase tracking-wide mb-3">How to order domains</p>
+                            <p class="ui-section-title text-indigo-700 dark:text-indigo-400 mb-3">How to order domains</p>
                             <ol class="space-y-2">
-                                <li class="flex items-start gap-2 text-xs text-indigo-700 dark:text-indigo-300">
-                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">1</span>
+                                <li class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
+                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">1</span>
                                     <span>Search for a domain name and check availability across extensions.</span>
                                 </li>
-                                <li class="flex items-start gap-2 text-xs text-indigo-700 dark:text-indigo-300">
-                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">2</span>
+                                <li class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
+                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">2</span>
                                     <span>Tick the domains you want to order — they'll appear in the bar at the bottom.</span>
                                 </li>
-                                <li class="flex items-start gap-2 text-xs text-indigo-700 dark:text-indigo-300">
-                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">3</span>
+                                <li class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
+                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">3</span>
                                     <span>Click <strong class="font-semibold">Fill in details and request</strong> to open this panel and fill in your registration details.</span>
                                 </li>
-                                <li class="flex items-start gap-2 text-xs text-indigo-700 dark:text-indigo-300">
-                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">4</span>
+                                <li class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
+                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">4</span>
                                     <span>Click <strong class="font-semibold">Copy to clipboard</strong> at the bottom — your domain list and details are now on your clipboard.</span>
                                 </li>
-                                <li class="flex items-start gap-2 text-xs text-indigo-700 dark:text-indigo-300">
-                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">5</span>
+                                <li class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
+                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">5</span>
                                     <span>Paste it into an email, WhatsApp, or chat message and send it to your provider to place the order.</span>
                                 </li>
                             </ol>
@@ -885,8 +884,8 @@ function statusConfig(status) {
 
                     <div class="overflow-y-auto flex-1">
                         <!-- Selected domains -->
-                        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-800">
-                            <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">Selected domains</p>
+                        <div class="px-6 py-4 border-b border-hairline">
+                            <p class="ui-section-title mb-2.5">Selected domains</p>
                             <div class="flex flex-wrap gap-2">
                                 <span
                                     v-for="domain in selectedList"
@@ -901,84 +900,84 @@ function statusConfig(status) {
 
                         <!-- Registration details form -->
                         <div class="px-6 py-5 space-y-5">
-                            <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Registration details <span class="normal-case font-normal">(required — added to clipboard)</span></p>
+                            <p class="ui-section-title">Registration details <span class="normal-case font-normal">(required — added to clipboard)</span></p>
 
                             <!-- Existing account -->
-                            <div class="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4">
-                                <label class="block text-sm font-semibold text-indigo-700 dark:text-indigo-400 mb-0.5">Existing account <span class="font-normal text-indigo-400">(optional)</span></label>
-                                <p class="text-xs text-indigo-500 dark:text-indigo-400 mb-3">Already a customer? Enter your name or company so we link this to the right account.</p>
+                            <div class="ui-accent-panel p-4">
+                                <label class="block ui-accent-title mb-0.5">Existing account <span class="font-normal text-indigo-600/70 dark:text-indigo-500">(optional)</span></label>
+                                <p class="ui-accent-help mb-3">Already a customer? Enter your name or company so we link this to the right account.</p>
                                 <div class="relative">
-                                    <UserCircle class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-400" />
-                                    <input v-model="reg.existingAccount" type="text" placeholder="e.g. John Doe or Example Company" class="w-full pl-9 pr-3 py-2.5 text-sm bg-white dark:bg-gray-900 border border-indigo-300 dark:border-indigo-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                    <UserCircle class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-500 dark:text-indigo-400 pointer-events-none" />
+                                    <input v-model="reg.existingAccount" type="text" placeholder="e.g. John Doe or Example Company" class="ui-input ui-input-accent pl-9" />
                                 </div>
                             </div>
 
                             <!-- Personal & company -->
                             <div class="space-y-3">
-                                <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Contact details</p>
+                                <p class="ui-section-title">Contact details</p>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Company name <span class="font-normal text-gray-400">(optional)</span></label>
+                                    <label class="ui-label text-sm">Company name <span class="ui-label-hint">(optional)</span></label>
                                     <div class="relative">
-                                        <Building2 class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                        <input v-model="reg.companyName" type="text" placeholder="Example Company" class="w-full pl-9 pr-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                        <Building2 class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                        <input v-model="reg.companyName" type="text" placeholder="Example Company" class="ui-input pl-9" />
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">First name</label>
-                                        <input v-model="reg.firstName" type="text" placeholder="John" class="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                        <label class="ui-label text-sm">First name</label>
+                                        <input v-model="reg.firstName" type="text" placeholder="John" class="ui-input" />
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Last name</label>
-                                        <input v-model="reg.lastName" type="text" placeholder="Doe" class="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                        <label class="ui-label text-sm">Last name</label>
+                                        <input v-model="reg.lastName" type="text" placeholder="Doe" class="ui-input" />
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Phone number</label>
-                                    <input v-model="reg.phone" type="tel" placeholder="+31 6 12345678" class="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                    <label class="ui-label text-sm">Phone number</label>
+                                    <input v-model="reg.phone" type="tel" placeholder="+31 6 12345678" class="ui-input" />
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
-                                    <input v-model="reg.email" type="email" placeholder="john@example.com" class="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                    <label class="ui-label text-sm">Email</label>
+                                    <input v-model="reg.email" type="email" placeholder="john@example.com" class="ui-input" />
                                 </div>
                             </div>
 
                             <!-- Address -->
                             <div class="space-y-3">
-                                <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Address</p>
+                                <p class="ui-section-title">Address</p>
                                 <div class="grid grid-cols-3 gap-3">
                                     <div class="col-span-2">
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Street</label>
-                                        <input v-model="reg.street" type="text" placeholder="Kerkstraat" class="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                        <label class="ui-label text-sm">Street</label>
+                                        <input v-model="reg.street" type="text" placeholder="Kerkstraat" class="ui-input" />
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">House no.</label>
-                                        <input v-model="reg.houseNumber" type="text" placeholder="42A" class="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                        <label class="ui-label text-sm">House no.</label>
+                                        <input v-model="reg.houseNumber" type="text" placeholder="42A" class="ui-input" />
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Postal code</label>
-                                        <input v-model="reg.postalCode" type="text" placeholder="1234 AB" class="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                        <label class="ui-label text-sm">Postal code</label>
+                                        <input v-model="reg.postalCode" type="text" placeholder="1234 AB" class="ui-input" />
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">City</label>
-                                        <input v-model="reg.city" type="text" placeholder="Amsterdam" class="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                        <label class="ui-label text-sm">City</label>
+                                        <input v-model="reg.city" type="text" placeholder="Amsterdam" class="ui-input" />
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Business IDs -->
                             <div class="space-y-3">
-                                <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Business <span class="normal-case font-normal">(optional)</span></p>
+                                <p class="ui-section-title">Business <span class="normal-case font-normal">(optional)</span></p>
                                 <div class="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">KVK</label>
-                                        <input v-model="reg.kvk" type="text" placeholder="12345678" class="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                        <label class="ui-label text-sm">KVK</label>
+                                        <input v-model="reg.kvk" type="text" placeholder="12345678" class="ui-input" />
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">VAT ID</label>
-                                        <input v-model="reg.vatId" type="text" placeholder="NL123456789B01" class="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                        <label class="ui-label text-sm">VAT ID</label>
+                                        <input v-model="reg.vatId" type="text" placeholder="NL123456789B01" class="ui-input" />
                                     </div>
                                 </div>
                             </div>
@@ -986,12 +985,12 @@ function statusConfig(status) {
                     </div>
 
                     <!-- Footer -->
-                    <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 shrink-0 flex items-center justify-between gap-3">
-                        <p class="text-xs text-gray-400">Fields left empty are omitted from the clipboard.</p>
+                    <div class="px-6 py-4 border-t border-hairline bg-gray-50/80 dark:bg-gray-900 shrink-0 flex items-center justify-between gap-3">
+                        <p class="ui-help">Fields left empty are omitted from the clipboard.</p>
                         <button
                             @click="copyToClipboard"
-                            class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shrink-0"
-                            :class="copied ? 'bg-emerald-600 text-white' : 'bg-indigo-600 hover:bg-indigo-500 text-white'"
+                            class="ui-btn shrink-0"
+                            :class="copied ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'ui-btn-primary'"
                         >
                             <Check v-if="copied" class="w-4 h-4" />
                             <Copy v-else class="w-4 h-4" />

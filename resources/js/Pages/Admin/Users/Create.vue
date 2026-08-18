@@ -34,48 +34,48 @@ const submit = () => {
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Create User</h1>
                 </div>
 
-                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
+                <div class="ui-card rounded-xl p-6">
                     <form @submit.prevent="submit" class="space-y-4">
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">First Name</label>
+                                <label class="ui-label text-sm mb-1">First Name</label>
                                 <input v-model="form.first_name" type="text" required
-                                    class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" />
-                                <p v-if="form.errors.first_name" class="text-red-500 text-xs mt-1">{{ form.errors.first_name }}</p>
+                                    class="ui-input" />
+                                <p v-if="form.errors.first_name" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ form.errors.first_name }}</p>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Name <span class="text-gray-400 font-normal">(optional)</span></label>
+                                <label class="ui-label text-sm mb-1">Last Name <span class="ui-label-hint">(optional)</span></label>
                                 <input v-model="form.last_name" type="text"
-                                    class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" />
+                                    class="ui-input" />
                             </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                            <label class="ui-label text-sm mb-1">Email</label>
                             <input v-model="form.email" type="email" required
-                                class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" />
-                            <p v-if="form.errors.email" class="text-red-500 text-xs mt-1">{{ form.errors.email }}</p>
+                                class="ui-input" />
+                            <p v-if="form.errors.email" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ form.errors.email }}</p>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                            <label class="ui-label text-sm mb-1">Password</label>
                             <input v-model="form.password" type="password" required
-                                class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" />
-                            <p v-if="form.errors.password" class="text-red-500 text-xs mt-1">{{ form.errors.password }}</p>
+                                class="ui-input" />
+                            <p v-if="form.errors.password" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ form.errors.password }}</p>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm Password</label>
+                            <label class="ui-label text-sm mb-1">Confirm Password</label>
                             <input v-model="form.password_confirmation" type="password" required
-                                class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" />
+                                class="ui-input" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
+                            <label class="ui-label text-sm mb-1">Role</label>
                             <select v-model="form.role"
-                                class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                                class="ui-input">
                                 <option v-for="r in assignableRoles" :key="r" :value="r">{{ roleLabel(r) }}</option>
                             </select>
                         </div>
                         <div class="flex gap-3 pt-2">
                             <button type="submit" :disabled="form.processing"
-                                class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors text-sm disabled:opacity-50">
+                                class="ui-btn ui-btn-primary">
                                 Create User
                             </button>
                             <Link :href="route('admin.users.index')"

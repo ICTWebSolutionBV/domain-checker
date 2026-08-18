@@ -21,6 +21,24 @@ _Nothing yet._
 
 ---
 
+## [1.11.0] — 2026-08-18
+
+Light-mode design-system pass. Dark mode intentionally unchanged.
+
+### Changed
+- **Light theme reworked into a proper surface hierarchy.** The application background is now a soft cool neutral (`--color-canvas`) instead of pure white, so white cards, panels and modals visibly sit *on* the page rather than dissolving into it. Dark mode keeps its current values — the default Tailwind gray ramp is restored on `:root.dark`, and every new token has a dark counterpart.
+- **Semantic design tokens** added in `resources/css/app.css`: `canvas`, `surface`, `surface-muted`, `field`, `hairline`, `field-line`, plus `shadow-card` / `shadow-card-hover` / `shadow-overlay`. They resolve per theme, so `bg-surface`, `border-hairline` etc. work in both.
+- **Shared component classes** replace the repeated utility strings across every page: `.ui-card`, `.ui-card-header`, `.ui-panel-muted`, `.ui-surface-light`, `.ui-label`, `.ui-help`, `.ui-section-title`, `.ui-input`, `.ui-field-shell`, `.ui-chip`, `.ui-accent-panel` / `.ui-accent-title` / `.ui-accent-help` / `.ui-input-accent`, `.ui-btn` (+ `primary`, `secondary`, `ghost`, `accent`, `danger`, `sm`) and `.ui-icon-btn` / `.ui-icon-btn-danger`.
+- **Form controls** are now white in light mode with a clear `slate-300`-level resting border, a hover border step and an indigo focus border + ring, instead of gray fills with near-invisible borders. Placeholders stay lighter; disabled states are explicit.
+- **Light-mode typography contrast** raised app-wide by retuning the light half of the neutral ramp (cooler, darker at 400–700). Labels, helper text, section headings and the footer all clear WCAG AA at their sizes.
+- **`/transfer`**: wider intentional content column (`max-w-5xl`), card headers separated from card bodies, section headings with subtle rules, refined domain chip field, first-class "Existing account" panel, consistent field spacing and single-column stacking for address fields on mobile.
+- **Registration modal** (domain checker): same tokens as the full page — stronger section headings, matching input treatment, distinct sticky footer band, unchanged behaviour.
+- **Domain results** now sit on a light-mode card; the single/bulk mode toggle became a segmented control in light mode. Both are transparent in dark mode, exactly as before.
+
+No behavioural changes: validation, clipboard, API calls, routing, auth and domain grouping are untouched.
+
+---
+
 ## [1.10.2] — 2026-08-04
 
 No user-facing behaviour changes. Maintenance release covering two fresh Guzzle

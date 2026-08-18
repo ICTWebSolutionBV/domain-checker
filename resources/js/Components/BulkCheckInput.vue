@@ -45,7 +45,7 @@ function handleKeydown(e) {
             placeholder="example.com&#10;mysite.nl&#10;coolbrand.io"
             autocomplete="off"
             spellcheck="false"
-            class="w-full px-4 py-3.5 font-mono text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 outline-none transition focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-sm resize-none"
+            class="ui-input px-4 py-3.5 rounded-2xl font-mono shadow-card resize-none dark:bg-gray-900"
         />
         <div class="flex items-center justify-between mt-2">
             <p class="text-xs text-gray-400 dark:text-gray-500">
@@ -65,7 +65,7 @@ function handleKeydown(e) {
         <button
             @click="handleCheck"
             :disabled="isChecking || !parsedDomains.length"
-            class="mt-3 w-full px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-2xl transition-colors text-sm shadow-sm shadow-indigo-600/20 flex items-center justify-center gap-2"
+            class="ui-btn ui-btn-primary mt-3 w-full px-6 py-3.5 rounded-2xl"
         >
             <Loader2 v-if="isChecking" class="w-4 h-4 animate-spin" />
             <Search v-else class="w-4 h-4" />

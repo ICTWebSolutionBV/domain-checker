@@ -207,26 +207,24 @@ const showPreview = ref(false)
     <AppLayout>
         <Head title="Transfer domains" />
 
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-12 pb-20">
 
             <!-- Hero -->
-            <div class="text-center mb-10">
+            <div class="text-center mb-8 sm:mb-10">
                 <div class="inline-flex items-center justify-center w-12 h-12 bg-indigo-100 dark:bg-indigo-900/40 rounded-2xl mb-4">
                     <ArrowRightLeft class="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight mb-3">
                     Transfer domains to us
                 </h1>
-                <p class="text-sm text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed mb-4">
+                <p class="text-sm text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed mb-5">
                     Add the domains you want to transfer, fill in the owner details once per group, and copy everything to your clipboard in one click.
                 </p>
                 <!-- How it works toggle -->
                 <button
                     @click="showHelp = !showHelp"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border rounded-lg transition-colors"
-                    :class="showHelp
-                        ? 'border-indigo-400 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30'
-                        : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400'"
+                    class="ui-btn ui-btn-sm font-medium"
+                    :class="showHelp ? 'ui-btn-accent' : 'ui-btn-secondary'"
                 >
                     <Info class="w-3.5 h-3.5" />
                     {{ showHelp ? 'Hide instructions' : 'How does this work?' }}
@@ -243,23 +241,23 @@ const showPreview = ref(false)
                     leave-from-class="max-h-96 opacity-100"
                     leave-to-class="max-h-0 opacity-0"
                 >
-                    <div v-if="showHelp" class="mt-4 text-left max-w-lg mx-auto bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900 rounded-2xl px-5 py-4">
-                        <p class="text-xs font-semibold text-indigo-700 dark:text-indigo-400 uppercase tracking-wide mb-3">How to transfer domains</p>
-                        <ol class="space-y-2">
-                            <li class="flex items-start gap-2 text-xs text-indigo-700 dark:text-indigo-300">
-                                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">1</span>
+                    <div v-if="showHelp" class="mt-5 text-left max-w-xl mx-auto ui-accent-panel rounded-2xl px-5 py-4">
+                        <p class="ui-section-title text-indigo-700 dark:text-indigo-400 mb-3">How to transfer domains</p>
+                        <ol class="space-y-2.5">
+                            <li class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
+                                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">1</span>
                                 <span>Add the domain names you want to transfer to the list below.</span>
                             </li>
-                            <li class="flex items-start gap-2 text-xs text-indigo-700 dark:text-indigo-300">
-                                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">2</span>
+                            <li class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
+                                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">2</span>
                                 <span>Fill in the current owner's details. Use separate groups if different domains have different owners.</span>
                             </li>
-                            <li class="flex items-start gap-2 text-xs text-indigo-700 dark:text-indigo-300">
-                                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">3</span>
+                            <li class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
+                                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">3</span>
                                 <span>Click <strong class="font-semibold">Fill in details and request</strong> — everything is copied to your clipboard.</span>
                             </li>
-                            <li class="flex items-start gap-2 text-xs text-indigo-700 dark:text-indigo-300">
-                                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">4</span>
+                            <li class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
+                                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">4</span>
                                 <span>Paste it into an email, WhatsApp, or chat message and send it to your provider to start the transfer.</span>
                             </li>
                         </ol>
@@ -268,57 +266,60 @@ const showPreview = ref(false)
             </div>
 
             <!-- Requester card -->
-            <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-6 shadow-sm">
-                <div class="flex items-center gap-2 mb-4">
-                    <UserCircle class="w-4 h-4 text-indigo-500" />
-                    <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Your details <span class="font-normal text-gray-400">(optional — included at the top of the copied request)</span></h2>
+            <div class="ui-card mb-5 overflow-hidden">
+                <div class="ui-card-header flex items-center gap-2 px-5 py-3.5">
+                    <UserCircle class="w-4 h-4 text-indigo-500 shrink-0" />
+                    <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Your details</h2>
+                    <span class="text-xs text-gray-500 dark:text-gray-500 truncate">(optional — included at the top of the copied request)</span>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Your name</label>
-                        <input v-model="requesterName" type="text" placeholder="John Doe" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                <div class="p-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="ui-label">Your name</label>
+                            <input v-model="requesterName" type="text" placeholder="John Doe" class="ui-input" />
+                        </div>
+                        <div>
+                            <label class="ui-label">Reply-to email</label>
+                            <input v-model="requesterEmail" type="email" placeholder="john@example.com" class="ui-input" />
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Reply-to email</label>
-                        <input v-model="requesterEmail" type="email" placeholder="john@example.com" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                    <div class="mt-4">
+                        <label class="ui-label">Message <span class="ui-label-hint">(optional)</span></label>
+                        <textarea v-model="requesterNote" rows="2" placeholder="Anything we should know about these transfers — e.g. preferred go-live date." class="ui-input resize-y"></textarea>
                     </div>
-                </div>
-                <div class="mt-3">
-                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Message <span class="text-gray-400">(optional)</span></label>
-                    <textarea v-model="requesterNote" rows="2" placeholder="Anything we should know about these transfers — e.g. preferred go-live date." class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y"></textarea>
                 </div>
             </div>
 
             <!-- Repeater of blocks -->
-            <div class="space-y-3">
+            <div class="space-y-4">
                 <div
                     v-for="(block, i) in blocks"
                     :key="i"
-                    class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden"
+                    class="ui-card overflow-hidden"
                 >
                     <!-- Header bar -->
-                    <div class="flex items-center justify-between gap-3 px-5 py-3 border-b border-gray-100 dark:border-gray-800">
-                        <div class="flex items-center gap-2 flex-1 min-w-0">
-                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 text-xs font-semibold shrink-0">
+                    <div class="ui-card-header flex items-center justify-between gap-3 px-4 sm:px-5 py-3">
+                        <div class="flex items-center gap-2.5 flex-1 min-w-0">
+                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 text-xs font-semibold shrink-0">
                                 {{ i + 1 }}
                             </span>
 
                             <!-- Editable label — looks like a real input so it's obvious you can rename it -->
                             <label
-                                class="group flex items-center gap-1.5 flex-1 min-w-0 px-2 py-1 -mx-2 -my-1 rounded-md border border-dashed border-gray-300 dark:border-gray-700 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/20 focus-within:border-indigo-500 focus-within:bg-white dark:focus-within:bg-gray-900 focus-within:border-solid transition-colors cursor-text"
+                                class="group flex items-center gap-1.5 flex-1 min-w-0 px-2 py-1 -my-1 rounded-lg border border-dashed border-gray-300 dark:border-gray-700 bg-surface/60 dark:bg-transparent hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/20 focus-within:border-indigo-500 focus-within:border-solid focus-within:bg-surface dark:focus-within:bg-gray-900 transition-colors cursor-text"
                                 :title="'Click to rename this group'"
                             >
                                 <Pencil class="w-3 h-3 text-gray-400 group-hover:text-indigo-500 group-focus-within:text-indigo-500 shrink-0" />
                                 <input
                                     v-model="block.label"
                                     type="text"
-                                    class="bg-transparent text-sm font-medium text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-0 border-0 p-0 truncate min-w-0 flex-1"
+                                    class="bg-transparent text-sm font-medium text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-500 focus:outline-none focus:ring-0 border-0 p-0 truncate min-w-0 flex-1"
                                     :placeholder="`Name this group (e.g. “${i === 0 ? 'My company domains' : 'Client X domains'}”)`"
                                     maxlength="60"
                                 />
                             </label>
 
-                            <span class="text-xs text-gray-400 dark:text-gray-500 shrink-0 hidden sm:inline ml-2 mr-3">
+                            <span class="text-xs font-medium text-gray-500 dark:text-gray-500 shrink-0 hidden sm:inline ml-1 mr-2">
                                 {{ block.domains.length }} domain{{ block.domains.length === 1 ? '' : 's' }}
                             </span>
                         </div>
@@ -327,7 +328,7 @@ const showPreview = ref(false)
                             <button
                                 @click="removeBlock(i)"
                                 type="button"
-                                class="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors"
+                                class="ui-icon-btn-danger"
                                 :title="blocks.length === 1 ? 'Clear this group' : 'Remove this group'"
                             >
                                 <Trash2 class="w-4 h-4" />
@@ -335,7 +336,7 @@ const showPreview = ref(false)
                             <button
                                 @click="toggleBlock(i)"
                                 type="button"
-                                class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                                class="ui-icon-btn"
                                 :title="block.open ? 'Collapse' : 'Expand'"
                             >
                                 <component :is="block.open ? ChevronUp : ChevronDown" class="w-4 h-4" />
@@ -344,25 +345,26 @@ const showPreview = ref(false)
                     </div>
 
                     <!-- Body -->
-                    <div v-show="block.open" class="px-5 py-4 space-y-5">
+                    <div v-show="block.open" class="px-4 sm:px-5 py-5 space-y-6">
 
                         <!-- Domains chip input -->
                         <div>
-                            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                                <Globe class="w-3.5 h-3.5" />
-                                Domains in this group
-                            </p>
-                            <div class="flex flex-wrap items-center gap-2 px-2.5 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent">
+                            <div class="flex items-center gap-2 mb-2.5">
+                                <Globe class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400 shrink-0" />
+                                <p class="ui-section-title">Domains in this group</p>
+                                <div class="h-px flex-1 bg-hairline" />
+                            </div>
+                            <div class="ui-field-shell flex flex-wrap items-center gap-2 px-2.5 py-2">
                                 <span
                                     v-for="(d, di) in block.domains"
                                     :key="di"
-                                    class="inline-flex items-center gap-1 px-2 py-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-xs text-gray-800 dark:text-gray-100"
+                                    class="ui-chip"
                                 >
                                     {{ d }}
                                     <button
                                         type="button"
                                         @click="removeDomain(block, di)"
-                                        class="ml-0.5 -mr-0.5 p-0.5 text-gray-400 hover:text-red-500 rounded"
+                                        class="ml-0.5 -mr-0.5 p-0.5 rounded text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                                         :title="`Remove ${d}`"
                                     >
                                         <X class="w-3 h-3" />
@@ -375,108 +377,108 @@ const showPreview = ref(false)
                                     @blur="commitDomains(block)"
                                     type="text"
                                     :placeholder="block.domains.length ? 'Add another…' : 'example.com, another.nl …'"
-                                    class="flex-1 min-w-[180px] bg-transparent border-0 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-0 px-1 py-0.5"
+                                    class="flex-1 min-w-[180px] bg-transparent border-0 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-0 px-1 py-1"
                                 />
                             </div>
-                            <p class="mt-1.5 text-xs text-gray-400 flex items-center gap-1">
+                            <p class="mt-2 ui-help flex items-center gap-1.5">
                                 <Info class="w-3 h-3 shrink-0" />
                                 Press Enter, comma, or space to add. Paste a list to add many at once.
                             </p>
                         </div>
 
                         <!-- Existing account -->
-                        <div class="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-xl p-3">
-                            <label class="block text-xs font-semibold text-indigo-700 dark:text-indigo-400 mb-1">Existing account <span class="font-normal text-indigo-500 dark:text-indigo-500">(optional)</span></label>
-                            <p class="text-xs text-indigo-500 dark:text-indigo-500 mb-2">Already a customer? Enter the contact name or company so we know which account the domains in this group should land under.</p>
+                        <div class="ui-accent-panel p-4">
+                            <label class="block ui-accent-title mb-0.5">Existing account <span class="font-normal text-indigo-600/70 dark:text-indigo-500">(optional)</span></label>
+                            <p class="ui-accent-help mb-3">Already a customer? Enter the contact name or company so we know which account the domains in this group should land under.</p>
                             <div class="relative">
-                                <UserCircle class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-indigo-400" />
-                                <input v-model="block.existingAccount" type="text" placeholder="e.g. John Doe or Example Company" class="w-full pl-8 pr-3 py-2 text-sm bg-white dark:bg-gray-900 border border-indigo-200 dark:border-indigo-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                <UserCircle class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-500 dark:text-indigo-400 pointer-events-none" />
+                                <input v-model="block.existingAccount" type="text" placeholder="e.g. John Doe or Example Company" class="ui-input ui-input-accent pl-9" />
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-2 pt-1">
-                            <div class="h-px flex-1 bg-gray-100 dark:bg-gray-800" />
-                            <span class="text-xs text-gray-400 shrink-0">— or — new registrant</span>
-                            <div class="h-px flex-1 bg-gray-100 dark:bg-gray-800" />
+                        <div class="flex items-center gap-3">
+                            <div class="h-px flex-1 bg-hairline" />
+                            <span class="ui-section-title shrink-0">or — new registrant</span>
+                            <div class="h-px flex-1 bg-hairline" />
                         </div>
 
                         <!-- New registrant fields -->
-                        <div class="space-y-3">
+                        <div class="space-y-4">
                             <div>
-                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Company name <span class="text-gray-400">(optional)</span></label>
+                                <label class="ui-label">Company name <span class="ui-label-hint">(optional)</span></label>
                                 <div class="relative">
-                                    <Building2 class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-                                    <input v-model="block.companyName" type="text" placeholder="Example Company" class="w-full pl-8 pr-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                    <Building2 class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                    <input v-model="block.companyName" type="text" placeholder="Example Company" class="ui-input pl-9" />
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-2">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">First name</label>
-                                    <input v-model="block.firstName" type="text" placeholder="John" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                    <label class="ui-label">First name</label>
+                                    <input v-model="block.firstName" type="text" placeholder="John" class="ui-input" />
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Last name</label>
-                                    <input v-model="block.lastName" type="text" placeholder="Doe" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                    <label class="ui-label">Last name</label>
+                                    <input v-model="block.lastName" type="text" placeholder="Doe" class="ui-input" />
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-3 gap-2">
+                            <div class="grid grid-cols-3 gap-3 sm:gap-4">
                                 <div class="col-span-2">
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Street</label>
-                                    <input v-model="block.street" type="text" placeholder="Kerkstraat" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                    <label class="ui-label">Street</label>
+                                    <input v-model="block.street" type="text" placeholder="Kerkstraat" class="ui-input" />
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">House no.</label>
-                                    <input v-model="block.houseNumber" type="text" placeholder="42A" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                    <label class="ui-label">House no.</label>
+                                    <input v-model="block.houseNumber" type="text" placeholder="42A" class="ui-input" />
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-3 gap-2">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Postal code</label>
-                                    <input v-model="block.postalCode" type="text" placeholder="1234 AB" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                    <label class="ui-label">Postal code</label>
+                                    <input v-model="block.postalCode" type="text" placeholder="1234 AB" class="ui-input" />
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">City</label>
-                                    <input v-model="block.city" type="text" placeholder="Amsterdam" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                    <label class="ui-label">City</label>
+                                    <input v-model="block.city" type="text" placeholder="Amsterdam" class="ui-input" />
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Country</label>
-                                    <input v-model="block.country" type="text" placeholder="Netherlands" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Phone</label>
-                                    <input v-model="block.phone" type="tel" placeholder="+31 6 12345678" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Email</label>
-                                    <input v-model="block.email" type="email" placeholder="john@example.com" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                    <label class="ui-label">Country</label>
+                                    <input v-model="block.country" type="text" placeholder="Netherlands" class="ui-input" />
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-2">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">KVK <span class="text-gray-400">(optional)</span></label>
-                                    <input v-model="block.kvk" type="text" placeholder="12345678" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                    <label class="ui-label">Phone</label>
+                                    <input v-model="block.phone" type="tel" placeholder="+31 6 12345678" class="ui-input" />
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">VAT ID <span class="text-gray-400">(optional)</span></label>
-                                    <input v-model="block.vatId" type="text" placeholder="NL123456789B01" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                    <label class="ui-label">Email</label>
+                                    <input v-model="block.email" type="email" placeholder="john@example.com" class="ui-input" />
                                 </div>
                             </div>
 
-                            <div>
-                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Auth / EPP code <span class="text-gray-400">(optional — same code applies to every domain in this group)</span></label>
-                                <input v-model="block.authCode" type="text" placeholder="EPP code from current registrar" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono" />
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="ui-label">KVK <span class="ui-label-hint">(optional)</span></label>
+                                    <input v-model="block.kvk" type="text" placeholder="12345678" class="ui-input" />
+                                </div>
+                                <div>
+                                    <label class="ui-label">VAT ID <span class="ui-label-hint">(optional)</span></label>
+                                    <input v-model="block.vatId" type="text" placeholder="NL123456789B01" class="ui-input" />
+                                </div>
                             </div>
 
                             <div>
-                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Notes <span class="text-gray-400">(optional)</span></label>
-                                <textarea v-model="block.notes" rows="2" placeholder="Anything specific to the domains in this group." class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y"></textarea>
+                                <label class="ui-label">Auth / EPP code <span class="ui-label-hint">(optional — same code applies to every domain in this group)</span></label>
+                                <input v-model="block.authCode" type="text" placeholder="EPP code from current registrar" class="ui-input font-mono" />
+                            </div>
+
+                            <div>
+                                <label class="ui-label">Notes <span class="ui-label-hint">(optional)</span></label>
+                                <textarea v-model="block.notes" rows="2" placeholder="Anything specific to the domains in this group." class="ui-input resize-y"></textarea>
                             </div>
                         </div>
                     </div>
@@ -488,7 +490,7 @@ const showPreview = ref(false)
                 <button
                     @click="addBlock"
                     type="button"
-                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-xl transition-colors"
+                    class="ui-btn ui-btn-accent"
                     title="Add another group of domains with different owner details"
                 >
                     <Plus class="w-4 h-4" />
@@ -497,26 +499,26 @@ const showPreview = ref(false)
             </div>
 
             <!-- Submit bar -->
-            <div class="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-200 dark:border-indigo-900 rounded-2xl px-5 py-4">
+            <div class="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-200 dark:border-indigo-900 rounded-2xl shadow-card px-5 py-4">
                 <div class="text-sm text-gray-700 dark:text-gray-300">
-                    <span class="font-semibold">{{ totalDomains }}</span>
+                    <span class="font-semibold text-gray-900 dark:text-white">{{ totalDomains }}</span>
                     domain{{ totalDomains === 1 ? '' : 's' }} across
-                    <span class="font-semibold">{{ blocks.length }}</span>
+                    <span class="font-semibold text-gray-900 dark:text-white">{{ blocks.length }}</span>
                     group{{ blocks.length === 1 ? '' : 's' }} ready to copy.
                 </div>
                 <div class="flex items-center gap-2">
                     <button
                         @click="showPreview = !showPreview"
                         type="button"
-                        class="px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white rounded-xl transition-colors"
+                        class="ui-btn ui-btn-ghost font-medium"
                     >
                         {{ showPreview ? 'Hide preview' : 'Show preview' }}
                     </button>
                     <button
                         @click="copyAll"
                         type="button"
-                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
-                        :class="copied ? 'bg-emerald-600 text-white' : 'bg-indigo-600 hover:bg-indigo-500 text-white'"
+                        class="ui-btn"
+                        :class="copied ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'ui-btn-primary'"
                     >
                         <Check v-if="copied" class="w-4 h-4" />
                         <Copy v-else class="w-4 h-4" />
@@ -525,11 +527,11 @@ const showPreview = ref(false)
                 </div>
             </div>
 
-            <p v-if="copyError" class="mt-3 text-xs text-red-500">{{ copyError }}</p>
+            <p v-if="copyError" class="mt-3 text-xs font-medium text-red-600 dark:text-red-400">{{ copyError }}</p>
 
             <!-- Preview -->
-            <div v-if="showPreview" class="mt-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
-                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Preview</p>
+            <div v-if="showPreview" class="mt-4 ui-panel-muted rounded-2xl p-5">
+                <p class="ui-section-title mb-2.5">Preview</p>
                 <pre class="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-mono leading-relaxed">{{ previewText }}</pre>
             </div>
 

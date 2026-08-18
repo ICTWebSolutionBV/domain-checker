@@ -79,7 +79,7 @@ const twoFactorSummary = (user) => {
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Users</h1>
                 <div class="flex gap-2">
                     <button @click="showInviteForm = !showInviteForm"
-                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors text-sm">
+                        class="ui-btn ui-btn-primary">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                         Invite
                     </button>
@@ -92,46 +92,46 @@ const twoFactorSummary = (user) => {
             </div>
 
             <!-- Invite form -->
-            <div v-if="showInviteForm" class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-6">
+            <div v-if="showInviteForm" class="ui-card rounded-xl p-6 mb-6">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Send Invite</h2>
                 <form @submit.prevent="createInvite" class="flex flex-wrap gap-3 items-end">
                     <div class="flex-1 min-w-[140px]">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">First Name <span class="text-gray-400 font-normal">(optional)</span></label>
+                        <label class="ui-label text-sm mb-1">First Name <span class="ui-label-hint">(optional)</span></label>
                         <input v-model="inviteForm.first_name" type="text" placeholder="Jane"
-                            class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" />
+                            class="ui-input" />
                     </div>
                     <div class="flex-1 min-w-[140px]">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Name <span class="text-gray-400 font-normal">(optional)</span></label>
+                        <label class="ui-label text-sm mb-1">Last Name <span class="ui-label-hint">(optional)</span></label>
                         <input v-model="inviteForm.last_name" type="text" placeholder="Doe"
-                            class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" />
+                            class="ui-input" />
                     </div>
                     <div class="flex-1 min-w-[180px]">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                        <label class="ui-label text-sm mb-1">Email</label>
                         <input v-model="inviteForm.email" type="email" required placeholder="jane@example.com"
-                            class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" />
-                        <p v-if="inviteForm.errors.email" class="text-red-500 text-xs mt-1">{{ inviteForm.errors.email }}</p>
+                            class="ui-input" />
+                        <p v-if="inviteForm.errors.email" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ inviteForm.errors.email }}</p>
                     </div>
                     <div class="w-28">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
+                        <label class="ui-label text-sm mb-1">Role</label>
                         <select v-model="inviteForm.role"
-                            class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                            class="ui-input">
                             <option v-for="r in assignableRoles" :key="r" :value="r">{{ roleLabel(r) }}</option>
                         </select>
                     </div>
                     <div class="w-36">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expires (hours)</label>
+                        <label class="ui-label text-sm mb-1">Expires (hours)</label>
                         <input v-model.number="inviteForm.expires_hours" type="number" min="1" max="720"
-                            class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+                            class="ui-input" />
                     </div>
                     <button type="submit" :disabled="inviteForm.processing"
-                        class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors text-sm disabled:opacity-50 self-end">
+                        class="ui-btn ui-btn-primary self-end">
                         {{ inviteForm.processing ? 'Sending…' : 'Send Invite' }}
                     </button>
                 </form>
             </div>
 
             <!-- Users table -->
-            <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden mb-6">
+            <div class="ui-card rounded-xl overflow-hidden mb-6">
                 <table class="w-full text-sm">
                     <thead class="bg-gray-50 dark:bg-gray-800/50">
                         <tr>
@@ -163,7 +163,7 @@ const twoFactorSummary = (user) => {
             </div>
 
             <!-- Pending invites -->
-            <div v-if="invites.length" class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+            <div v-if="invites.length" class="ui-card rounded-xl overflow-hidden">
                 <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
                     <h2 class="font-semibold text-gray-900 dark:text-white">Pending Invites</h2>
                 </div>

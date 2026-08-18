@@ -192,13 +192,13 @@ onMounted(() => {
                             placeholder="8.8.8.8 or example.com"
                             autocomplete="off"
                             spellcheck="false"
-                            class="w-full pl-12 pr-4 py-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition"
+                            class="ui-input pl-12 pr-4 py-4 rounded-2xl text-base shadow-card dark:bg-gray-900"
                         />
                     </div>
                     <button
                         type="submit"
                         :disabled="loading || !input.trim()"
-                        class="px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm shadow-lg shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                        class="ui-btn ui-btn-primary px-6 py-0 rounded-2xl shadow-lg shadow-indigo-600/20"
                     >
                         <Loader2 v-if="loading" class="w-5 h-5 animate-spin" />
                         <span v-else>Lookup</span>
@@ -226,7 +226,7 @@ onMounted(() => {
             <!-- Result -->
             <div v-else-if="result" class="mt-8 space-y-6">
                 <!-- Header card -->
-                <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
+                <div class="ui-card overflow-hidden">
                     <div class="p-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
                         <div class="shrink-0">
                             <div class="text-5xl leading-none">
@@ -271,8 +271,8 @@ onMounted(() => {
 
                 <!-- Detail grid -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-                        <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                    <div class="ui-card p-5">
+                        <div class="ui-section-title flex items-center gap-2 mb-3">
                             <MapPin class="w-4 h-4" /> Location
                         </div>
                         <dl class="space-y-2 text-sm">
@@ -310,8 +310,8 @@ onMounted(() => {
                         </dl>
                     </div>
 
-                    <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-                        <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                    <div class="ui-card p-5">
+                        <div class="ui-section-title flex items-center gap-2 mb-3">
                             <Network class="w-4 h-4" /> Network
                         </div>
                         <dl class="space-y-2 text-sm">
@@ -338,8 +338,8 @@ onMounted(() => {
                         </dl>
                     </div>
 
-                    <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-                        <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                    <div class="ui-card p-5">
+                        <div class="ui-section-title flex items-center gap-2 mb-3">
                             <Clock class="w-4 h-4" /> Time &amp; Currency
                         </div>
                         <dl class="space-y-2 text-sm">
@@ -360,8 +360,8 @@ onMounted(() => {
                         </dl>
                     </div>
 
-                    <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-                        <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                    <div class="ui-card p-5">
+                        <div class="ui-section-title flex items-center gap-2 mb-3">
                             <Shield class="w-4 h-4" /> Flags
                         </div>
                         <dl class="space-y-2 text-sm">
@@ -405,7 +405,7 @@ onMounted(() => {
                         Clear
                     </button>
                 </div>
-                <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-800">
+                <div class="ui-card divide-y divide-gray-100 dark:divide-gray-800">
                     <button
                         v-for="entry in recent" :key="entry.ip + entry.looked_up_at"
                         type="button"
@@ -435,7 +435,7 @@ onMounted(() => {
             </div>
 
             <!-- Info -->
-            <div class="mt-12 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 p-6 text-sm text-gray-600 dark:text-gray-400">
+            <div class="mt-12 ui-panel-muted dark:bg-gray-900/50 rounded-2xl p-6 text-sm text-gray-600 dark:text-gray-400">
                 <p class="font-medium text-gray-900 dark:text-white mb-2">How this works</p>
                 <p>
                     Geolocation data comes from <a href="https://ip-api.com" target="_blank" rel="noopener" class="text-indigo-600 dark:text-indigo-400 hover:underline">ip-api.com</a>, a free public IP information database. Hostnames are resolved via DNS. Results are cached server-side for one hour per IP. Private and reserved ranges are not geolocated. Your recent lookups are kept privately in your own browser's localStorage and expire after 7 days — nothing is stored on the server.

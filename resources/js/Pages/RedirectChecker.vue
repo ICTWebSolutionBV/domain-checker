@@ -155,12 +155,12 @@ onMounted(() => {
                         autocomplete="off"
                         spellcheck="false"
                         :disabled="loading"
-                        class="flex-1 px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition disabled:opacity-60"
+                        class="ui-input flex-1 px-4 py-3 shadow-card dark:bg-gray-900"
                     />
                     <button
                         type="submit"
                         :disabled="loading || !urlInput.trim()"
-                        class="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold rounded-xl transition-colors text-sm shadow-sm whitespace-nowrap flex items-center gap-2"
+                        class="ui-btn ui-btn-primary px-5 py-3"
                     >
                         <svg v-if="loading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
@@ -179,7 +179,7 @@ onMounted(() => {
                     <select
                         v-model="selectedAgent"
                         :disabled="loading"
-                        class="flex-1 min-w-0 px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-xs shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition disabled:opacity-60 truncate"
+                        class="ui-input flex-1 min-w-0 px-3 py-2 rounded-lg text-xs shadow-card truncate dark:bg-gray-900"
                     >
                         <template v-for="(opts, group) in groupedAgents" :key="group">
                             <optgroup :label="group">
@@ -214,7 +214,7 @@ onMounted(() => {
                 </div>
 
                 <!-- Redirect chain -->
-                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+                <div class="ui-card overflow-hidden">
 
                     <div v-for="(hop, index) in hops" :key="index">
 
@@ -288,7 +288,7 @@ onMounted(() => {
                 </div>
 
                 <!-- Info box -->
-                <div class="bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 text-xs text-gray-500 dark:text-gray-400 space-y-1.5">
+                <div class="ui-panel-muted dark:bg-gray-900/60 px-4 py-3.5 text-xs text-gray-600 dark:text-gray-400 space-y-1.5">
                     <p class="font-semibold text-gray-700 dark:text-gray-300">How this checker works</p>
                     <p>Each hop is fetched without auto-following redirects, so the full chain is captured individually.</p>
                     <p>Click any hop to expand its raw HTTP response headers. The user-agent sent can be changed to test bot vs. browser redirect differences.</p>

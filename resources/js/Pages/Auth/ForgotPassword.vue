@@ -21,18 +21,18 @@ const submit = () => {
                 <p class="text-gray-400 text-sm mt-2">Enter your email and we'll send you a reset link.</p>
             </div>
 
-            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 border border-gray-200 dark:border-gray-800">
+            <div class="ui-card shadow-overlay p-6">
                 <p v-if="status" class="text-green-600 dark:text-green-400 text-sm mb-4">{{ status }}</p>
 
                 <form @submit.prevent="submit" class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                        <label class="ui-label text-sm mb-1">Email</label>
                         <input v-model="form.email" type="email" required autofocus
-                            class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
-                        <p v-if="form.errors.email" class="text-red-500 text-xs mt-1">{{ form.errors.email }}</p>
+                            class="ui-input" />
+                        <p v-if="form.errors.email" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ form.errors.email }}</p>
                     </div>
                     <button type="submit" :disabled="form.processing"
-                        class="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl disabled:opacity-50 text-sm">
+                        class="ui-btn ui-btn-primary w-full">
                         {{ form.processing ? 'Sending…' : 'Send reset link' }}
                     </button>
                 </form>

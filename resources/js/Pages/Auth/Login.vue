@@ -60,7 +60,7 @@ onMounted(() => {
             <button
                 @click="loginWithPasskey"
                 :disabled="passkeyLoading"
-                class="w-full flex items-center justify-center gap-2.5 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors text-sm shadow-sm shadow-indigo-600/20"
+                class="ui-btn ui-btn-primary w-full px-4 py-3 gap-2.5"
             >
                 <Loader2 v-if="passkeyLoading" class="w-4 h-4 animate-spin" />
                 <Fingerprint v-else class="w-4 h-4" />
@@ -81,7 +81,7 @@ onMounted(() => {
         <!-- Password form -->
         <form @submit.prevent="login" class="space-y-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
+                <label class="ui-label text-sm">Email</label>
                 <div class="relative">
                     <Mail class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
@@ -90,15 +90,15 @@ onMounted(() => {
                         required
                         autofocus
                         autocomplete="username"
-                        class="w-full pl-9 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border rounded-xl text-sm outline-none transition focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        class="ui-input pl-9"
                         :class="form.errors.email ? 'border-red-400' : 'border-gray-300 dark:border-gray-700'"
                     />
                 </div>
-                <p v-if="form.errors.email" class="text-red-500 text-xs mt-1">{{ form.errors.email }}</p>
+                <p v-if="form.errors.email" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ form.errors.email }}</p>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password</label>
+                <label class="ui-label text-sm">Password</label>
                 <div class="relative">
                     <Lock class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
@@ -106,11 +106,11 @@ onMounted(() => {
                         type="password"
                         required
                         autocomplete="current-password"
-                        class="w-full pl-9 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border rounded-xl text-sm outline-none transition focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        class="ui-input pl-9"
                         :class="form.errors.password ? 'border-red-400' : 'border-gray-300 dark:border-gray-700'"
                     />
                 </div>
-                <p v-if="form.errors.password" class="text-red-500 text-xs mt-1">{{ form.errors.password }}</p>
+                <p v-if="form.errors.password" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ form.errors.password }}</p>
             </div>
 
             <div class="flex items-center justify-between">

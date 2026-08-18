@@ -37,37 +37,37 @@ const submit = () => {
                 <p class="text-gray-400 mt-1 text-sm">Create your account for {{ email }}</p>
             </div>
 
-            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 border border-gray-200 dark:border-gray-800">
+            <div class="ui-card shadow-overlay p-6">
                 <form @submit.prevent="submit" class="space-y-4">
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">First Name</label>
+                            <label class="ui-label text-sm mb-1">First Name</label>
                             <input v-model="form.first_name" type="text" required autofocus
-                                class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" />
-                            <p v-if="form.errors.first_name" class="text-red-500 text-xs mt-1">{{ form.errors.first_name }}</p>
+                                class="ui-input" />
+                            <p v-if="form.errors.first_name" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ form.errors.first_name }}</p>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Name <span class="text-gray-400 font-normal">(optional)</span></label>
+                            <label class="ui-label text-sm mb-1">Last Name <span class="ui-label-hint">(optional)</span></label>
                             <input v-model="form.last_name" type="text"
-                                class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" />
+                                class="ui-input" />
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                        <label class="ui-label text-sm mb-1">Password</label>
                         <input v-model="form.password" type="password" required autocomplete="new-password"
-                            class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" />
-                        <p v-if="form.errors.password" class="text-red-500 text-xs mt-1">{{ form.errors.password }}</p>
+                            class="ui-input" />
+                        <p v-if="form.errors.password" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ form.errors.password }}</p>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm Password</label>
+                        <label class="ui-label text-sm mb-1">Confirm Password</label>
                         <input v-model="form.password_confirmation" type="password" required autocomplete="new-password"
-                            class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" />
+                            class="ui-input" />
                     </div>
 
                     <button type="submit" :disabled="form.processing"
-                        class="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors disabled:opacity-50 text-sm flex items-center justify-center gap-2">
+                        class="ui-btn ui-btn-primary w-full">
                         {{ form.processing ? 'Creating account…' : 'Create account' }}
                         <svg v-if="!form.processing" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                     </button>

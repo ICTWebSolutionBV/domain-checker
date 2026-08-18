@@ -29,7 +29,7 @@ const verify = () => {
 
         <form @submit.prevent="verify" class="space-y-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Authentication code</label>
+                <label class="ui-label text-sm">Authentication code</label>
                 <input
                     ref="codeInput"
                     v-model="form.code"
@@ -39,7 +39,7 @@ const verify = () => {
                     maxlength="6"
                     placeholder="000000"
                     autofocus
-                    class="w-full px-3 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-sm text-center tracking-[0.5em] font-mono outline-none transition focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    class="ui-input py-3 text-center tracking-[0.5em] font-mono"
                     :class="form.errors.code ? 'border-red-400' : ''"
                 />
                 <p v-if="form.errors.code" class="text-red-500 text-xs mt-1 text-center">{{ form.errors.code }}</p>
@@ -48,7 +48,7 @@ const verify = () => {
             <button
                 type="submit"
                 :disabled="form.processing || form.code.length < 6"
-                class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold rounded-xl transition-colors text-sm"
+                class="ui-btn ui-btn-primary w-full"
             >
                 <Loader2 v-if="form.processing" class="w-4 h-4 animate-spin inline mr-2" />
                 {{ form.processing ? 'Verifying…' : 'Verify' }}

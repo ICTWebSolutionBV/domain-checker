@@ -216,7 +216,7 @@ const pendingKeys = computed(() => {
             <!-- Search bar -->
             <form @submit.prevent="submitForm" class="flex gap-2 mb-8">
                 <div class="flex-1 relative">
-                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm select-none pointer-events-none">https://</span>
+                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 text-sm select-none pointer-events-none">https://</span>
                     <input
                         v-model="hostInput"
                         type="text"
@@ -224,13 +224,13 @@ const pendingKeys = computed(() => {
                         autocomplete="off"
                         spellcheck="false"
                         :disabled="isChecking"
-                        class="w-full pl-16 pr-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition disabled:opacity-60"
+                        class="ui-input pl-16 pr-4 py-3 shadow-card dark:bg-gray-900"
                     />
                 </div>
                 <button
                     type="submit"
                     :disabled="isChecking || !hostInput.trim()"
-                    class="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold rounded-xl transition-colors text-sm shadow-sm whitespace-nowrap flex items-center gap-2"
+                    class="ui-btn ui-btn-primary px-5 py-3"
                 >
                     <svg v-if="isChecking" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
@@ -274,7 +274,7 @@ const pendingKeys = computed(() => {
                 </transition>
 
                 <!-- Checks list -->
-                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+                <div class="ui-card overflow-hidden">
                     <div class="divide-y divide-gray-100 dark:divide-gray-800">
 
                         <!-- Completed checks -->
@@ -335,10 +335,10 @@ const pendingKeys = computed(() => {
                 </div>
 
                 <!-- Server information (HTTP version, status, timings, headers) -->
-                <div v-if="serverInfo" class="border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-900">
+                <div v-if="serverInfo" class="ui-card overflow-hidden">
                     <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between gap-3">
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            <p class="ui-section-title">
                                 {{ serverInfo.transport === 'HTTP/3' ? 'HTTP/3 Server Information' : 'Server Information' }}
                             </p>
                             <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
@@ -357,15 +357,15 @@ const pendingKeys = computed(() => {
 
                     <!-- Primary stats: HTTP Version / Status / Response Time -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-5 bg-gray-50 dark:bg-gray-900/60">
-                        <div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+                        <div class="ui-card rounded-xl p-4">
                             <p class="text-[11px] uppercase tracking-wider text-sky-600 dark:text-sky-400 font-bold">HTTP Version</p>
                             <p class="mt-2 font-mono text-base text-gray-900 dark:text-white">{{ serverInfo.info.http_version_label }}</p>
                         </div>
-                        <div v-if="serverInfo.info.status_code" class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+                        <div v-if="serverInfo.info.status_code" class="ui-card rounded-xl p-4">
                             <p class="text-[11px] uppercase tracking-wider text-sky-600 dark:text-sky-400 font-bold">Status Code</p>
                             <p class="mt-2 font-mono text-base text-gray-900 dark:text-white">{{ serverInfo.info.status_code }}</p>
                         </div>
-                        <div v-if="serverInfo.info.timing_ms?.total !== undefined" class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+                        <div v-if="serverInfo.info.timing_ms?.total !== undefined" class="ui-card rounded-xl p-4">
                             <p class="text-[11px] uppercase tracking-wider text-sky-600 dark:text-sky-400 font-bold">Response Time</p>
                             <p class="mt-2 font-mono text-base text-gray-900 dark:text-white">{{ serverInfo.info.timing_ms.total }} ms</p>
                         </div>
@@ -426,7 +426,7 @@ const pendingKeys = computed(() => {
                 </div>
 
                 <!-- What is HTTP/3 info box -->
-                <div v-if="verdict" class="bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 text-xs text-gray-500 dark:text-gray-400 space-y-1.5">
+                <div v-if="verdict" class="ui-panel-muted dark:bg-gray-900/60 px-4 py-3.5 text-xs text-gray-600 dark:text-gray-400 space-y-1.5">
                     <p class="font-semibold text-gray-700 dark:text-gray-300">How this checker works</p>
                     <p><span class="font-medium text-gray-600 dark:text-gray-400">DNS</span> — Resolves A (IPv4) and AAAA (IPv6) records.</p>
                     <p><span class="font-medium text-gray-600 dark:text-gray-400">TLS 1.3</span> — HTTP/3 requires TLS 1.3; older TLS versions block it.</p>

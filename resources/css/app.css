@@ -8,16 +8,6 @@
 @source '../**/*.js';
 @source '../**/*.vue';
 
-/* Dot grid background pattern */
-.dot-grid {
-    background-image: radial-gradient(circle, #cbd5e1 1px, transparent 1px);
-    background-size: 28px 28px;
-}
-
-.dark .dot-grid {
-    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
-}
-
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
@@ -25,4 +15,221 @@
     --color-indigo-500: oklch(0.585 0.233 277.1);
     --color-indigo-600: oklch(0.511 0.262 276.97);
     --color-indigo-700: oklch(0.457 0.24 277.02);
+
+    /* ── Semantic surface tokens ──────────────────────────────────────────
+       Light values live here, dark values are re-declared on :root.dark
+       further down, so `bg-canvas` / `bg-surface` / `border-hairline`
+       automatically follow the active theme. */
+
+    /* Level 1 — application background */
+    --color-canvas: oklch(0.977 0.006 265);
+    /* Level 2 — cards, panels, modals */
+    --color-surface: #ffffff;
+    /* Level 2b — inset areas inside a card (previews, read-only blocks) */
+    --color-surface-muted: oklch(0.982 0.004 250);
+    /* Hairlines between/around surfaces */
+    --color-hairline: oklch(0.916 0.014 254);
+    /* Level 2c — surface of interactive controls (inputs, chips fields) */
+    --color-field: #ffffff;
+    /* Resting border of interactive controls */
+    --color-field-line: oklch(0.858 0.024 253);
+
+    --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 2px 6px -1px rgb(15 23 42 / 0.07);
+    --shadow-card-hover: 0 2px 4px -1px rgb(15 23 42 / 0.06), 0 4px 10px -2px rgb(15 23 42 / 0.08);
+    --shadow-overlay: 0 10px 15px -3px rgb(15 23 42 / 0.1), 0 25px 50px -12px rgb(15 23 42 / 0.25);
+}
+
+/* ── Light-mode neutral ramp ──────────────────────────────────────────────
+   A cooler, higher-contrast ramp than Tailwind's default gray. Overriding
+   the theme variables lifts every existing `text-gray-*` / `border-gray-*`
+   utility at once instead of touching hundreds of call sites.
+   The default ramp is restored inside `.dark` below, so dark mode keeps
+   exactly the colours it has today. */
+:root {
+    --color-gray-50: oklch(0.984 0.003 248);
+    --color-gray-100: oklch(0.966 0.008 252);
+    --color-gray-200: oklch(0.924 0.014 254);
+    --color-gray-300: oklch(0.865 0.023 253);
+    --color-gray-400: oklch(0.63 0.038 256);
+    --color-gray-500: oklch(0.515 0.043 257);
+    --color-gray-600: oklch(0.435 0.044 257);
+    --color-gray-700: oklch(0.365 0.044 257);
+    --color-gray-800: oklch(0.275 0.042 260);
+    --color-gray-900: oklch(0.205 0.042 265);
+    --color-gray-950: oklch(0.129 0.042 264);
+}
+
+:root.dark {
+    --color-gray-50: oklch(98.5% 0.002 247.839);
+    --color-gray-100: oklch(96.7% 0.003 264.542);
+    --color-gray-200: oklch(92.8% 0.006 264.531);
+    --color-gray-300: oklch(87.2% 0.01 258.338);
+    --color-gray-400: oklch(70.7% 0.022 261.325);
+    --color-gray-500: oklch(55.1% 0.027 264.364);
+    --color-gray-600: oklch(44.6% 0.03 256.802);
+    --color-gray-700: oklch(37.3% 0.034 259.733);
+    --color-gray-800: oklch(27.8% 0.033 256.848);
+    --color-gray-900: oklch(21% 0.034 264.665);
+    --color-gray-950: oklch(13% 0.028 261.692);
+
+    --color-canvas: oklch(13% 0.028 261.692);
+    --color-surface: oklch(21% 0.034 264.665);
+    --color-surface-muted: oklch(27.8% 0.033 256.848);
+    --color-hairline: oklch(27.8% 0.033 256.848);
+    --color-field: oklch(27.8% 0.033 256.848);
+    --color-field-line: oklch(37.3% 0.034 259.733);
+
+    --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-card-hover: 0 4px 10px -2px rgb(0 0 0 / 0.4);
+    --shadow-overlay: 0 25px 50px -12px rgb(0 0 0 / 0.6);
+}
+
+/* Dot grid background pattern */
+.dot-grid {
+    background-image: radial-gradient(circle, oklch(0.87 0.02 253) 1px, transparent 1px);
+    background-size: 28px 28px;
+}
+
+.dark .dot-grid {
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+}
+
+@layer components {
+    /* ── Surfaces ───────────────────────────────────────────────────── */
+    .ui-card {
+        @apply bg-surface border border-hairline rounded-2xl shadow-card;
+    }
+
+    .ui-card-header {
+        @apply border-b border-hairline bg-gray-100/70 dark:bg-transparent;
+    }
+
+    /* A surface that only materialises in light mode — used where dark mode
+       already reads well without an extra container. */
+    .ui-surface-light {
+        @apply bg-surface dark:bg-transparent border border-hairline dark:border-transparent
+               shadow-card dark:shadow-none;
+    }
+
+    .ui-panel-muted {
+        @apply bg-surface-muted border border-hairline rounded-xl;
+    }
+
+    /* ── Typography ─────────────────────────────────────────────────── */
+    .ui-label {
+        @apply block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5;
+    }
+
+    .ui-label-hint {
+        @apply font-normal text-gray-500 dark:text-gray-500;
+    }
+
+    .ui-help {
+        @apply text-xs text-gray-500 dark:text-gray-400;
+    }
+
+    .ui-section-title {
+        @apply text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-500 dark:text-gray-400;
+    }
+
+    /* ── Form controls ──────────────────────────────────────────────── */
+    .ui-input {
+        @apply w-full px-3 py-2.5 text-sm rounded-xl bg-field text-gray-900 dark:text-white
+               border border-field-line
+               placeholder:text-gray-400 dark:placeholder:text-gray-500
+               transition-colors outline-none
+               hover:border-gray-400 dark:hover:border-gray-600
+               disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-50 dark:disabled:bg-gray-800;
+    }
+
+    .ui-input:focus {
+        border-color: var(--color-indigo-500);
+        box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-indigo-500) 16%, transparent);
+    }
+
+    /* Wrapper that behaves like an input (chip/token fields) */
+    .ui-field-shell {
+        @apply bg-field border border-field-line rounded-xl transition-colors
+               hover:border-gray-400 dark:hover:border-gray-600;
+    }
+
+    .ui-field-shell:focus-within {
+        border-color: var(--color-indigo-500);
+        box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-indigo-500) 16%, transparent);
+    }
+
+    .ui-chip {
+        @apply inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium
+               bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100
+               border border-gray-200 dark:border-gray-700;
+    }
+
+    /* ── Accent (level 3) ───────────────────────────────────────────── */
+    .ui-accent-panel {
+        @apply bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-xl;
+    }
+
+    .ui-accent-title {
+        @apply text-sm font-semibold text-indigo-800 dark:text-indigo-300;
+    }
+
+    .ui-accent-help {
+        @apply text-xs text-indigo-700/80 dark:text-indigo-400;
+    }
+
+    .ui-input-accent {
+        @apply border-indigo-200 dark:border-indigo-700 hover:border-indigo-400 dark:hover:border-indigo-600;
+    }
+
+    /* ── Buttons ────────────────────────────────────────────────────── */
+    .ui-btn {
+        @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
+               text-sm font-semibold whitespace-nowrap transition-colors
+               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2
+               focus-visible:ring-offset-canvas
+               disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+
+    .ui-btn-sm {
+        @apply px-3 py-2 text-xs rounded-lg gap-1.5;
+    }
+
+    .ui-btn-primary {
+        @apply bg-indigo-600 text-white shadow-sm shadow-indigo-600/20
+               hover:bg-indigo-700 dark:hover:bg-indigo-500;
+    }
+
+    .ui-btn-secondary {
+        @apply bg-surface text-gray-700 dark:text-gray-200 border border-field-line
+               hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-600;
+    }
+
+    .ui-btn-ghost {
+        @apply text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white
+               hover:bg-gray-100 dark:hover:bg-gray-800;
+    }
+
+    .ui-btn-accent {
+        @apply bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300
+               border border-indigo-200 dark:border-indigo-800
+               hover:bg-indigo-100 dark:hover:bg-indigo-950/50 hover:border-indigo-300 dark:hover:border-indigo-700;
+    }
+
+    .ui-btn-danger {
+        @apply bg-red-600 text-white hover:bg-red-700;
+    }
+
+    .ui-icon-btn {
+        @apply inline-flex items-center justify-center p-1.5 rounded-lg transition-colors
+               text-gray-500 dark:text-gray-400
+               hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
+               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500;
+    }
+
+    .ui-icon-btn-danger {
+        @apply inline-flex items-center justify-center p-1.5 rounded-lg transition-colors
+               text-red-500 hover:text-red-700 dark:hover:text-red-400
+               hover:bg-red-50 dark:hover:bg-red-950/30
+               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500;
+    }
 }
