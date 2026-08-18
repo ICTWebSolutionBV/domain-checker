@@ -21,6 +21,7 @@ class RealtimeRegisterService
 
     /** Persistent socket reused for the lifetime of this service instance */
     private mixed $socket = null;
+
     private bool $loggedIn = false;
 
     // -------------------------------------------------------------------------
@@ -39,9 +40,9 @@ class RealtimeRegisterService
      * Returns the list of TLDs that could not be resolved (null/error) so the
      * caller can fall back to RDAP / WHOIS for those.
      *
-     * @param  array<string>                      $tlds
-     * @param  callable(string, string): void     $onResult
-     * @return array<string>  TLDs that need a fallback check
+     * @param  array<string>  $tlds
+     * @param  callable(string, string): void  $onResult
+     * @return array<string> TLDs that need a fallback check
      */
     public function pipelineStream(string $domain, array $tlds, callable $onResult): array
     {
@@ -64,16 +65,16 @@ class RealtimeRegisterService
 
         // Read responses as they arrive; call $onResult for each valid one
         $resolved = [];
-        $fallback  = [];
+        $fallback = [];
         // Give 90 s for the full list — server-side parallel processing is fast
-        $deadline  = time() + 90;
+        $deadline = time() + 90;
 
         while (count($resolved) + count($fallback) < count($tlds) && time() < $deadline) {
             $line = $this->readLine($this->socket);
 
             if ($line === false || $line === '') {
                 // Socket died — mark remaining as fallback
-                $this->socket   = null;
+                $this->socket = null;
                 $this->loggedIn = false;
                 break;
             }
@@ -83,11 +84,11 @@ class RealtimeRegisterService
                 $responseStatus = strtolower($m[2]);
 
                 if (isset($pending[$responseDomain])) {
-                    $tld    = $pending[$responseDomain];
+                    $tld = $pending[$responseDomain];
                     $status = match ($responseStatus) {
-                        'available'     => 'available',
+                        'available' => 'available',
                         'not available' => 'taken',
-                        default         => null,
+                        default => null,
                     };
 
                     if ($status !== null) {
@@ -118,7 +119,7 @@ class RealtimeRegisterService
      */
     public function checkBatch(string $domain, array $tlds): array
     {
-        $results  = [];
+        $results = [];
         $fallback = $this->pipelineStream($domain, $tlds, function (string $tld, string $status) use (&$results) {
             $results[$tld] = $status;
         });
@@ -135,7 +136,7 @@ class RealtimeRegisterService
         if ($this->socket) {
             @fwrite($this->socket, "QUIT\r\n");
             @fclose($this->socket);
-            $this->socket   = null;
+            $this->socket = null;
             $this->loggedIn = false;
         }
     }
@@ -152,7 +153,7 @@ class RealtimeRegisterService
 
         if ($this->socket) {
             @fclose($this->socket);
-            $this->socket   = null;
+            $this->socket = null;
             $this->loggedIn = false;
         }
 
@@ -181,8 +182,8 @@ class RealtimeRegisterService
     /** @return resource|null */
     private function openSocket(): mixed
     {
-        $host    = $this->host();
-        $port    = $this->port();
+        $host = $this->host();
+        $port = $this->port();
         $timeout = config('domain-checker.timeouts.realtime_register', 10);
 
         $socket = @stream_socket_client("tcp://{$host}:{$port}", $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT);
@@ -209,15 +210,10 @@ class RealtimeRegisterService
         stream_context_set_option($socket, 'ssl', 'verify_peer_name', true);
 
         if (stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT) !== true) {
-            stream_context_set_option($socket, 'ssl', 'verify_peer', false);
-            stream_context_set_option($socket, 'ssl', 'verify_peer_name', false);
+            Log::debug('IsProxy TLS upgrade failed');
+            fclose($socket);
 
-            if (stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT) !== true) {
-                Log::debug('IsProxy TLS upgrade failed');
-                fclose($socket);
-
-                return null;
-            }
+            return null;
         }
 
         return $socket;

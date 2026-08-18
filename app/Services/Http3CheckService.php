@@ -19,6 +19,8 @@ namespace App\Services;
  */
 class Http3CheckService
 {
+    public function __construct(private readonly PublicNetworkGuard $networkGuard) {}
+
     /**
      * Run all checks and call $emit(array $event) for each result.
      *
@@ -43,15 +45,24 @@ class Http3CheckService
         ['hostname' => $hostname, 'url' => $url] = $parsed;
         $emit(['type' => 'host', 'hostname' => $hostname, 'url' => $url]);
 
+        $ips = $this->networkGuard->resolvePublicIps($hostname);
+
+        if (empty($ips)) {
+            $emit(['type' => 'check', 'key' => 'dns', 'status' => 'fail', 'label' => 'DNS Resolution', 'detail' => 'Hostname did not resolve to public DNS records']);
+            $emit(['type' => 'done', 'result' => 'error', 'h3' => false, 'summary' => "Could not resolve {$hostname} to a public address."]);
+
+            return;
+        }
+
         // ── 1 + 2: DNS ────────────────────────────────────────────────────
-        if (! $this->checkDns($hostname, $emit)) {
+        if (! $this->checkDns($ips, $emit)) {
             $emit(['type' => 'done', 'result' => 'error', 'h3' => false, 'summary' => "Could not resolve {$hostname}."]);
 
             return;
         }
 
         // ── 3 + 4: HTTPS + TLS ────────────────────────────────────────────
-        if (! $this->checkTls($hostname, $emit)) {
+        if (! $this->checkTls($hostname, $ips[0], $emit)) {
             $emit(['type' => 'done', 'result' => 'error', 'h3' => false, 'summary' => "Cannot reach {$hostname} over HTTPS."]);
 
             return;
@@ -59,7 +70,7 @@ class Http3CheckService
 
         // ── 5 + 6: HTTP/2 + Alt-Svc (also collects server_info) ──────────
         $this->heartbeat();
-        [$h3Advertised, $baselineInfo] = $this->checkHttp2AndAltSvc($url, $emit);
+        [$h3Advertised, $baselineInfo] = $this->checkHttp2AndAltSvc($hostname, $url, $ips, $emit);
 
         // Emit the baseline server info (HTTP/2 or HTTP/1.1 response) so we
         // always have something to show, even when QUIC is unavailable.
@@ -69,7 +80,7 @@ class Http3CheckService
 
         // ── 7: Direct HTTP/3 QUIC ─────────────────────────────────────────
         $this->heartbeat();
-        [$h3Connected, $h3Info] = $this->checkHttp3($url, $emit);
+        [$h3Connected, $h3Info] = $this->checkHttp3($hostname, $url, $ips, $emit);
 
         // Prefer the HTTP/3 server info when we got it.
         if ($h3Info) {
@@ -80,13 +91,13 @@ class Http3CheckService
         $h3Supported = $h3Connected || $h3Advertised;
 
         $emit([
-            'type'    => 'done',
-            'result'  => $h3Supported ? 'supported' : 'not_supported',
-            'h3'      => $h3Supported,
+            'type' => 'done',
+            'result' => $h3Supported ? 'supported' : 'not_supported',
+            'h3' => $h3Supported,
             'summary' => match (true) {
-                $h3Connected  => 'HTTP/3 connection confirmed via QUIC',
+                $h3Connected => 'HTTP/3 connection confirmed via QUIC',
                 $h3Advertised => 'HTTP/3 supported — advertised via Alt-Svc header',
-                default       => 'HTTP/3 is not supported on this host',
+                default => 'HTTP/3 is not supported on this host',
             },
         ]);
     }
@@ -95,29 +106,26 @@ class Http3CheckService
     // Individual checks
     // ─────────────────────────────────────────────────────────────────────
 
-    private function checkDns(string $hostname, callable $emit): bool
+    /**
+     * @param  list<string>  $ips
+     */
+    private function checkDns(array $ips, callable $emit): bool
     {
-        $a    = @dns_get_record($hostname, DNS_A)    ?: [];
-        $aaaa = @dns_get_record($hostname, DNS_AAAA) ?: [];
-
-        $ipv4 = array_column($a, 'ip');
-        $ipv6 = array_column($aaaa, 'ipv6');
-        $all  = array_merge($ipv4, $ipv6);
-
-        if (empty($all)) {
+        if (empty($ips)) {
             $emit(['type' => 'check', 'key' => 'dns', 'status' => 'fail', 'label' => 'DNS Resolution', 'detail' => 'Hostname could not be resolved']);
 
             return false;
         }
 
-        $preview = implode(', ', array_slice($all, 0, 3));
-        if (count($all) > 3) {
-            $preview .= ' +' . (count($all) - 3) . ' more';
+        $ipv6 = array_values(array_filter($ips, fn (string $ip) => str_contains($ip, ':')));
+        $preview = implode(', ', array_slice($ips, 0, 3));
+        if (count($ips) > 3) {
+            $preview .= ' +'.(count($ips) - 3).' more';
         }
         $emit(['type' => 'check', 'key' => 'dns', 'status' => 'pass', 'label' => 'DNS Resolution', 'detail' => $preview]);
 
         if ($ipv6) {
-            $ipv6Detail = $ipv6[0] . (count($ipv6) > 1 ? ' +' . (count($ipv6) - 1) . ' more' : '');
+            $ipv6Detail = $ipv6[0].(count($ipv6) > 1 ? ' +'.(count($ipv6) - 1).' more' : '');
             $emit(['type' => 'check', 'key' => 'ipv6', 'status' => 'pass', 'label' => 'IPv6 (AAAA)', 'detail' => $ipv6Detail]);
         } else {
             $emit(['type' => 'check', 'key' => 'ipv6', 'status' => 'warn', 'label' => 'IPv6 (AAAA)', 'detail' => 'No AAAA record — IPv4 only (HTTP/3 still works over IPv4)']);
@@ -126,20 +134,20 @@ class Http3CheckService
         return true;
     }
 
-    private function checkTls(string $hostname, callable $emit): bool
+    private function checkTls(string $hostname, string $ip, callable $emit): bool
     {
         $context = stream_context_create([
             'ssl' => [
-                'verify_peer'      => true,
+                'verify_peer' => true,
                 'verify_peer_name' => true,
-                'SNI_enabled'      => true,
-                'peer_name'        => $hostname,
+                'SNI_enabled' => true,
+                'peer_name' => $hostname,
             ],
         ]);
 
-        $t0   = microtime(true);
+        $t0 = microtime(true);
         $sock = @stream_socket_client(
-            "tls://{$hostname}:443",
+            'tls://'.$this->networkGuard->formatConnectHost($ip).':443',
             $errno, $errstr,
             10,
             STREAM_CLIENT_CONNECT,
@@ -154,19 +162,19 @@ class Http3CheckService
             return false;
         }
 
-        $crypto   = stream_get_meta_data($sock)['crypto'] ?? [];
-        $protocol = $crypto['protocol']    ?? 'Unknown';
-        $cipher   = $crypto['cipher_name'] ?? '';
+        $crypto = stream_get_meta_data($sock)['crypto'] ?? [];
+        $protocol = $crypto['protocol'] ?? 'Unknown';
+        $cipher = $crypto['cipher_name'] ?? '';
         fclose($sock);
 
         $isTls13 = stripos($protocol, '1.3') !== false;
 
         $emit(['type' => 'check', 'key' => 'https', 'status' => 'pass', 'label' => 'HTTPS', 'detail' => "Connected in {$ms} ms"]);
         $emit([
-            'type'   => 'check',
-            'key'    => 'tls13',
+            'type' => 'check',
+            'key' => 'tls13',
             'status' => $isTls13 ? 'pass' : 'warn',
-            'label'  => 'TLS 1.3',
+            'label' => 'TLS 1.3',
             'detail' => $cipher ? "{$protocol} / {$cipher}" : $protocol,
         ]);
 
@@ -176,25 +184,25 @@ class Http3CheckService
     /**
      * @return array{0: bool, 1: array|null} [h3Advertised, serverInfo]
      */
-    private function checkHttp2AndAltSvc(string $url, callable $emit): array
+    private function checkHttp2AndAltSvc(string $hostname, string $url, array $ips, callable $emit): array
     {
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HEADER         => true,
-            CURLOPT_NOBODY         => false,
-            CURLOPT_TIMEOUT        => 10,
+            CURLOPT_HEADER => true,
+            CURLOPT_NOBODY => false,
+            CURLOPT_TIMEOUT => 10,
             CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_2_0,
-            CURLOPT_USERAGENT      => 'Mozilla/5.0 DomainChecker/1.0 HTTP3-Probe',
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_MAXREDIRS      => 3,
-            CURLOPT_ENCODING       => '',
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_2_0,
+            CURLOPT_USERAGENT => 'Mozilla/5.0 DomainChecker/1.0 HTTP3-Probe',
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_ENCODING => '',
+            CURLOPT_RESOLVE => $this->networkGuard->curlResolveEntries($hostname, 443, $ips),
         ]);
 
-        $body        = curl_exec($ch);
-        $info        = curl_getinfo($ch);
-        $errno       = curl_errno($ch);
+        $body = curl_exec($ch);
+        $info = curl_getinfo($ch);
+        $errno = curl_errno($ch);
         $versionUsed = $this->curlHttpVersion($ch);
         curl_close($ch);
 
@@ -207,18 +215,18 @@ class Http3CheckService
 
         $http2 = ($versionUsed === CURL_HTTP_VERSION_2_0);
         $emit([
-            'type'   => 'check',
-            'key'    => 'http2',
+            'type' => 'check',
+            'key' => 'http2',
             'status' => $http2 ? 'pass' : 'warn',
-            'label'  => 'HTTP/2',
-            'detail' => $http2 ? 'Supported' : 'Not supported (server negotiated HTTP/' . $this->versionLabel($versionUsed) . ')',
+            'label' => 'HTTP/2',
+            'detail' => $http2 ? 'Supported' : 'Not supported (server negotiated HTTP/'.$this->versionLabel($versionUsed).')',
         ]);
 
         // Parse the final response's headers.
         $finalHeaders = $this->parseFinalHeaders($body, (int) $info['header_size']);
 
         // Alt-Svc detection
-        $altSvc       = $finalHeaders['alt-svc'] ?? '';
+        $altSvc = $finalHeaders['alt-svc'] ?? '';
         $h3Advertised = (bool) preg_match('/\bh3\b/i', $altSvc);
 
         if ($h3Advertised) {
@@ -230,25 +238,25 @@ class Http3CheckService
         }
 
         $nameLookup = (float) ($info['namelookup_time'] ?? 0);
-        $connect    = (float) ($info['connect_time'] ?? 0);
+        $connect = (float) ($info['connect_time'] ?? 0);
         $appConnect = (float) ($info['appconnect_time'] ?? 0);
-        $startXfer  = (float) ($info['starttransfer_time'] ?? 0);
-        $ttfbBase   = $appConnect > 0 ? $appConnect : $connect;
+        $startXfer = (float) ($info['starttransfer_time'] ?? 0);
+        $ttfbBase = $appConnect > 0 ? $appConnect : $connect;
 
         $serverInfo = [
-            'http_version_label' => 'HTTP/' . $this->versionLabel($versionUsed),
-            'status_code'        => (int) ($info['http_code'] ?? 0),
-            'server_ip'          => $info['primary_ip'] ?? null,
-            'server_port'        => (int) ($info['primary_port'] ?? 0) ?: null,
-            'effective_url'      => $info['url'] ?? $url,
-            'timing_ms'          => [
-                'dns'     => $this->ms($nameLookup),
+            'http_version_label' => 'HTTP/'.$this->versionLabel($versionUsed),
+            'status_code' => (int) ($info['http_code'] ?? 0),
+            'server_ip' => $info['primary_ip'] ?? null,
+            'server_port' => (int) ($info['primary_port'] ?? 0) ?: null,
+            'effective_url' => $info['url'] ?? $url,
+            'timing_ms' => [
+                'dns' => $this->ms($nameLookup),
                 'connect' => $this->ms($connect - $nameLookup),
-                'tls'     => $this->ms($appConnect - $connect),
-                'ttfb'    => $this->ms($startXfer - $ttfbBase),
-                'total'   => $this->ms((float) ($info['total_time'] ?? 0)),
+                'tls' => $this->ms($appConnect - $connect),
+                'ttfb' => $this->ms($startXfer - $ttfbBase),
+                'total' => $this->ms((float) ($info['total_time'] ?? 0)),
             ],
-            'headers'            => $this->headersToList($finalHeaders),
+            'headers' => $this->headersToList($finalHeaders),
         ];
 
         return [$h3Advertised, $serverInfo];
@@ -257,7 +265,7 @@ class Http3CheckService
     /**
      * @return array{0: bool, 1: array|null} [h3Connected, serverInfo]
      */
-    private function checkHttp3(string $url, callable $emit): array
+    private function checkHttp3(string $hostname, string $url, array $ips, callable $emit): array
     {
         if (! defined('CURL_HTTP_VERSION_3')) {
             $emit(['type' => 'check', 'key' => 'http3', 'status' => 'info', 'label' => 'HTTP/3 Direct (QUIC)', 'detail' => 'curl not compiled with QUIC — using Alt-Svc advertisement as proof']);
@@ -272,22 +280,23 @@ class Http3CheckService
 
         $ch = curl_init($url);
         curl_setopt_array($ch, [
-            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_3,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_3,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HEADER         => true,
-            CURLOPT_NOBODY         => false,
-            CURLOPT_TIMEOUT        => 8,
+            CURLOPT_HEADER => true,
+            CURLOPT_NOBODY => false,
+            CURLOPT_TIMEOUT => 8,
             CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_USERAGENT      => 'Mozilla/5.0 DomainChecker/1.0 HTTP3-Probe',
+            CURLOPT_USERAGENT => 'Mozilla/5.0 DomainChecker/1.0 HTTP3-Probe',
             CURLOPT_FOLLOWLOCATION => false,
-            CURLOPT_VERBOSE        => true,
-            CURLOPT_STDERR         => $verbose,
+            CURLOPT_VERBOSE => true,
+            CURLOPT_STDERR => $verbose,
+            CURLOPT_RESOLVE => $this->networkGuard->curlResolveEntries($hostname, 443, $ips),
         ]);
 
-        $body        = curl_exec($ch);
-        $info        = curl_getinfo($ch);
-        $errno       = curl_errno($ch);
-        $error       = curl_error($ch);
+        $body = curl_exec($ch);
+        $info = curl_getinfo($ch);
+        $errno = curl_errno($ch);
+        $error = curl_error($ch);
         $versionUsed = $this->curlHttpVersion($ch);
         curl_close($ch);
 
@@ -301,36 +310,36 @@ class Http3CheckService
         if (! $errno && ($info['http_code'] ?? 0) >= 100 && $versionUsed === CURL_HTTP_VERSION_3) {
             $emit(['type' => 'check', 'key' => 'http3', 'status' => 'pass', 'label' => 'HTTP/3 Direct (QUIC)', 'detail' => "Connected via QUIC in {$ms} ms (HTTP/3)"]);
 
-            $headers    = $this->parseFinalHeaders((string) $body, (int) ($info['header_size'] ?? 0));
+            $headers = $this->parseFinalHeaders((string) $body, (int) ($info['header_size'] ?? 0));
             $nameLookup = (float) ($info['namelookup_time'] ?? 0);
-            $connect    = (float) ($info['connect_time'] ?? 0);
+            $connect = (float) ($info['connect_time'] ?? 0);
             $appConnect = (float) ($info['appconnect_time'] ?? 0);
-            $startXfer  = (float) ($info['starttransfer_time'] ?? 0);
-            $ttfbBase   = $appConnect > 0 ? $appConnect : $connect;
-            $handshake  = $this->ms($appConnect - $connect);
-            $packetRx   = $this->ms($startXfer - $ttfbBase);
+            $startXfer = (float) ($info['starttransfer_time'] ?? 0);
+            $ttfbBase = $appConnect > 0 ? $appConnect : $connect;
+            $handshake = $this->ms($appConnect - $connect);
+            $packetRx = $this->ms($startXfer - $ttfbBase);
 
             $serverInfo = [
                 'http_version_label' => 'HTTP/3',
-                'status_code'        => (int) ($info['http_code'] ?? 0),
-                'server_ip'          => $info['primary_ip'] ?? null,
-                'server_port'        => (int) ($info['primary_port'] ?? 0) ?: null,
-                'effective_url'      => $info['url'] ?? $url,
-                'quic'               => [
-                    'connection_id'     => $this->parseConnectionId($verboseText),
-                    'cipher'            => $this->parseTlsCipher($verboseText),
-                    'alpn'              => $this->parseAlpn($verboseText),
+                'status_code' => (int) ($info['http_code'] ?? 0),
+                'server_ip' => $info['primary_ip'] ?? null,
+                'server_port' => (int) ($info['primary_port'] ?? 0) ?: null,
+                'effective_url' => $info['url'] ?? $url,
+                'quic' => [
+                    'connection_id' => $this->parseConnectionId($verboseText),
+                    'cipher' => $this->parseTlsCipher($verboseText),
+                    'alpn' => $this->parseAlpn($verboseText),
                     'handshake_done_ms' => $handshake,
-                    'packet_rx_ms'      => $packetRx,
+                    'packet_rx_ms' => $packetRx,
                 ],
-                'timing_ms'          => [
-                    'dns'       => $this->ms($nameLookup),
-                    'connect'   => $this->ms($connect - $nameLookup),
+                'timing_ms' => [
+                    'dns' => $this->ms($nameLookup),
+                    'connect' => $this->ms($connect - $nameLookup),
                     'handshake' => $handshake,
-                    'ttfb'      => $packetRx,
-                    'total'     => $ms,
+                    'ttfb' => $packetRx,
+                    'total' => $ms,
                 ],
-                'headers'            => $this->headersToList($headers),
+                'headers' => $this->headersToList($headers),
             ];
 
             return [true, $serverInfo];
@@ -338,7 +347,7 @@ class Http3CheckService
 
         // Connected but server negotiated a lower version
         if (! $errno && ($info['http_code'] ?? 0) >= 100) {
-            $emit(['type' => 'check', 'key' => 'http3', 'status' => 'warn', 'label' => 'HTTP/3 Direct (QUIC)', 'detail' => 'Attempted HTTP/3 but server negotiated HTTP/' . $this->versionLabel($versionUsed)]);
+            $emit(['type' => 'check', 'key' => 'http3', 'status' => 'warn', 'label' => 'HTTP/3 Direct (QUIC)', 'detail' => 'Attempted HTTP/3 but server negotiated HTTP/'.$this->versionLabel($versionUsed)]);
 
             return [false, null];
         }
@@ -394,7 +403,7 @@ class Http3CheckService
         }
 
         if (! preg_match('#^https?://#i', $input)) {
-            $input = 'https://' . $input;
+            $input = 'https://'.$input;
         }
 
         $parts = parse_url($input);
@@ -411,7 +420,7 @@ class Http3CheckService
 
         return [
             'hostname' => $hostname,
-            'url'      => 'https://' . $hostname . '/',
+            'url' => 'https://'.$hostname.'/',
         ];
     }
 
@@ -426,7 +435,7 @@ class Http3CheckService
 
         // Split into individual response blocks; keep only the last non-empty one.
         $blocks = preg_split('/\r?\n\r?\n/', rtrim($headerBlob));
-        $last   = '';
+        $last = '';
         foreach ($blocks as $block) {
             $block = trim($block);
             if ($block !== '') {
@@ -449,7 +458,7 @@ class Http3CheckService
     /**
      * Convert a parsed headers map into a preserved-order list for display.
      *
-     * @param array<string, string> $headers
+     * @param  array<string, string>  $headers
      * @return list<array{name: string, value: string}>
      */
     private function headersToList(array $headers): array
@@ -495,10 +504,10 @@ class Http3CheckService
     private function versionLabel(int $version): string
     {
         return match ($version) {
-            1       => '1.0',
-            2       => '1.1',
-            3       => '2',
-            30      => '3',
+            1 => '1.0',
+            2 => '1.1',
+            3 => '2',
+            30 => '3',
             default => 'Unknown',
         };
     }
