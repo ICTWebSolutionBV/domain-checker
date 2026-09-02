@@ -389,7 +389,7 @@ const showPreview = ref(false)
                         </div>
 
                         <!-- Existing account -->
-                        <div class="ui-accent-panel p-4">
+                        <div class="ui-accent-panel p-3.5 sm:p-4">
                             <label class="block ui-accent-title mb-0.5">Existing account <span class="font-normal text-indigo-600/70 dark:text-indigo-500">(optional)</span></label>
                             <p class="ui-accent-help mb-3">Already a customer? Enter the contact name or company so we know which account the domains in this group should land under.</p>
                             <div class="relative">
@@ -425,8 +425,8 @@ const showPreview = ref(false)
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-3 gap-3 sm:gap-4">
-                                <div class="col-span-2">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                                <div class="sm:col-span-2">
                                     <label class="ui-label">Street</label>
                                     <input v-model="block.street" type="text" placeholder="Kerkstraat" class="ui-input" />
                                 </div>
@@ -508,18 +508,18 @@ const showPreview = ref(false)
                     <span class="font-semibold text-gray-900 dark:text-white">{{ blocks.length }}</span>
                     group{{ blocks.length === 1 ? '' : 's' }} ready to copy.
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
                     <button
                         @click="showPreview = !showPreview"
                         type="button"
-                        class="ui-btn ui-btn-ghost font-medium"
+                        class="ui-btn ui-btn-ghost font-medium w-full sm:w-auto"
                     >
                         {{ showPreview ? 'Hide preview' : 'Show preview' }}
                     </button>
                     <button
                         @click="copyAll"
                         type="button"
-                        class="ui-btn"
+                        class="ui-btn w-full sm:w-auto"
                         :class="copied ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'ui-btn-primary'"
                     >
                         <Check v-if="copied" class="w-4 h-4" />

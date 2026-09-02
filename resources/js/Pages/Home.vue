@@ -773,12 +773,12 @@ function statusConfig(status) {
             leave-from-class="translate-y-0 opacity-100"
             leave-to-class="translate-y-full opacity-0"
         >
-            <div v-if="selectedList.length > 0" class="fixed bottom-0 inset-x-0 z-50 p-4">
+            <div v-if="selectedList.length > 0" class="fixed bottom-0 inset-x-0 z-50 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:p-4">
                 <!-- Hint line -->
                 <p class="text-center text-xs font-medium text-gray-600 dark:text-gray-500 mb-2 hidden sm:block">
                     Fill in your registration details so we can process your order
                 </p>
-                <div class="max-w-2xl mx-auto bg-gray-900 dark:bg-gray-800 border border-gray-700 dark:border-gray-600 rounded-2xl shadow-overlay px-4 py-3 flex items-center gap-3">
+                <div class="max-w-2xl mx-auto bg-gray-900 dark:bg-gray-800 border border-gray-700 dark:border-gray-600 rounded-2xl shadow-overlay px-3 py-3 sm:px-4 flex flex-col sm:flex-row sm:items-center gap-3">
                     <div class="flex items-center gap-2 flex-1 min-w-0">
                         <ClipboardList class="w-4 h-4 text-indigo-400 shrink-0" />
                         <span class="text-sm font-medium text-white">
@@ -788,17 +788,19 @@ function statusConfig(status) {
                             — {{ selectedList.slice(0, 3).join(', ') }}{{ selectedList.length > 3 ? ` +${selectedList.length - 3} more` : '' }}
                         </span>
                     </div>
-                    <button @click="clearSelection" class="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors" title="Clear selection">
-                        <X class="w-4 h-4" />
-                    </button>
-                    <button
-                        @click="openModal"
-                        class="ui-btn ui-btn-primary px-4 py-2 focus-visible:ring-offset-gray-900"
-                        title="Fill in registration details and copy to clipboard"
-                    >
-                        <Copy class="w-4 h-4" />
-                        Fill in details and request
-                    </button>
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <button @click="clearSelection" class="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors shrink-0" title="Clear selection">
+                            <X class="w-4 h-4" />
+                        </button>
+                        <button
+                            @click="openModal"
+                            class="ui-btn ui-btn-primary flex-1 sm:flex-none px-4 py-2 focus-visible:ring-offset-gray-900"
+                            title="Fill in registration details and copy to clipboard"
+                        >
+                            <Copy class="w-4 h-4" />
+                            Fill in details and request
+                        </button>
+                    </div>
                 </div>
             </div>
         </Transition>
@@ -812,22 +814,22 @@ function statusConfig(status) {
             leave-from-class="opacity-100"
             leave-to-class="opacity-0"
         >
-            <div v-if="showModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" @click.self="closeModal">
+            <div v-if="showModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" @click.self="closeModal">
                 <!-- Backdrop -->
                 <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeModal" />
 
                 <!-- Modal panel -->
-                <div class="relative w-full max-w-2xl bg-surface rounded-2xl shadow-overlay border border-hairline dark:border-gray-700 overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="relative w-full max-w-2xl bg-surface rounded-t-2xl sm:rounded-2xl shadow-overlay border border-hairline dark:border-gray-700 overflow-hidden max-h-[calc(100dvh-0.75rem)] sm:max-h-[90vh] flex flex-col">
 
                     <!-- Header -->
-                    <div class="flex items-center justify-between gap-4 px-6 sm:px-8 py-4 border-b border-hairline shrink-0">
-                        <div class="flex items-center gap-2.5">
+                    <div class="flex items-center justify-between gap-3 px-4 sm:px-8 py-3.5 sm:py-4 border-b border-hairline shrink-0">
+                        <div class="flex items-center gap-2.5 min-w-0">
                             <div class="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg flex items-center justify-center">
                                 <ClipboardList class="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                             </div>
-                            <div>
+                            <div class="min-w-0">
                                 <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Fill in details and request</h2>
-                                <p class="ui-help">Add your details so we can process your order</p>
+                                <p class="ui-help hidden min-[380px]:block">Add your details so we can process your order</p>
                             </div>
                         </div>
                         <div class="flex items-center gap-1">
@@ -857,7 +859,7 @@ function statusConfig(status) {
                         leave-from-class="max-h-96 opacity-100"
                         leave-to-class="max-h-0 opacity-0"
                     >
-                        <div v-if="showModalHelp" class="px-6 sm:px-8 py-4 bg-indigo-50 dark:bg-indigo-950/30 border-b border-indigo-100 dark:border-indigo-900">
+                        <div v-if="showModalHelp" class="px-4 sm:px-8 py-4 bg-indigo-50 dark:bg-indigo-950/30 border-b border-indigo-100 dark:border-indigo-900">
                             <p class="ui-section-title text-indigo-700 dark:text-indigo-400 mb-3">How to order domains</p>
                             <ol class="space-y-2">
                                 <li class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
@@ -886,26 +888,26 @@ function statusConfig(status) {
 
                     <div class="overflow-y-auto flex-1">
                         <!-- Selected domains -->
-                        <div class="px-6 sm:px-8 py-4 border-b border-hairline">
+                        <div class="px-4 sm:px-8 py-4 border-b border-hairline">
                             <p class="ui-section-title mb-2.5">Selected domains</p>
                             <div class="flex flex-wrap gap-2">
                                 <span
                                     v-for="domain in selectedList"
                                     :key="domain"
-                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-medium"
+                                    class="inline-flex max-w-full items-center gap-1.5 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-medium"
                                 >
-                                    <CheckCircle class="w-3 h-3" />
-                                    {{ domain }}
+                                    <CheckCircle class="w-3 h-3 shrink-0" />
+                                    <span class="truncate">{{ domain }}</span>
                                 </span>
                             </div>
                         </div>
 
                         <!-- Registration details form -->
-                        <div class="px-6 sm:px-8 py-6 space-y-6">
+                        <div class="px-4 sm:px-8 py-5 sm:py-6 space-y-5 sm:space-y-6">
                             <p class="ui-section-title">Registration details <span class="normal-case font-normal">(required — added to clipboard)</span></p>
 
                             <!-- Existing account -->
-                            <div class="ui-accent-panel p-4">
+                            <div class="ui-accent-panel p-3.5 sm:p-4">
                                 <label class="block ui-accent-title mb-0.5">Existing account <span class="font-normal text-indigo-600/70 dark:text-indigo-500">(optional)</span></label>
                                 <p class="ui-accent-help mb-3">Already a customer? Enter your name or company so we link this to the right account.</p>
                                 <div class="relative">
@@ -924,7 +926,7 @@ function statusConfig(status) {
                                         <input v-model="reg.companyName" type="text" placeholder="Example Company" class="ui-input pl-9" />
                                     </div>
                                 </div>
-                                <div class="grid grid-cols-2 gap-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
                                         <label class="ui-label text-sm">First name</label>
                                         <input v-model="reg.firstName" type="text" placeholder="John" class="ui-input" />
@@ -949,8 +951,8 @@ function statusConfig(status) {
                             <!-- Address -->
                             <div class="space-y-3">
                                 <p class="ui-section-title">Address</p>
-                                <div class="grid grid-cols-3 gap-3">
-                                    <div class="col-span-2">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div class="sm:col-span-2">
                                         <label class="ui-label text-sm">Street</label>
                                         <input v-model="reg.street" type="text" placeholder="Kerkstraat" class="ui-input" />
                                     </div>
@@ -959,7 +961,7 @@ function statusConfig(status) {
                                         <input v-model="reg.houseNumber" type="text" placeholder="42A" class="ui-input" />
                                     </div>
                                 </div>
-                                <div class="grid grid-cols-2 gap-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
                                         <label class="ui-label text-sm">Postal code</label>
                                         <input v-model="reg.postalCode" type="text" placeholder="1234 AB" class="ui-input" />
@@ -974,7 +976,7 @@ function statusConfig(status) {
                             <!-- Business IDs -->
                             <div class="space-y-3">
                                 <p class="ui-section-title">Business <span class="normal-case font-normal">(optional)</span></p>
-                                <div class="grid grid-cols-2 gap-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
                                         <label class="ui-label text-sm">KVK</label>
                                         <input v-model="reg.kvk" type="text" placeholder="12345678" class="ui-input" />
@@ -989,11 +991,11 @@ function statusConfig(status) {
                     </div>
 
                     <!-- Footer -->
-                    <div class="px-6 sm:px-8 py-4 border-t border-hairline bg-gray-50/80 dark:bg-gray-900 shrink-0 flex items-center justify-between gap-3">
-                        <p class="ui-help">Fields left empty are omitted from the clipboard.</p>
+                    <div class="px-4 sm:px-8 pt-3 sm:pt-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-4 border-t border-hairline bg-gray-50/80 dark:bg-gray-900 shrink-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <p class="ui-help text-center sm:text-left">Fields left empty are omitted from the clipboard.</p>
                         <button
                             @click="copyToClipboard"
-                            class="ui-btn shrink-0"
+                            class="ui-btn w-full sm:w-auto shrink-0"
                             :class="copied ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'ui-btn-primary'"
                         >
                             <Check v-if="copied" class="w-4 h-4" />
