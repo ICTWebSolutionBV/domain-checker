@@ -16,7 +16,7 @@ const props = defineProps({
     popularTlds: Array,
 })
 
-const { results, isDone, isChecking, checkedCount, totalCount, error, check, reset } = useDomainCheck()
+const { results, isDone, isChecking, checkedCount, totalCount, error, check, stop, reset } = useDomainCheck()
 const {
     results: bulkResults,
     checkedDomains: bulkCheckedDomains,
@@ -25,6 +25,7 @@ const {
     totalCount: bulkTotalCount,
     error: bulkError,
     check: bulkCheck,
+    stop: bulkStop,
     reset: bulkReset,
 } = useBulkDomainCheck()
 
@@ -78,17 +79,18 @@ const tldsToCheck = computed(() =>
         : currentTlds.value
 )
 
-// Auto-select the pinned TLD as soon as it comes back "available"
-watch(results, (val) => {
-    if (pinnedTld.value && val[pinnedTld.value] === 'available') {
-        const domain = `${searchedDomain.value}.${pinnedTld.value}`
-        if (!selected.value.has(domain)) {
-            const next = new Set(selected.value)
-            next.add(domain)
-            selected.value = next
-        }
-    }
-}, { deep: true })
+// Auto-select the pinned TLD as soon as it comes back "available".
+// This used to be a deep watcher over the whole results map: with 1287 keys
+// Vue re-traversed all of them on every one of the 1287 stream events, around
+// 1.65M property reads, to answer a question about a single key.
+watch(() => pinnedTld.value && results[pinnedTld.value], (status) => {
+    if (status !== 'available') return
+    const domain = `${searchedDomain.value}.${pinnedTld.value}`
+    if (selected.value.has(domain)) return
+    const next = new Set(selected.value)
+    next.add(domain)
+    selected.value = next
+})
 
 // Clear error when user starts typing again
 watch(domainInput, () => { if (error.value) error.value = null })
@@ -409,38 +411,37 @@ async function copyToClipboard() {
     setTimeout(() => { copied.value = false }, 2000)
 }
 
-function statusConfig(status) {
-    switch (status) {
-        case 'available':
-            return {
-                icon: CheckCircle,
-                badgeClass: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800',
-                rowClass: 'hover:bg-emerald-50 dark:hover:bg-emerald-950/20',
-                label: 'Available',
-            }
-        case 'taken':
-            return {
-                icon: XCircle,
-                badgeClass: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800',
-                rowClass: 'hover:bg-red-50/50 dark:hover:bg-red-950/10',
-                label: 'Taken',
-            }
-        case 'checking':
-            return {
-                icon: Loader2,
-                badgeClass: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700',
-                rowClass: '',
-                label: 'Checking…',
-            }
-        default:
-            return {
-                icon: HelpCircle,
-                badgeClass: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700',
-                rowClass: '',
-                label: 'Unknown',
-            }
-    }
-}
+// One frozen object per status instead of a fresh literal per call: the
+// template called this three times per row, so a single re-render of the
+// 1287-row grid allocated 3861 throwaway objects.
+const STATUS = Object.freeze({
+    available: Object.freeze({
+        icon: CheckCircle,
+        badgeClass: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800',
+        rowClass: 'hover:bg-emerald-50 dark:hover:bg-emerald-950/20',
+        label: 'Available',
+    }),
+    taken: Object.freeze({
+        icon: XCircle,
+        badgeClass: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800',
+        rowClass: 'hover:bg-red-50/50 dark:hover:bg-red-950/10',
+        label: 'Taken',
+    }),
+    checking: Object.freeze({
+        icon: Loader2,
+        badgeClass: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700',
+        rowClass: '',
+        label: 'Checking…',
+    }),
+    unknown: Object.freeze({
+        icon: HelpCircle,
+        badgeClass: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700',
+        rowClass: '',
+        label: 'Unknown',
+    }),
+})
+
+const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
 </script>
 
 <template>
@@ -546,13 +547,21 @@ function statusConfig(status) {
                         />
                     </div>
                     <button
+                        v-if="isChecking"
+                        @click="stop"
+                        class="ui-btn ui-btn-secondary px-6 py-3.5 rounded-2xl"
+                    >
+                        <X class="w-4 h-4" aria-hidden="true" />
+                        Stop
+                    </button>
+                    <button
+                        v-else
                         @click="handleCheck"
-                        :disabled="isChecking || !domainInput.trim()"
+                        :disabled="!domainInput.trim()"
                         class="ui-btn ui-btn-primary px-6 py-3.5 rounded-2xl"
                     >
-                        <Loader2 v-if="isChecking" class="w-4 h-4 animate-spin" />
-                        <Search v-else class="w-4 h-4" />
-                        {{ isChecking ? 'Checking…' : 'Check' }}
+                        <Search class="w-4 h-4" aria-hidden="true" />
+                        Check
                     </button>
                 </div>
 
@@ -746,9 +755,15 @@ function statusConfig(status) {
 
             <!-- Progress bar -->
             <div v-if="bulkIsChecking" class="mb-5">
-                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+                <div class="flex items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400 mb-1.5">
                     <span>Checking domains…</span>
-                    <span>{{ bulkCheckedCount }} / {{ bulkTotalCount }}</span>
+                    <span class="flex items-center gap-3">
+                        <span>{{ bulkCheckedCount }} / {{ bulkTotalCount }}</span>
+                        <button @click="bulkStop" class="ui-btn ui-btn-sm ui-btn-secondary">
+                            <X class="w-3 h-3" aria-hidden="true" />
+                            Stop
+                        </button>
+                    </span>
                 </div>
                 <div class="h-1 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
                     <div class="h-full bg-indigo-500 rounded-full transition-all duration-300" :style="{ width: bulkProgressPercent + '%' }" />

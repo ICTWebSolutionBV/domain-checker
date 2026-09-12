@@ -10,13 +10,46 @@ export function useDomainCheck() {
     let abortController = null
     let runId = 0
 
+    // One SSE event per TLD means 1287 reactive writes and 1287 re-renders of
+    // a 1287-row grid on the "All extensions" pass, which wedged the
+    // renderer. Coalescing them into one flush per frame turns that into ~60
+    // renders a second regardless of how fast results arrive.
+    let pending = new Map()
+    let pendingChecked = null
+    let pendingTotal = null
+    let raf = null
+
+    function flush() {
+        raf = null
+        pending.forEach((status, key) => { results[key] = status })
+        pending.clear()
+        if (pendingChecked !== null) { checkedCount.value = pendingChecked; pendingChecked = null }
+        if (pendingTotal !== null) { totalCount.value = pendingTotal; pendingTotal = null }
+    }
+
+    function queue(key, status) {
+        pending.set(key, status)
+        if (raf === null) raf = requestAnimationFrame(flush)
+    }
+
+    function cancelFlush() {
+        if (raf !== null) cancelAnimationFrame(raf)
+        raf = null
+        pending.clear()
+        pendingChecked = null
+        pendingTotal = null
+    }
+
     // Abandoning a check used to leave the reader loop alive and the HTTP
     // connection open: an Inertia navigation away from / kept writing into a
     // destroyed component's state and held a server worker. Measured once at
     // over 10 minutes of unreachable app with 46 sockets in CLOSE-WAIT.
     // onScopeDispose rather than onUnmounted, so this also works when the
     // composable is called from a non-component scope.
-    onScopeDispose(() => abortController?.abort())
+    onScopeDispose(() => {
+        abortController?.abort()
+        cancelFlush()
+    })
 
     function downgradePending() {
         Object.keys(results).forEach(tld => {
@@ -32,6 +65,7 @@ export function useDomainCheck() {
         // off and re-enabled the Check button mid-stream.
         const myRun = ++runId
 
+        cancelFlush()
         Object.keys(results).forEach(key => delete results[key])
         tlds.forEach(tld => (results[tld] = 'checking'))
         isDone.value = false
@@ -76,6 +110,7 @@ export function useDomainCheck() {
             while (true) {
                 const { done, value } = await reader.read()
                 if (done) {
+                    flush()
                     // The backend always terminates the stream with
                     // {"done":true}. Reaching the end of the body without it
                     // means the connection died mid-flight — an nginx
@@ -103,13 +138,14 @@ export function useDomainCheck() {
                     try {
                         const parsed = JSON.parse(dataLine.slice(6))
                         if (parsed.done) {
+                            flush()
                             isDone.value = true
                             return
                         }
                         if (parsed.tld && parsed.status) {
-                            results[parsed.tld] = parsed.status
-                            if (parsed.checked) checkedCount.value = parsed.checked
-                            if (parsed.total)   totalCount.value  = parsed.total
+                            queue(parsed.tld, parsed.status)
+                            if (parsed.checked) pendingChecked = parsed.checked
+                            if (parsed.total)   pendingTotal  = parsed.total
                         }
                     } catch {
                         // ignore malformed events
@@ -118,6 +154,7 @@ export function useDomainCheck() {
             }
         } catch (err) {
             if (err.name === 'AbortError') return
+            flush()
             error.value = 'error'
             downgradePending()
         } finally {
@@ -125,9 +162,24 @@ export function useDomainCheck() {
         }
     }
 
+    // The only way out of a running check other than leaving the page — the
+    // 1287-TLD pass takes ~160s at the measured ~8 results/s and there was no
+    // cancel affordance at all.
+    function stop() {
+        if (!isChecking.value) return
+        abortController?.abort()
+        abortController = null
+        cancelFlush()
+        runId++
+        downgradePending()
+        isChecking.value = false
+        isDone.value = true
+    }
+
     function reset() {
         abortController?.abort()
         abortController = null
+        cancelFlush()
         runId++
         Object.keys(results).forEach(key => delete results[key])
         isDone.value = false
@@ -137,5 +189,5 @@ export function useDomainCheck() {
         totalCount.value = 0
     }
 
-    return { results, isDone, isChecking, checkedCount, totalCount, error, check, reset }
+    return { results, isDone, isChecking, checkedCount, totalCount, error, check, stop, reset }
 }
