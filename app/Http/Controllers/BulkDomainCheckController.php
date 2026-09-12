@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\StreamsServerSentEvents;
 use App\Services\DomainAvailabilityService;
 use App\Services\TldRepository;
+use App\Support\DomainName;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -28,7 +29,7 @@ class BulkDomainCheckController extends Controller
 
         $domains = [];
         foreach ($lines as $line) {
-            $line = strtolower($line);
+            $line = strtolower(DomainName::toAscii($line));
             $line = preg_replace('#^https?://#', '', $line);
             $line = preg_replace('#^www\.#', '', $line);
             // Must look like name.tld (at least one dot, valid label characters)
