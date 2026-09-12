@@ -2,10 +2,7 @@
 import { ref, computed, onMounted, onScopeDispose } from 'vue'
 import { Head } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
-import {
-    MapPin, Search, Loader2, Network,
-    Clock, Shield, AlertTriangle, History, ArrowRight,
-} from '@lucide/vue'
+import { MapPin, Search, Loader2, Network, Clock, Shield, AlertTriangle, History, ArrowRight } from '@lucide/vue'
 
 const props = defineProps({
     initialInput: { type: String, default: '' },
@@ -31,7 +28,7 @@ function loadHistory() {
         const parsed = JSON.parse(raw)
         if (!Array.isArray(parsed)) return []
         const cutoff = Date.now() - HISTORY_MAX_AGE_MS
-        return parsed.filter(e => e && typeof e.looked_up_at === 'number' && e.looked_up_at >= cutoff)
+        return parsed.filter((e) => e && typeof e.looked_up_at === 'number' && e.looked_up_at >= cutoff)
     } catch {
         return []
     }
@@ -57,7 +54,7 @@ function addToHistory(data) {
             isp: data.isp,
         },
     }
-    const filtered = recent.value.filter(e => e.ip !== entry.ip)
+    const filtered = recent.value.filter((e) => e.ip !== entry.ip)
     filtered.unshift(entry)
     recent.value = filtered.slice(0, HISTORY_LIMIT)
     saveHistory(recent.value)
@@ -65,7 +62,11 @@ function addToHistory(data) {
 
 function clearHistory() {
     recent.value = []
-    try { localStorage.removeItem(HISTORY_KEY) } catch { /* ignore */ }
+    try {
+        localStorage.removeItem(HISTORY_KEY)
+    } catch {
+        /* ignore */
+    }
 }
 
 async function lookup() {
@@ -86,7 +87,9 @@ async function lookup() {
         const url = new URL(window.location.href)
         url.searchParams.set('q', q)
         window.history.replaceState({}, '', url)
-    } catch { /* ignore */ }
+    } catch {
+        /* ignore */
+    }
 
     try {
         const token = document.querySelector('meta[name="csrf-token"]')?.content
@@ -95,7 +98,7 @@ async function lookup() {
             signal,
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json',
+                Accept: 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
                 ...(token ? { 'X-CSRF-TOKEN': token } : {}),
             },
@@ -137,15 +140,15 @@ function countryFlag(code) {
 const badges = computed(() => {
     if (!result.value) return []
     const b = []
-    if (result.value.mobile)  b.push({ label: 'Mobile network', tone: 'amber' })
-    if (result.value.proxy)   b.push({ label: 'Proxy / VPN / Tor', tone: 'rose' })
+    if (result.value.mobile) b.push({ label: 'Mobile network', tone: 'amber' })
+    if (result.value.proxy) b.push({ label: 'Proxy / VPN / Tor', tone: 'rose' })
     if (result.value.hosting) b.push({ label: 'Hosting / Datacenter', tone: 'indigo' })
     return b
 })
 
 const toneClasses = {
-    amber:  'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200 border-amber-200 dark:border-amber-800',
-    rose:   'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-200 border-rose-200 dark:border-rose-800',
+    amber: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200 border-amber-200 dark:border-amber-800',
+    rose: 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-200 border-rose-200 dark:border-rose-800',
     indigo: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200 border-indigo-200 dark:border-indigo-800',
 }
 
@@ -181,7 +184,9 @@ onMounted(() => {
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
             <!-- Hero -->
             <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-600 mb-4 shadow-lg shadow-indigo-600/20">
+                <div
+                    class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-600 mb-4 shadow-lg shadow-indigo-600/20"
+                >
                     <MapPin class="w-7 h-7 text-white" />
                 </div>
                 <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
@@ -197,7 +202,10 @@ onMounted(() => {
                 <div class="flex gap-2">
                     <div class="relative flex-1">
                         <label for="ip-query" class="sr-only">IP address or hostname</label>
-                        <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" aria-hidden="true" />
+                        <Search
+                            class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                            aria-hidden="true"
+                        />
                         <input
                             id="ip-query"
                             v-model="input"
@@ -220,13 +228,20 @@ onMounted(() => {
             </form>
 
             <!-- Error -->
-            <div v-if="error" role="alert" class="mt-6 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950 text-rose-800 dark:text-rose-200 px-4 py-3 text-sm flex items-center gap-2">
+            <div
+                v-if="error"
+                role="alert"
+                class="mt-6 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950 text-rose-800 dark:text-rose-200 px-4 py-3 text-sm flex items-center gap-2"
+            >
                 <AlertTriangle class="w-4 h-4 shrink-0" />
                 {{ error }}
             </div>
 
             <!-- Private range notice -->
-            <div v-if="result?.private" class="mt-8 rounded-2xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 p-6">
+            <div
+                v-if="result?.private"
+                class="mt-8 rounded-2xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 p-6"
+            >
                 <div class="flex items-start gap-3">
                     <AlertTriangle class="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                     <div>
@@ -250,7 +265,10 @@ onMounted(() => {
                             <div class="font-mono text-lg font-semibold text-gray-900 dark:text-white break-all">
                                 {{ result.ip }}
                             </div>
-                            <div v-if="result.hostname" class="text-sm text-gray-500 dark:text-gray-400 break-all mt-0.5">
+                            <div
+                                v-if="result.hostname"
+                                class="text-sm text-gray-500 dark:text-gray-400 break-all mt-0.5"
+                            >
                                 {{ result.hostname }}
                             </div>
                             <div class="text-sm text-gray-600 dark:text-gray-300 mt-2">
@@ -261,7 +279,8 @@ onMounted(() => {
                         </div>
                         <div v-if="badges.length" class="flex flex-wrap gap-2">
                             <span
-                                v-for="b in badges" :key="b.label"
+                                v-for="b in badges"
+                                :key="b.label"
                                 class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border"
                                 :class="toneClasses[b.tone]"
                             >
@@ -272,7 +291,10 @@ onMounted(() => {
                     </div>
 
                     <!-- Map -->
-                    <div v-if="mapSrc" class="border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950">
+                    <div
+                        v-if="mapSrc"
+                        class="border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950"
+                    >
                         <iframe
                             :src="mapSrc"
                             class="w-full h-72 border-0"
@@ -297,12 +319,16 @@ onMounted(() => {
                                 <dt class="text-gray-500 dark:text-gray-400">Country</dt>
                                 <dd class="text-gray-900 dark:text-white text-right">
                                     {{ result.country || '—' }}
-                                    <span v-if="result.country_code" class="text-gray-500 dark:text-gray-400">({{ result.country_code }})</span>
+                                    <span v-if="result.country_code" class="text-gray-500 dark:text-gray-400"
+                                        >({{ result.country_code }})</span
+                                    >
                                 </dd>
                             </div>
                             <div class="flex justify-between gap-4">
                                 <dt class="text-gray-500 dark:text-gray-400">Region</dt>
-                                <dd class="text-gray-900 dark:text-white text-right">{{ result.region_name || '—' }}</dd>
+                                <dd class="text-gray-900 dark:text-white text-right">
+                                    {{ result.region_name || '—' }}
+                                </dd>
                             </div>
                             <div class="flex justify-between gap-4">
                                 <dt class="text-gray-500 dark:text-gray-400">City</dt>
@@ -318,7 +344,9 @@ onMounted(() => {
                             </div>
                             <div v-if="result.lat !== null && result.lon !== null" class="flex justify-between gap-4">
                                 <dt class="text-gray-500 dark:text-gray-400">Coordinates</dt>
-                                <dd class="text-gray-900 dark:text-white text-right font-mono">{{ result.lat }}, {{ result.lon }}</dd>
+                                <dd class="text-gray-900 dark:text-white text-right font-mono">
+                                    {{ result.lat }}, {{ result.lon }}
+                                </dd>
                             </div>
                         </dl>
                     </div>
@@ -338,7 +366,9 @@ onMounted(() => {
                             </div>
                             <div class="flex justify-between gap-4">
                                 <dt class="text-gray-500 dark:text-gray-400">ASN</dt>
-                                <dd class="text-gray-900 dark:text-white text-right font-mono break-all">{{ result.as || '—' }}</dd>
+                                <dd class="text-gray-900 dark:text-white text-right font-mono break-all">
+                                    {{ result.as || '—' }}
+                                </dd>
                             </div>
                             <div v-if="result.as_name" class="flex justify-between gap-4">
                                 <dt class="text-gray-500 dark:text-gray-400">AS name</dt>
@@ -346,7 +376,9 @@ onMounted(() => {
                             </div>
                             <div class="flex justify-between gap-4">
                                 <dt class="text-gray-500 dark:text-gray-400">Reverse DNS</dt>
-                                <dd class="text-gray-900 dark:text-white text-right break-all">{{ result.reverse_dns || '—' }}</dd>
+                                <dd class="text-gray-900 dark:text-white text-right break-all">
+                                    {{ result.reverse_dns || '—' }}
+                                </dd>
                             </div>
                         </dl>
                     </div>
@@ -368,7 +400,9 @@ onMounted(() => {
                             </div>
                             <div v-if="result.currency" class="flex justify-between gap-4">
                                 <dt class="text-gray-500 dark:text-gray-400">Currency</dt>
-                                <dd class="text-gray-900 dark:text-white text-right font-mono">{{ result.currency }}</dd>
+                                <dd class="text-gray-900 dark:text-white text-right font-mono">
+                                    {{ result.currency }}
+                                </dd>
                             </div>
                         </dl>
                     </div>
@@ -380,19 +414,37 @@ onMounted(() => {
                         <dl class="space-y-2 text-sm">
                             <div class="flex justify-between gap-4">
                                 <dt class="text-gray-500 dark:text-gray-400">Mobile network</dt>
-                                <dd :class="result.mobile ? 'text-amber-600 dark:text-amber-400 font-medium' : 'text-gray-900 dark:text-white'">
+                                <dd
+                                    :class="
+                                        result.mobile
+                                            ? 'text-amber-600 dark:text-amber-400 font-medium'
+                                            : 'text-gray-900 dark:text-white'
+                                    "
+                                >
                                     {{ result.mobile ? 'Yes' : 'No' }}
                                 </dd>
                             </div>
                             <div class="flex justify-between gap-4">
                                 <dt class="text-gray-500 dark:text-gray-400">Proxy / VPN / Tor</dt>
-                                <dd :class="result.proxy ? 'text-rose-600 dark:text-rose-400 font-medium' : 'text-gray-900 dark:text-white'">
+                                <dd
+                                    :class="
+                                        result.proxy
+                                            ? 'text-rose-600 dark:text-rose-400 font-medium'
+                                            : 'text-gray-900 dark:text-white'
+                                    "
+                                >
                                     {{ result.proxy ? 'Yes' : 'No' }}
                                 </dd>
                             </div>
                             <div class="flex justify-between gap-4">
                                 <dt class="text-gray-500 dark:text-gray-400">Hosting / Datacenter</dt>
-                                <dd :class="result.hosting ? 'text-indigo-600 dark:text-indigo-400 font-medium' : 'text-gray-900 dark:text-white'">
+                                <dd
+                                    :class="
+                                        result.hosting
+                                            ? 'text-indigo-600 dark:text-indigo-400 font-medium'
+                                            : 'text-gray-900 dark:text-white'
+                                    "
+                                >
                                     {{ result.hosting ? 'Yes' : 'No' }}
                                 </dd>
                             </div>
@@ -420,7 +472,8 @@ onMounted(() => {
                 </div>
                 <div class="ui-card divide-y divide-gray-100 dark:divide-gray-800">
                     <button
-                        v-for="entry in recent" :key="entry.ip + entry.looked_up_at"
+                        v-for="entry in recent"
+                        :key="entry.ip + entry.looked_up_at"
                         type="button"
                         @click="pickRecent(entry.ip)"
                         class="w-full flex items-center gap-4 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 transition"
@@ -429,7 +482,9 @@ onMounted(() => {
                             {{ countryFlag(entry.data?.country_code) || '🌐' }}
                         </div>
                         <div class="flex-1 min-w-0">
-                            <div class="font-mono text-sm font-medium text-gray-900 dark:text-white truncate">{{ entry.ip }}</div>
+                            <div class="font-mono text-sm font-medium text-gray-900 dark:text-white truncate">
+                                {{ entry.ip }}
+                            </div>
                             <div class="text-xs text-gray-500 dark:text-gray-400 truncate">
                                 <template v-if="entry.data?.city || entry.data?.country">
                                     <span v-if="entry.data?.city">{{ entry.data.city }}, </span>
@@ -448,10 +503,22 @@ onMounted(() => {
             </div>
 
             <!-- Info -->
-            <div class="mt-12 ui-panel-muted dark:bg-gray-900/50 rounded-2xl p-6 text-sm text-gray-600 dark:text-gray-400">
+            <div
+                class="mt-12 ui-panel-muted dark:bg-gray-900/50 rounded-2xl p-6 text-sm text-gray-600 dark:text-gray-400"
+            >
                 <p class="font-medium text-gray-900 dark:text-white mb-2">How this works</p>
                 <p>
-                    Geolocation data comes from <a href="https://ip-api.com" target="_blank" rel="noopener" class="text-indigo-600 dark:text-indigo-400 hover:underline">ip-api.com</a>, a free public IP information database. Hostnames are resolved via DNS. Results are cached server-side for one hour per IP. Private and reserved ranges are not geolocated. Your recent lookups are kept privately in your own browser's localStorage and expire after 7 days — nothing is stored on the server.
+                    Geolocation data comes from
+                    <a
+                        href="https://ip-api.com"
+                        target="_blank"
+                        rel="noopener"
+                        class="text-indigo-600 dark:text-indigo-400 hover:underline"
+                        >ip-api.com</a
+                    >, a free public IP information database. Hostnames are resolved via DNS. Results are cached
+                    server-side for one hour per IP. Private and reserved ranges are not geolocated. Your recent lookups
+                    are kept privately in your own browser's localStorage and expire after 7 days — nothing is stored on
+                    the server.
                 </p>
             </div>
         </div>

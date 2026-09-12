@@ -4,8 +4,19 @@ import { Head } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import FormField from '@/Components/FormField.vue'
 import {
-    ArrowRightLeft, Plus, Trash2, ChevronDown, ChevronUp,
-    Copy, Check, X, UserCircle, Building2, Globe, Info, Pencil,
+    ArrowRightLeft,
+    Plus,
+    Trash2,
+    ChevronDown,
+    ChevronUp,
+    Copy,
+    Check,
+    X,
+    UserCircle,
+    Building2,
+    Globe,
+    Info,
+    Pencil,
 } from '@lucide/vue'
 
 // ── Helpers ──────────────────────────────────────────────────────────────
@@ -36,17 +47,22 @@ function blankBlock(label) {
 const DOMAIN_RE = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i
 
 function normalizeDomain(raw) {
-    let v = String(raw || '').trim().toLowerCase()
-    v = v.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '')
+    let v = String(raw || '')
+        .trim()
+        .toLowerCase()
+    v = v
+        .replace(/^https?:\/\//, '')
+        .replace(/^www\./, '')
+        .replace(/\/.*$/, '')
     return v
 }
 
 // ── State ────────────────────────────────────────────────────────────────
 const showHelp = ref(false)
 const blocks = ref([blankBlock('')])
-const requesterName  = ref('')
+const requesterName = ref('')
 const requesterEmail = ref('')
-const requesterNote  = ref('')
+const requesterNote = ref('')
 const copied = ref(false)
 const copyError = ref('')
 
@@ -54,7 +70,7 @@ const totalDomains = computed(() => blocks.value.reduce((n, b) => n + b.domains.
 
 // ── Block / domain management ────────────────────────────────────────────
 function addBlock() {
-    blocks.value.forEach(b => (b.open = false))
+    blocks.value.forEach((b) => (b.open = false))
     blocks.value.push(blankBlock(''))
 }
 
@@ -114,7 +130,7 @@ function blockSummary(block, idx) {
 
     if (block.domains.length) {
         lines.push('Domains:')
-        block.domains.forEach(d => lines.push(`  • ${d}`))
+        block.domains.forEach((d) => lines.push(`  • ${d}`))
     } else {
         lines.push('Domains: (none)')
     }
@@ -125,16 +141,16 @@ function blockSummary(block, idx) {
     }
 
     const reg = [
-        ['Company',     block.companyName],
-        ['Name',        [block.firstName, block.lastName].filter(Boolean).join(' ')],
-        ['Address',     [block.street,    block.houseNumber].filter(Boolean).join(' ')],
+        ['Company', block.companyName],
+        ['Name', [block.firstName, block.lastName].filter(Boolean).join(' ')],
+        ['Address', [block.street, block.houseNumber].filter(Boolean).join(' ')],
         ['Postal code', block.postalCode],
-        ['City',        block.city],
-        ['Country',     block.country],
-        ['Phone',       block.phone],
-        ['Email',       block.email],
-        ['KVK',         block.kvk],
-        ['VAT ID',      block.vatId],
+        ['City', block.city],
+        ['Country', block.country],
+        ['Phone', block.phone],
+        ['Email', block.email],
+        ['KVK', block.kvk],
+        ['VAT ID', block.vatId],
     ].filter(([, v]) => v && String(v).trim())
 
     if (reg.length) {
@@ -152,7 +168,10 @@ function blockSummary(block, idx) {
     if (block.notes && block.notes.trim()) {
         lines.push('')
         lines.push('Notes:')
-        block.notes.trim().split(/\n/).forEach(l => lines.push(`  ${l}`))
+        block.notes
+            .trim()
+            .split(/\n/)
+            .forEach((l) => lines.push(`  ${l}`))
     }
 
     return lines.join('\n')
@@ -164,13 +183,16 @@ function buildClipboardText() {
     lines.push('═══════════════════════')
     if (requesterName.value.trim() || requesterEmail.value.trim()) {
         lines.push('')
-        if (requesterName.value.trim())  lines.push(`Requester:  ${requesterName.value.trim()}`)
+        if (requesterName.value.trim()) lines.push(`Requester:  ${requesterName.value.trim()}`)
         if (requesterEmail.value.trim()) lines.push(`Reply to:   ${requesterEmail.value.trim()}`)
     }
     if (requesterNote.value.trim()) {
         lines.push('')
         lines.push('Message:')
-        requesterNote.value.trim().split(/\n/).forEach(l => lines.push(`  ${l}`))
+        requesterNote.value
+            .trim()
+            .split(/\n/)
+            .forEach((l) => lines.push(`  ${l}`))
     }
     lines.push('')
     lines.push(`Total: ${totalDomains.value} domain(s) across ${blocks.value.length} group(s)`)
@@ -194,7 +216,9 @@ async function copyAll() {
     try {
         await navigator.clipboard.writeText(buildClipboardText())
         copied.value = true
-        setTimeout(() => { copied.value = false }, 2200)
+        setTimeout(() => {
+            copied.value = false
+        }, 2200)
     } catch {
         copyError.value = 'Could not access the clipboard. Select the preview text below and copy manually.'
     }
@@ -209,17 +233,19 @@ const showPreview = ref(false)
         <Head title="Transfer domains" />
 
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-12 pb-20">
-
             <!-- Hero -->
             <div class="text-center mb-8 sm:mb-10">
-                <div class="inline-flex items-center justify-center w-12 h-12 bg-indigo-100 dark:bg-indigo-900/40 rounded-2xl mb-4">
+                <div
+                    class="inline-flex items-center justify-center w-12 h-12 bg-indigo-100 dark:bg-indigo-900/40 rounded-2xl mb-4"
+                >
                     <ArrowRightLeft class="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight mb-3">
                     Transfer domains to us
                 </h1>
                 <p class="text-sm text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed mb-5">
-                    Add the domains you want to transfer, fill in the owner details once per group, and copy everything to your clipboard in one click.
+                    Add the domains you want to transfer, fill in the owner details once per group, and copy everything
+                    to your clipboard in one click.
                 </p>
                 <!-- How it works toggle -->
                 <button
@@ -245,23 +271,54 @@ const showPreview = ref(false)
                     leave-to-class="max-h-0 opacity-0"
                 >
                     <div v-if="showHelp" class="mt-5 text-left max-w-xl mx-auto ui-accent-panel rounded-2xl px-5 py-4">
-                        <p class="ui-section-title text-indigo-700 dark:text-indigo-400 mb-3">How to transfer domains</p>
+                        <p class="ui-section-title text-indigo-700 dark:text-indigo-400 mb-3">
+                            How to transfer domains
+                        </p>
                         <ol class="space-y-2.5">
-                            <li class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
-                                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">1</span>
+                            <li
+                                class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed"
+                            >
+                                <span
+                                    class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5"
+                                    >1</span
+                                >
                                 <span>Add the domain names you want to transfer to the list below.</span>
                             </li>
-                            <li class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
-                                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">2</span>
-                                <span>Fill in the current owner's details. Use separate groups if different domains have different owners.</span>
+                            <li
+                                class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed"
+                            >
+                                <span
+                                    class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5"
+                                    >2</span
+                                >
+                                <span
+                                    >Fill in the current owner's details. Use separate groups if different domains have
+                                    different owners.</span
+                                >
                             </li>
-                            <li class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
-                                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">3</span>
-                                <span>Click <strong class="font-semibold">Fill in details and request</strong> — everything is copied to your clipboard.</span>
+                            <li
+                                class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed"
+                            >
+                                <span
+                                    class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5"
+                                    >3</span
+                                >
+                                <span
+                                    >Click <strong class="font-semibold">Fill in details and request</strong> —
+                                    everything is copied to your clipboard.</span
+                                >
                             </li>
-                            <li class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
-                                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">4</span>
-                                <span>Paste it into an email, WhatsApp, or chat message and send it to your provider to start the transfer.</span>
+                            <li
+                                class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed"
+                            >
+                                <span
+                                    class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5"
+                                    >4</span
+                                >
+                                <span
+                                    >Paste it into an email, WhatsApp, or chat message and send it to your provider to
+                                    start the transfer.</span
+                                >
                             </li>
                         </ol>
                     </div>
@@ -273,34 +330,54 @@ const showPreview = ref(false)
                 <div class="ui-card-header flex items-center gap-2 px-5 py-3.5">
                     <UserCircle class="w-4 h-4 text-indigo-500 shrink-0" />
                     <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Your details</h2>
-                    <span class="text-xs text-gray-500 dark:text-gray-400 truncate">(optional — included at the top of the copied request)</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 truncate"
+                        >(optional — included at the top of the copied request)</span
+                    >
                 </div>
                 <div class="p-5">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FormField label="Your name" v-slot="field">
-                            <input v-bind="field" v-model="requesterName" type="text" autocomplete="name" placeholder="John Doe" class="ui-input" />
+                            <input
+                                v-bind="field"
+                                v-model="requesterName"
+                                type="text"
+                                autocomplete="name"
+                                placeholder="John Doe"
+                                class="ui-input"
+                            />
                         </FormField>
                         <FormField label="Reply-to email" v-slot="field">
-                            <input v-bind="field" v-model="requesterEmail" type="email" autocomplete="email" placeholder="john@example.com" class="ui-input" />
+                            <input
+                                v-bind="field"
+                                v-model="requesterEmail"
+                                type="email"
+                                autocomplete="email"
+                                placeholder="john@example.com"
+                                class="ui-input"
+                            />
                         </FormField>
                     </div>
                     <FormField label="Message" hint="(optional)" class="mt-4" v-slot="field">
-                        <textarea v-bind="field" v-model="requesterNote" rows="2" placeholder="Anything we should know about these transfers — e.g. preferred go-live date." class="ui-input resize-y"></textarea>
+                        <textarea
+                            v-bind="field"
+                            v-model="requesterNote"
+                            rows="2"
+                            placeholder="Anything we should know about these transfers — e.g. preferred go-live date."
+                            class="ui-input resize-y"
+                        ></textarea>
                     </FormField>
                 </div>
             </div>
 
             <!-- Repeater of blocks -->
             <div class="space-y-4">
-                <div
-                    v-for="(block, i) in blocks"
-                    :key="i"
-                    class="ui-card overflow-hidden"
-                >
+                <div v-for="(block, i) in blocks" :key="i" class="ui-card overflow-hidden">
                     <!-- Header bar -->
                     <div class="ui-card-header flex items-center justify-between gap-3 px-4 sm:px-5 py-3">
                         <div class="flex items-center gap-2.5 flex-1 min-w-0">
-                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 text-xs font-semibold shrink-0">
+                            <span
+                                class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 text-xs font-semibold shrink-0"
+                            >
                                 {{ i + 1 }}
                             </span>
 
@@ -309,7 +386,10 @@ const showPreview = ref(false)
                                 class="group flex items-center gap-1.5 flex-1 min-w-0 px-2 py-1 -my-1 rounded-lg border border-dashed border-gray-300 dark:border-gray-700 bg-surface/60 dark:bg-transparent hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/20 focus-within:border-indigo-500 focus-within:border-solid focus-within:bg-surface dark:focus-within:bg-gray-900 transition-colors cursor-text"
                                 :title="'Click to rename this group'"
                             >
-                                <Pencil class="w-3 h-3 text-gray-400 group-hover:text-indigo-500 group-focus-within:text-indigo-500 shrink-0" aria-hidden="true" />
+                                <Pencil
+                                    class="w-3 h-3 text-gray-400 group-hover:text-indigo-500 group-focus-within:text-indigo-500 shrink-0"
+                                    aria-hidden="true"
+                                />
                                 <span class="sr-only">Name of group {{ i + 1 }}</span>
                                 <input
                                     v-model="block.label"
@@ -320,7 +400,9 @@ const showPreview = ref(false)
                                 />
                             </label>
 
-                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0 hidden sm:inline ml-1 mr-2">
+                            <span
+                                class="text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0 hidden sm:inline ml-1 mr-2"
+                            >
                                 {{ block.domains.length }} domain{{ block.domains.length === 1 ? '' : 's' }}
                             </span>
                         </div>
@@ -347,20 +429,20 @@ const showPreview = ref(false)
 
                     <!-- Body -->
                     <div v-show="block.open" class="px-4 sm:px-5 py-5 space-y-6">
-
                         <!-- Domains chip input -->
                         <div>
                             <div class="flex items-center gap-2 mb-2.5">
-                                <Globe class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400 shrink-0" aria-hidden="true" />
-                                <label :for="`transfer-domains-${i}`" class="ui-section-title">Domains in this group</label>
+                                <Globe
+                                    class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400 shrink-0"
+                                    aria-hidden="true"
+                                />
+                                <label :for="`transfer-domains-${i}`" class="ui-section-title"
+                                    >Domains in this group</label
+                                >
                                 <div class="h-px flex-1 bg-hairline" />
                             </div>
                             <div class="ui-field-shell flex flex-wrap items-center gap-2 px-2.5 py-2">
-                                <span
-                                    v-for="(d, di) in block.domains"
-                                    :key="di"
-                                    class="ui-chip"
-                                >
+                                <span v-for="(d, di) in block.domains" :key="di" class="ui-chip">
                                     {{ d }}
                                     <button
                                         type="button"
@@ -391,11 +473,29 @@ const showPreview = ref(false)
 
                         <!-- Existing account -->
                         <div class="ui-accent-panel p-3.5 sm:p-4">
-                            <label :for="`transfer-account-${i}`" class="block ui-accent-title mb-0.5">Existing account <span class="font-normal text-indigo-600/70 dark:text-indigo-500">(optional)</span></label>
-                            <p :id="`transfer-account-${i}-help`" class="ui-accent-help mb-3">Already a customer? Enter the contact name or company so we know which account the domains in this group should land under.</p>
+                            <label :for="`transfer-account-${i}`" class="block ui-accent-title mb-0.5"
+                                >Existing account
+                                <span class="font-normal text-indigo-600/70 dark:text-indigo-500"
+                                    >(optional)</span
+                                ></label
+                            >
+                            <p :id="`transfer-account-${i}-help`" class="ui-accent-help mb-3">
+                                Already a customer? Enter the contact name or company so we know which account the
+                                domains in this group should land under.
+                            </p>
                             <div class="relative">
-                                <UserCircle class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-500 dark:text-indigo-400 pointer-events-none" aria-hidden="true" />
-                                <input :id="`transfer-account-${i}`" :aria-describedby="`transfer-account-${i}-help`" v-model="block.existingAccount" type="text" placeholder="e.g. John Doe or Example Company" class="ui-input ui-input-accent pl-9" />
+                                <UserCircle
+                                    class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-500 dark:text-indigo-400 pointer-events-none"
+                                    aria-hidden="true"
+                                />
+                                <input
+                                    :id="`transfer-account-${i}`"
+                                    :aria-describedby="`transfer-account-${i}-help`"
+                                    v-model="block.existingAccount"
+                                    type="text"
+                                    placeholder="e.g. John Doe or Example Company"
+                                    class="ui-input ui-input-accent pl-9"
+                                />
                             </div>
                         </div>
 
@@ -409,65 +509,166 @@ const showPreview = ref(false)
                         <div class="space-y-4">
                             <FormField label="Company name" hint="(optional)" v-slot="field">
                                 <div class="relative">
-                                    <Building2 class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" aria-hidden="true" />
-                                    <input v-bind="field" v-model="block.companyName" type="text" autocomplete="organization" placeholder="Example Company" class="ui-input pl-9" />
+                                    <Building2
+                                        class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                                        aria-hidden="true"
+                                    />
+                                    <input
+                                        v-bind="field"
+                                        v-model="block.companyName"
+                                        type="text"
+                                        autocomplete="organization"
+                                        placeholder="Example Company"
+                                        class="ui-input pl-9"
+                                    />
                                 </div>
                             </FormField>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <FormField label="First name" v-slot="field">
-                                    <input v-bind="field" v-model="block.firstName" type="text" autocomplete="given-name" placeholder="John" class="ui-input" />
+                                    <input
+                                        v-bind="field"
+                                        v-model="block.firstName"
+                                        type="text"
+                                        autocomplete="given-name"
+                                        placeholder="John"
+                                        class="ui-input"
+                                    />
                                 </FormField>
                                 <FormField label="Last name" v-slot="field">
-                                    <input v-bind="field" v-model="block.lastName" type="text" autocomplete="family-name" placeholder="Doe" class="ui-input" />
+                                    <input
+                                        v-bind="field"
+                                        v-model="block.lastName"
+                                        type="text"
+                                        autocomplete="family-name"
+                                        placeholder="Doe"
+                                        class="ui-input"
+                                    />
                                 </FormField>
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                                 <FormField label="Street" class="sm:col-span-2" v-slot="field">
-                                    <input v-bind="field" v-model="block.street" type="text" autocomplete="address-line1" placeholder="Kerkstraat" class="ui-input" />
+                                    <input
+                                        v-bind="field"
+                                        v-model="block.street"
+                                        type="text"
+                                        autocomplete="address-line1"
+                                        placeholder="Kerkstraat"
+                                        class="ui-input"
+                                    />
                                 </FormField>
                                 <FormField label="House no." v-slot="field">
-                                    <input v-bind="field" v-model="block.houseNumber" type="text" autocomplete="address-line2" placeholder="42A" class="ui-input" />
+                                    <input
+                                        v-bind="field"
+                                        v-model="block.houseNumber"
+                                        type="text"
+                                        autocomplete="address-line2"
+                                        placeholder="42A"
+                                        class="ui-input"
+                                    />
                                 </FormField>
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                                 <FormField label="Postal code" v-slot="field">
-                                    <input v-bind="field" v-model="block.postalCode" type="text" autocomplete="postal-code" placeholder="1234 AB" class="ui-input" />
+                                    <input
+                                        v-bind="field"
+                                        v-model="block.postalCode"
+                                        type="text"
+                                        autocomplete="postal-code"
+                                        placeholder="1234 AB"
+                                        class="ui-input"
+                                    />
                                 </FormField>
                                 <FormField label="City" v-slot="field">
-                                    <input v-bind="field" v-model="block.city" type="text" autocomplete="address-level2" placeholder="Amsterdam" class="ui-input" />
+                                    <input
+                                        v-bind="field"
+                                        v-model="block.city"
+                                        type="text"
+                                        autocomplete="address-level2"
+                                        placeholder="Amsterdam"
+                                        class="ui-input"
+                                    />
                                 </FormField>
                                 <FormField label="Country" v-slot="field">
-                                    <input v-bind="field" v-model="block.country" type="text" autocomplete="country-name" placeholder="Netherlands" class="ui-input" />
+                                    <input
+                                        v-bind="field"
+                                        v-model="block.country"
+                                        type="text"
+                                        autocomplete="country-name"
+                                        placeholder="Netherlands"
+                                        class="ui-input"
+                                    />
                                 </FormField>
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <FormField label="Phone" v-slot="field">
-                                    <input v-bind="field" v-model="block.phone" type="tel" autocomplete="tel" placeholder="+31 6 12345678" class="ui-input" />
+                                    <input
+                                        v-bind="field"
+                                        v-model="block.phone"
+                                        type="tel"
+                                        autocomplete="tel"
+                                        placeholder="+31 6 12345678"
+                                        class="ui-input"
+                                    />
                                 </FormField>
                                 <FormField label="Email" v-slot="field">
-                                    <input v-bind="field" v-model="block.email" type="email" autocomplete="email" placeholder="john@example.com" class="ui-input" />
+                                    <input
+                                        v-bind="field"
+                                        v-model="block.email"
+                                        type="email"
+                                        autocomplete="email"
+                                        placeholder="john@example.com"
+                                        class="ui-input"
+                                    />
                                 </FormField>
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <FormField label="KVK" hint="(optional)" v-slot="field">
-                                    <input v-bind="field" v-model="block.kvk" type="text" placeholder="12345678" class="ui-input" />
+                                    <input
+                                        v-bind="field"
+                                        v-model="block.kvk"
+                                        type="text"
+                                        placeholder="12345678"
+                                        class="ui-input"
+                                    />
                                 </FormField>
                                 <FormField label="VAT ID" hint="(optional)" v-slot="field">
-                                    <input v-bind="field" v-model="block.vatId" type="text" placeholder="NL123456789B01" class="ui-input" />
+                                    <input
+                                        v-bind="field"
+                                        v-model="block.vatId"
+                                        type="text"
+                                        placeholder="NL123456789B01"
+                                        class="ui-input"
+                                    />
                                 </FormField>
                             </div>
 
-                            <FormField label="Auth / EPP code" hint="(optional — same code applies to every domain in this group)" v-slot="field">
-                                <input v-bind="field" v-model="block.authCode" type="text" placeholder="EPP code from current registrar" class="ui-input font-mono" />
+                            <FormField
+                                label="Auth / EPP code"
+                                hint="(optional — same code applies to every domain in this group)"
+                                v-slot="field"
+                            >
+                                <input
+                                    v-bind="field"
+                                    v-model="block.authCode"
+                                    type="text"
+                                    placeholder="EPP code from current registrar"
+                                    class="ui-input font-mono"
+                                />
                             </FormField>
 
                             <FormField label="Notes" hint="(optional)" v-slot="field">
-                                <textarea v-bind="field" v-model="block.notes" rows="2" placeholder="Anything specific to the domains in this group." class="ui-input resize-y"></textarea>
+                                <textarea
+                                    v-bind="field"
+                                    v-model="block.notes"
+                                    rows="2"
+                                    placeholder="Anything specific to the domains in this group."
+                                    class="ui-input resize-y"
+                                ></textarea>
                             </FormField>
                         </div>
                     </div>
@@ -488,7 +689,9 @@ const showPreview = ref(false)
             </div>
 
             <!-- Submit bar -->
-            <div class="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-200 dark:border-indigo-900 rounded-2xl shadow-card px-5 py-4">
+            <div
+                class="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-200 dark:border-indigo-900 rounded-2xl shadow-card px-5 py-4"
+            >
                 <div class="text-sm text-gray-700 dark:text-gray-300">
                     <span class="font-semibold text-gray-900 dark:text-white">{{ totalDomains }}</span>
                     domain{{ totalDomains === 1 ? '' : 's' }} across
@@ -521,9 +724,10 @@ const showPreview = ref(false)
             <!-- Preview -->
             <div v-if="showPreview" class="mt-4 ui-panel-muted rounded-2xl p-5">
                 <p class="ui-section-title mb-2.5">Preview</p>
-                <pre class="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-mono leading-relaxed">{{ previewText }}</pre>
+                <pre class="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-mono leading-relaxed">{{
+                    previewText
+                }}</pre>
             </div>
-
         </div>
     </AppLayout>
 </template>

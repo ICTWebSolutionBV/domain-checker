@@ -36,8 +36,7 @@ const FOCUSABLE = [
 ].join(',')
 
 function focusables() {
-    return Array.from(panel.value?.querySelectorAll(FOCUSABLE) ?? [])
-        .filter(el => el.offsetParent !== null)
+    return Array.from(panel.value?.querySelectorAll(FOCUSABLE) ?? []).filter((el) => el.offsetParent !== null)
 }
 
 function onKeydown(e) {
@@ -89,14 +88,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div
-        ref="panel"
-        role="dialog"
-        aria-modal="true"
-        :aria-labelledby="labelledby"
-        :aria-label="label"
-        tabindex="-1"
-    >
+    <div ref="panel" role="dialog" aria-modal="true" :aria-labelledby="labelledby" :aria-label="label" tabindex="-1">
         <slot />
     </div>
 </template>

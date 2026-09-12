@@ -23,7 +23,9 @@ const submit = () => {
 
 <template>
     <Head title="Reset Password" />
-    <div class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-indigo-900 px-4">
+    <div
+        class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-indigo-900 px-4"
+    >
         <div class="w-full max-w-sm">
             <div class="mb-8 text-center">
                 <h1 class="text-2xl font-bold text-white">Choose a new password</h1>
@@ -35,19 +37,49 @@ const submit = () => {
                 </p>
                 <form @submit.prevent="submit" class="space-y-4">
                     <FormField label="Email" label-class="text-sm mb-1" :error="form.errors.email" v-slot="field">
-                        <input v-bind="field" :value="form.email" type="email" name="email" readonly
-                            autocomplete="username" class="ui-input" />
+                        <input
+                            v-bind="field"
+                            :value="form.email"
+                            type="email"
+                            name="email"
+                            readonly
+                            autocomplete="username"
+                            class="ui-input"
+                        />
                     </FormField>
-                    <FormField label="New password" label-class="text-sm mb-1" :error="form.errors.password" v-slot="field">
-                        <input v-bind="field" v-model="form.password" type="password" name="password" required autocomplete="new-password"
-                            class="ui-input" />
+                    <FormField
+                        label="New password"
+                        label-class="text-sm mb-1"
+                        :error="form.errors.password"
+                        v-slot="field"
+                    >
+                        <input
+                            v-bind="field"
+                            v-model="form.password"
+                            type="password"
+                            name="password"
+                            required
+                            autocomplete="new-password"
+                            class="ui-input"
+                        />
                     </FormField>
-                    <FormField label="Confirm new password" label-class="text-sm mb-1" :error="form.errors.password_confirmation" v-slot="field">
-                        <input v-bind="field" v-model="form.password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password"
-                            class="ui-input" />
+                    <FormField
+                        label="Confirm new password"
+                        label-class="text-sm mb-1"
+                        :error="form.errors.password_confirmation"
+                        v-slot="field"
+                    >
+                        <input
+                            v-bind="field"
+                            v-model="form.password_confirmation"
+                            type="password"
+                            name="password_confirmation"
+                            required
+                            autocomplete="new-password"
+                            class="ui-input"
+                        />
                     </FormField>
-                    <button type="submit" :disabled="form.processing"
-                        class="ui-btn ui-btn-primary w-full">
+                    <button type="submit" :disabled="form.processing" class="ui-btn ui-btn-primary w-full">
                         {{ form.processing ? 'Updating…' : 'Reset password' }}
                     </button>
                 </form>

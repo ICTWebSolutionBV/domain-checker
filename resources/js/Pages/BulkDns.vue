@@ -7,13 +7,13 @@ import { Search, Loader2, Copy, Check, X, AlertTriangle, Globe2, Eye, EyeOff } f
 
 const DNS_TYPES = ['MX', 'NS', 'TXT', 'A', 'AAAA', 'CNAME']
 
-const textarea  = ref('')
+const textarea = ref('')
 const selectedType = ref('MX')
-const loading   = ref(false)
-const error     = ref('')
-const results   = ref([])
+const loading = ref(false)
+const error = ref('')
+const results = ref([])
 const { copy, copied, error: copyError } = useClipboard()
-const showGeo   = ref(true)
+const showGeo = ref(true)
 // The type the rendered rows actually came from. Switching MX -> NS while the
 // MX request was in flight used to drop the NS call, land the MX response in
 // `results`, and label both the toolbar and the last column "NS".
@@ -27,13 +27,20 @@ const hasResults = computed(() => results.value.length > 0)
 const parsedDomains = computed(() => {
     const lines = textarea.value
         .split(/[\n,]+/)
-        .map(s => s.trim().toLowerCase())
-        .map(s => s.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/.*$/, ''))
+        .map((s) => s.trim().toLowerCase())
+        .map((s) =>
+            s
+                .replace(/^https?:\/\//i, '')
+                .replace(/^www\./i, '')
+                .replace(/\/.*$/, ''),
+        )
         .filter(Boolean)
     return [...new Set(lines)]
 })
 
-watch(selectedType, () => { if (hasResults.value) runLookup() })
+watch(selectedType, () => {
+    if (hasResults.value) runLookup()
+})
 
 async function runLookup() {
     const domains = parsedDomains.value
@@ -45,7 +52,7 @@ async function runLookup() {
     const requestedType = selectedType.value
 
     loading.value = true
-    error.value   = ''
+    error.value = ''
     results.value = []
 
     try {
@@ -55,7 +62,7 @@ async function runLookup() {
             signal,
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json',
+                Accept: 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
                 ...(token ? { 'X-CSRF-TOKEN': token } : {}),
             },
@@ -65,9 +72,10 @@ async function runLookup() {
         const body = await res.json().catch(() => ({}))
 
         if (!res.ok) {
-            error.value = res.status === 429
-                ? 'Too many requests — please wait a moment and try again.'
-                : (body.message || 'Lookup failed. Please try again.')
+            error.value =
+                res.status === 429
+                    ? 'Too many requests — please wait a moment and try again.'
+                    : body.message || 'Lookup failed. Please try again.'
             return
         }
 
@@ -83,7 +91,7 @@ async function runLookup() {
 
 function reset() {
     results.value = []
-    error.value   = ''
+    error.value = ''
 }
 
 function countryFlag(code) {
@@ -103,17 +111,20 @@ function ipLookupUrl(ip) {
 async function copyTable() {
     const geoHeaders = showGeo.value ? ['Country', 'Region', 'City', 'ISP', 'ASN'] : []
     const header = ['Domain', 'IP', ...geoHeaders, resultsType.value].join('\t')
-    const rows = results.value.map(row => {
-        const geo = showGeo.value ? [
-            row.geo?.country ?? '—',
-            row.geo?.region  ?? '—',
-            row.geo?.city    ?? '—',
-            row.geo?.isp     ?? '—',
-            row.geo?.asn     ?? '—',
-        ] : []
-        const recs = (row.records ?? []).map(r =>
-            r.priority !== undefined ? `${r.value} (pri: ${r.priority})` : r.value
-        ).join(', ') || '—'
+    const rows = results.value.map((row) => {
+        const geo = showGeo.value
+            ? [
+                  row.geo?.country ?? '—',
+                  row.geo?.region ?? '—',
+                  row.geo?.city ?? '—',
+                  row.geo?.isp ?? '—',
+                  row.geo?.asn ?? '—',
+              ]
+            : []
+        const recs =
+            (row.records ?? [])
+                .map((r) => (r.priority !== undefined ? `${r.value} (pri: ${r.priority})` : r.value))
+                .join(', ') || '—'
         return [row.domain, row.ip ?? '—', ...geo, recs].join('\t')
     })
     await copy([header, ...rows].join('\n'))
@@ -125,10 +136,11 @@ async function copyTable() {
         <Head title="Bulk DNS Lookup" />
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-
             <!-- Hero -->
             <div class="text-center mb-10">
-                <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-600 mb-4 shadow-lg shadow-indigo-600/20">
+                <div
+                    class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-600 mb-4 shadow-lg shadow-indigo-600/20"
+                >
                     <Globe2 class="w-7 h-7 text-white" />
                 </div>
                 <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
@@ -145,7 +157,8 @@ async function copyTable() {
                     <!-- Textarea -->
                     <div class="flex-1">
                         <label for="dns-domains" class="ui-section-title block mb-2">
-                            Domains <span class="normal-case font-normal">(one per line or comma separated, max 100)</span>
+                            Domains
+                            <span class="normal-case font-normal">(one per line or comma separated, max 100)</span>
                         </label>
                         <textarea
                             id="dns-domains"
@@ -164,9 +177,7 @@ async function copyTable() {
                     <!-- Controls -->
                     <div class="sm:w-52 flex flex-col gap-4">
                         <div>
-                            <p id="dns-record-type" class="ui-section-title block mb-2">
-                                Record type
-                            </p>
+                            <p id="dns-record-type" class="ui-section-title block mb-2">Record type</p>
                             <div class="grid grid-cols-3 gap-1.5" role="group" aria-labelledby="dns-record-type">
                                 <button
                                     v-for="type in DNS_TYPES"
@@ -175,9 +186,11 @@ async function copyTable() {
                                     @click="selectedType = type"
                                     :aria-pressed="selectedType === type"
                                     class="py-2 rounded-lg text-xs font-semibold font-mono transition-colors"
-                                    :class="selectedType === type
-                                        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
-                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
+                                    :class="
+                                        selectedType === type
+                                            ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
+                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                    "
                                 >
                                     {{ type }}
                                 </button>
@@ -194,11 +207,7 @@ async function copyTable() {
                             {{ loading ? 'Looking up…' : 'Lookup' }}
                         </button>
 
-                        <button
-                            v-if="hasResults && !loading"
-                            @click="reset"
-                            class="ui-btn ui-btn-secondary px-6"
-                        >
+                        <button v-if="hasResults && !loading" @click="reset" class="ui-btn ui-btn-secondary px-6">
                             <X class="w-4 h-4" />
                             Clear results
                         </button>
@@ -215,7 +224,11 @@ async function copyTable() {
                 leave-from-class="opacity-100 translate-y-0"
                 leave-to-class="opacity-0 -translate-y-1"
             >
-                <div v-if="error" role="alert" class="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 text-sm">
+                <div
+                    v-if="error"
+                    role="alert"
+                    class="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 text-sm"
+                >
                     <AlertTriangle class="w-4 h-4 shrink-0" />
                     {{ error }}
                 </div>
@@ -241,7 +254,10 @@ async function copyTable() {
                         <p class="text-sm text-gray-500 dark:text-gray-400">
                             <span class="font-medium text-gray-900 dark:text-white">{{ results.length }}</span>
                             domain{{ results.length !== 1 ? 's' : '' }} &middot;
-                            <span class="font-mono font-medium text-indigo-600 dark:text-indigo-400">{{ resultsType }}</span> records
+                            <span class="font-mono font-medium text-indigo-600 dark:text-indigo-400">{{
+                                resultsType
+                            }}</span>
+                            records
                         </p>
 
                         <div class="flex items-center gap-2">
@@ -251,9 +267,11 @@ async function copyTable() {
                                 @click="showGeo = !showGeo"
                                 :aria-pressed="showGeo"
                                 class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border"
-                                :class="showGeo
-                                    ? 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400'
-                                    : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
+                                :class="
+                                    showGeo
+                                        ? 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400'
+                                        : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                "
                             >
                                 <Eye v-if="showGeo" class="w-3.5 h-3.5" />
                                 <EyeOff v-else class="w-3.5 h-3.5" />
@@ -264,9 +282,11 @@ async function copyTable() {
                             <button
                                 @click="copyTable"
                                 class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                                :class="copied
-                                    ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400'
-                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
+                                :class="
+                                    copied
+                                        ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400'
+                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                "
                             >
                                 <Check v-if="copied" class="w-3.5 h-3.5" />
                                 <Copy v-else class="w-3.5 h-3.5" />
@@ -274,7 +294,11 @@ async function copyTable() {
                             </button>
                         </div>
                     </div>
-                    <p v-if="copyError" role="alert" class="mb-3 text-xs font-medium text-red-700 dark:text-red-400 text-right">
+                    <p
+                        v-if="copyError"
+                        role="alert"
+                        class="mb-3 text-xs font-medium text-red-700 dark:text-red-400 text-right"
+                    >
                         {{ copyError }}
                     </p>
 
@@ -283,13 +307,11 @@ async function copyTable() {
                         <div class="overflow-x-auto">
                             <table class="w-full text-sm">
                                 <thead>
-                                    <tr class="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/60">
-                                        <th class="ui-section-title px-4 py-3 text-left whitespace-nowrap">
-                                            Domain
-                                        </th>
-                                        <th class="ui-section-title px-4 py-3 text-left whitespace-nowrap">
-                                            IP
-                                        </th>
+                                    <tr
+                                        class="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/60"
+                                    >
+                                        <th class="ui-section-title px-4 py-3 text-left whitespace-nowrap">Domain</th>
+                                        <th class="ui-section-title px-4 py-3 text-left whitespace-nowrap">IP</th>
                                         <template v-if="showGeo">
                                             <th class="ui-section-title px-4 py-3 text-left whitespace-nowrap">
                                                 Country
@@ -297,17 +319,14 @@ async function copyTable() {
                                             <th class="ui-section-title px-4 py-3 text-left whitespace-nowrap">
                                                 Region
                                             </th>
-                                            <th class="ui-section-title px-4 py-3 text-left whitespace-nowrap">
-                                                City
-                                            </th>
-                                            <th class="ui-section-title px-4 py-3 text-left whitespace-nowrap">
-                                                ISP
-                                            </th>
-                                            <th class="ui-section-title px-4 py-3 text-left whitespace-nowrap">
-                                                ASN
-                                            </th>
+                                            <th class="ui-section-title px-4 py-3 text-left whitespace-nowrap">City</th>
+                                            <th class="ui-section-title px-4 py-3 text-left whitespace-nowrap">ISP</th>
+                                            <th class="ui-section-title px-4 py-3 text-left whitespace-nowrap">ASN</th>
                                         </template>
-                                        <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 whitespace-nowrap font-mono">
+                                        <th
+                                            scope="col"
+                                            class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 whitespace-nowrap font-mono"
+                                        >
                                             {{ resultsType }}
                                         </th>
                                     </tr>
@@ -319,7 +338,9 @@ async function copyTable() {
                                         class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors"
                                     >
                                         <!-- Domain -->
-                                        <td class="px-4 py-3 font-medium text-gray-900 dark:text-white whitespace-nowrap">
+                                        <td
+                                            class="px-4 py-3 font-medium text-gray-900 dark:text-white whitespace-nowrap"
+                                        >
                                             {{ row.domain }}
                                         </td>
 
@@ -331,7 +352,8 @@ async function copyTable() {
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 class="font-mono text-indigo-600 dark:text-indigo-400 hover:underline"
-                                            >{{ row.ip }}</a>
+                                                >{{ row.ip }}</a
+                                            >
                                             <span v-else class="text-gray-500 dark:text-gray-400">—</span>
                                         </td>
 
@@ -339,8 +361,13 @@ async function copyTable() {
                                         <template v-if="showGeo">
                                             <!-- Country -->
                                             <td class="px-4 py-3 whitespace-nowrap">
-                                                <span v-if="row.geo?.country" class="flex items-center gap-1.5 text-gray-700 dark:text-gray-300">
-                                                    <span class="text-base leading-none">{{ countryFlag(row.geo.country_code) }}</span>
+                                                <span
+                                                    v-if="row.geo?.country"
+                                                    class="flex items-center gap-1.5 text-gray-700 dark:text-gray-300"
+                                                >
+                                                    <span class="text-base leading-none">{{
+                                                        countryFlag(row.geo.country_code)
+                                                    }}</span>
                                                     {{ row.geo.country }}
                                                 </span>
                                                 <span v-else class="text-gray-500 dark:text-gray-400">—</span>
@@ -358,7 +385,9 @@ async function copyTable() {
                                                 {{ row.geo?.isp || '—' }}
                                             </td>
                                             <!-- ASN -->
-                                            <td class="px-4 py-3 font-mono text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                            <td
+                                                class="px-4 py-3 font-mono text-gray-500 dark:text-gray-400 whitespace-nowrap"
+                                            >
                                                 {{ row.geo?.asn || '—' }}
                                             </td>
                                         </template>
@@ -374,18 +403,35 @@ async function copyTable() {
                                                     >
                                                         <template v-if="resultsType === 'MX'">
                                                             <span class="inline-flex items-center gap-1.5">
-                                                                <span class="inline-block px-1.5 py-0.5 rounded text-xs font-semibold bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400">{{ rec.priority }}</span>
-                                                                <span class="text-gray-700 dark:text-gray-300">{{ rec.value }}</span>
+                                                                <span
+                                                                    class="inline-block px-1.5 py-0.5 rounded text-xs font-semibold bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400"
+                                                                    >{{ rec.priority }}</span
+                                                                >
+                                                                <span class="text-gray-700 dark:text-gray-300">{{
+                                                                    rec.value
+                                                                }}</span>
                                                             </span>
                                                         </template>
                                                         <template v-else-if="resultsType === 'TXT'">
-                                                            <span class="text-gray-700 dark:text-gray-300 break-all">{{ rec.value }}</span>
+                                                            <span class="text-gray-700 dark:text-gray-300 break-all">{{
+                                                                rec.value
+                                                            }}</span>
                                                         </template>
-                                                        <template v-else-if="resultsType === 'A' || resultsType === 'AAAA'">
-                                                            <a :href="ipLookupUrl(rec.value)" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ rec.value }}</a>
+                                                        <template
+                                                            v-else-if="resultsType === 'A' || resultsType === 'AAAA'"
+                                                        >
+                                                            <a
+                                                                :href="ipLookupUrl(rec.value)"
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                class="text-indigo-600 dark:text-indigo-400 hover:underline"
+                                                                >{{ rec.value }}</a
+                                                            >
                                                         </template>
                                                         <template v-else>
-                                                            <span class="text-gray-700 dark:text-gray-300">{{ rec.value }}</span>
+                                                            <span class="text-gray-700 dark:text-gray-300">{{
+                                                                rec.value
+                                                            }}</span>
                                                         </template>
                                                     </div>
                                                 </div>
@@ -400,7 +446,8 @@ async function copyTable() {
 
                     <!-- Footer note -->
                     <p class="mt-3 text-xs text-gray-500 dark:text-gray-400 text-center">
-                        DNS cached 5 min · Geo cached 1 h · 4 concurrent geo workers · Data may lag behind live propagation
+                        DNS cached 5 min · Geo cached 1 h · 4 concurrent geo workers · Data may lag behind live
+                        propagation
                     </p>
                 </div>
             </Transition>
@@ -408,7 +455,11 @@ async function copyTable() {
             <!-- Empty state -->
             <div v-if="!hasResults && !loading && !error" class="py-12 text-center">
                 <div class="grid grid-cols-3 gap-2 max-w-xs mx-auto opacity-20 select-none pointer-events-none mb-6">
-                    <div v-for="t in DNS_TYPES" :key="t" class="border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center">
+                    <div
+                        v-for="t in DNS_TYPES"
+                        :key="t"
+                        class="border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center"
+                    >
                         <div class="font-mono text-xs font-bold text-gray-500">{{ t }}</div>
                     </div>
                 </div>
@@ -416,7 +467,6 @@ async function copyTable() {
                     Enter domains above and choose a record type to look up
                 </p>
             </div>
-
         </div>
     </AppLayout>
 </template>
