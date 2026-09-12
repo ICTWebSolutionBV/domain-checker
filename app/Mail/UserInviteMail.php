@@ -4,12 +4,20 @@ namespace App\Mail;
 
 use App\Models\UserInvite;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class UserInviteMail extends Mailable
+/**
+ * Queued, not sent in-request. The invite was created and then the admin's
+ * request blocked on the SMTP handshake; an SMTP failure surfaced as a 500
+ * *after* the invite row had been written, leaving an invite in the database
+ * that nobody ever received. "Created" and "delivered" are now independently
+ * retryable.
+ */
+class UserInviteMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

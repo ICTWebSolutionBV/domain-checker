@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
+use App\Notifications\QueuedResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -50,7 +50,9 @@ class SecurityHardeningTest extends TestCase
             'X-Forwarded-Host' => 'evil.example.com',
         ]);
 
-        Notification::assertSentTo($user, ResetPassword::class, function (ResetPassword $notification) use ($user) {
+        // The notification is queued now, so it is the QueuedResetPassword
+        // subclass that gets sent; the assertion below is unchanged.
+        Notification::assertSentTo($user, QueuedResetPassword::class, function (QueuedResetPassword $notification) use ($user) {
             $url = $notification->toMail($user)->actionUrl;
 
             // The whole point: a forged host used to produce a mail carrying a
