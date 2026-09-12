@@ -1,4 +1,3 @@
-import './bootstrap';
 import '../css/app.css';
 
 import { createApp, h } from 'vue';
@@ -15,9 +14,12 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
 
 createInertiaApp({
     title: (title) => title ? `${title} - Domain Checker` : 'Domain Checker',
+    // Without `eager: true` Vite emits one chunk per page, so a first-time
+    // visitor to / no longer downloads and parses Settings, Admin, Transfer,
+    // MyIp, IpLookup, BulkDns and all nine auth pages.
     resolve: (name) => {
-        const pages = import.meta.glob('./Pages/**/*.vue', { eager: true });
-        return pages[`./Pages/${name}.vue`];
+        const pages = import.meta.glob('./Pages/**/*.vue');
+        return pages[`./Pages/${name}.vue`]();
     },
     setup({ el, App, props, plugin }) {
         const theme = localStorage.getItem('theme') || 'auto';

@@ -4,6 +4,7 @@ import { Head, useForm, Link } from '@inertiajs/vue3'
 import AuthLayout from '@/Layouts/AuthLayout.vue'
 import FormField from '@/Components/FormField.vue'
 import { Fingerprint, Mail, Lock, Loader2 } from 'lucide-vue-next'
+import { browserSupportsWebAuthn, startAuthentication } from '@simplewebauthn/browser'
 
 const form = useForm({
     email: '',
@@ -13,7 +14,7 @@ const form = useForm({
 
 const passkeyLoading = ref(false)
 const passkeyError = ref('')
-const supportsPasskeys = typeof window !== 'undefined' && window.browserSupportsWebAuthn?.()
+const supportsPasskeys = typeof window !== 'undefined' && browserSupportsWebAuthn()
 
 const login = () => {
     form.post(route('login'), {
@@ -27,7 +28,7 @@ const loginWithPasskey = async () => {
     try {
         const optionsRes = await fetch(route('passkeys.authentication_options'))
         const options = await optionsRes.json()
-        const assertion = await window.startAuthentication({ optionsJSON: options })
+        const assertion = await startAuthentication({ optionsJSON: options })
         const passkeyForm = useForm({ start_authentication_response: JSON.stringify(assertion) })
         passkeyForm.post(route('passkeys.login'), {
             onError: () => {
