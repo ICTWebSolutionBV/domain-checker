@@ -398,14 +398,36 @@ Named rate limiters live in `app/Providers/AppServiceProvider.php`:
 | `redirect-check` | `POST /redirect/check` | 30/min | 60/hour |
 | `dns-bulk` | `POST /dns/lookup` | 30/min | 5/min |
 
-Login (`5/min`), two-factor verification (`10/min`) and password reset
-(`5/min`) use inline `throttle:` middleware in `routes/web.php` instead.
+Authentication is limited separately, by named limiters in
+`app/Providers/FortifyServiceProvider.php`:
 
-All of these key guests by IP, and `bootstrap/app.php` trusts every proxy
-(`trustProxies(at: '*')`), so the per-IP limits are only as trustworthy as
-the proxy in front of the app.
+| Limiter | Route | Limit |
+|---|---|---|
+| `login` | `POST /login` | 5/min per email+IP **and** 20/min per account |
+| `two-factor` | `POST /two-factor` | 5/min per pending-login session |
+
+Password reset keeps an inline `throttle:5,1` in `routes/web.php`.
+
+The tool limiters key guests by IP, and `bootstrap/app.php` still trusts
+`X-Forwarded-For` from any source (`trustProxies(at: '*')`), so **those**
+limits are only as trustworthy as the proxy in front of the app — rotating
+that header rotates the bucket. Set `trustProxies(at: [...])` to the real
+proxy ranges to close it.
+
+Two things are deliberately not IP-keyed, because they are the ones worth
+attacking: the login limiter's second limit is per account, which no header
+can rotate, and the two-factor limiter keys on the pending-login session.
+The host is no longer taken from the request at all — `X-Forwarded-Host` is
+untrusted and URLs are generated from `APP_URL`.
 
 ---
+
+## Contributing
+
+Setup, the checks CI runs, the PHPStan baseline rule and the definition of done
+are in [CONTRIBUTING.md](CONTRIBUTING.md). The short version: run
+`php artisan test` on PHP 8.4, `composer lint`, and — if you touched the front
+end — `npm run lint && npm run format:check && npm run build`.
 
 ## Versioning
 
