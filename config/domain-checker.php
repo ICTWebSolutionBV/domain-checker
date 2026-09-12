@@ -16,6 +16,7 @@ return [
         'bootstrap_ttl' => 86400,   // 24 hours
         'tld_list_ttl'  => 86400,   // 24 hours
         'result_ttl'    => 900,     // 15 minutes
+        'whois_server_ttl' => 86400, // 24 hours — IANA's TLD -> WHOIS server map
     ],
 
     'realtime_register' => [
