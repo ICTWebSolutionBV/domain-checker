@@ -1,10 +1,10 @@
 <script setup>
 import { ref, computed, onMounted, onScopeDispose } from 'vue'
-import { Head, router } from '@inertiajs/vue3'
+import { Head } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import {
-    MapPin, Search, Loader2, Globe, Building2, Network, Wifi,
-    Clock, Cloud, Shield, AlertTriangle, Server, History, ArrowRight,
+    MapPin, Search, Loader2, Network,
+    Clock, Shield, AlertTriangle, History, ArrowRight,
 } from '@lucide/vue'
 
 const props = defineProps({

@@ -7,6 +7,19 @@ import { Link } from '@inertiajs/vue3'
 defineProps({
     paginator: { type: Object, required: true },
 })
+
+// Laravel's paginator labels arrive as markup: "&laquo; Previous", "Next
+// &raquo;", plain page numbers. They came from the framework, not from a
+// user, but rendering them with v-html on a component is still the wrong
+// tool -- it can clobber the component's own children, and it means this
+// template would happily render markup the day the labels stop being ours.
+const labelText = (label) =>
+    String(label)
+        .replace(/&laquo;/g, '\u2039')
+        .replace(/&raquo;/g, '\u203a')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/<[^>]*>/g, '')
+        .trim()
 </script>
 
 <template>
@@ -21,10 +34,12 @@ defineProps({
                     class="px-2.5 py-1 rounded-lg text-xs font-medium"
                     :class="link.active
                         ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
-                    v-html="link.label" />
-                <span v-else class="px-2.5 py-1 text-xs font-medium text-gray-300 dark:text-gray-600"
-                    v-html="link.label" />
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'">
+                    {{ labelText(link.label) }}
+                </Link>
+                <span v-else class="px-2.5 py-1 text-xs font-medium text-gray-300 dark:text-gray-600">
+                    {{ labelText(link.label) }}
+                </span>
             </template>
         </div>
     </nav>

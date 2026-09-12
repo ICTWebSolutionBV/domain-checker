@@ -17,7 +17,7 @@ const props = defineProps({
     popularTlds: Array,
 })
 
-const { results, isDone, isChecking, checkedCount, totalCount, error, check, stop, reset } = useDomainCheck()
+const { results, isChecking, checkedCount, totalCount, error, check, stop, reset } = useDomainCheck()
 const {
     results: bulkResults,
     checkedDomains: bulkCheckedDomains,

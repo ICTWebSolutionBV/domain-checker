@@ -1,0 +1,15 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
+parameters:
+    paths:
+        - app
+        - config
+        - database
+        - routes
+        - tests
+    # Level 5 is where Larastan stops being noise and starts catching real
+    # mistakes: wrong argument types, calls on possibly-null, unreachable code.
+    # Raise it only together with a baseline sweep, never by growing the
+    # baseline.
+    level: 5

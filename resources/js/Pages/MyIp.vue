@@ -4,8 +4,8 @@ import { Head, Link } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { useClipboard } from '@/composables/useClipboard'
 import {
-    Wifi, MapPin, Network, Clock, Shield, Check, Copy,
-    Monitor, Smartphone, Tablet, Globe, Building2, Server,
+    Wifi, MapPin, Network, Shield, Check, Copy,
+    Monitor, Smartphone, Tablet, Globe, Server,
     AlertTriangle, Search,
 } from '@lucide/vue'
 
@@ -234,6 +234,14 @@ onMounted(() => {
                                 <Copy v-else class="w-4 h-4" />
                             </button>
                         </div>
+
+                        <!-- The clipboard API refuses in plenty of ordinary
+                             situations (no permission, an insecure origin, a
+                             browser that wants a user gesture). Saying so beats
+                             a button that silently does nothing. -->
+                        <p v-if="copyError" role="alert" class="mt-2 text-xs text-red-600 dark:text-red-400">
+                            Could not copy to the clipboard — select the address and copy it manually.
+                        </p>
                     </template>
 
                     <!-- Hostname -->

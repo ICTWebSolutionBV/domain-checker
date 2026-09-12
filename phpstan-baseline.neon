@@ -1,0 +1,181 @@
+# Errors that existed when static analysis was introduced.
+#
+# Every entry here is analyser blindness rather than a defect, and the three
+# causes are worth knowing before you add a fourth:
+#
+#  - curl_getinfo() is typed by a stub as a fully-populated shaped array, so
+#    the defensive `?? 0` on its offsets reads as redundant and two duration
+#    comparisons read as always-false. The defensiveness stays: the real
+#    function omits keys depending on the handle and the protocol.
+#  - stream_select() rewrites its $read/$write arrays by reference, which the
+#    analyser cannot model, so the loop guards look like constant expressions.
+#  - Spatie's Passkey model declares no date casts, so its timestamps type as
+#    string here even though Eloquent hands back Carbon.
+#
+# The rule for this file: a pull request may not GROW it. Fix the finding, or
+# annotate the type the analyser is missing -- adding @property blocks to the
+# app's own models is what took this from 40 findings to 31.
+
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Parameter \#1 \$user of method Illuminate\\Auth\\SessionGuard\:\:login\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Auth/PasskeyLoginController.php
+
+		-
+			message: '#^Cannot call method diffForHumans\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Settings/SettingsController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<\(int\|string\),mixed\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Settings/SettingsController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Mail/UserInviteMail.php
+
+		-
+			message: '#^Comparison operation "\>" between 0\.0 and 0 is always false\.$#'
+			identifier: greater.alwaysFalse
+			count: 2
+			path: app/Services/Http3CheckService.php
+
+		-
+			message: '#^Offset ''appconnect_time'' on array\{url\: string, content_type\: string\|null, http_code\: int, header_size\: int, request_size\: int, filetime\: int, ssl_verify_result\: int, redirect_count\: int, \.\.\.\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Http3CheckService.php
+
+		-
+			message: '#^Offset ''appconnect_time'' on array\{url\: string, content_type\: string\|null, http_code\: int\<100, max\>, header_size\: int, request_size\: int, filetime\: int, ssl_verify_result\: int, redirect_count\: int, \.\.\.\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Http3CheckService.php
+
+		-
+			message: '#^Offset ''connect_time'' on array\{url\: string, content_type\: string\|null, http_code\: int, header_size\: int, request_size\: int, filetime\: int, ssl_verify_result\: int, redirect_count\: int, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Http3CheckService.php
+
+		-
+			message: '#^Offset ''connect_time'' on array\{url\: string, content_type\: string\|null, http_code\: int\<100, max\>, header_size\: int, request_size\: int, filetime\: int, ssl_verify_result\: int, redirect_count\: int, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Http3CheckService.php
+
+		-
+			message: '#^Offset ''header_size'' on array\{url\: string, content_type\: string\|null, http_code\: int\<100, max\>, header_size\: int, request_size\: int, filetime\: int, ssl_verify_result\: int, redirect_count\: int, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Http3CheckService.php
+
+		-
+			message: '#^Offset ''http_code'' on array\{url\: string, content_type\: string\|null, http_code\: int, header_size\: int, request_size\: int, filetime\: int, ssl_verify_result\: int, redirect_count\: int, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 3
+			path: app/Services/Http3CheckService.php
+
+		-
+			message: '#^Offset ''http_code'' on array\{url\: string, content_type\: string\|null, http_code\: int\<100, max\>, header_size\: int, request_size\: int, filetime\: int, ssl_verify_result\: int, redirect_count\: int, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Http3CheckService.php
+
+		-
+			message: '#^Offset ''namelookup_time'' on \(array\{url\: string, content_type\: string\|null, http_code\: int, header_size\: int, request_size\: int, filetime\: int, ssl_verify_result\: int, redirect_count\: int, \.\.\.\}\|false\) on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Http3CheckService.php
+
+		-
+			message: '#^Offset ''namelookup_time'' on array\{url\: string, content_type\: string\|null, http_code\: int\<100, max\>, header_size\: int, request_size\: int, filetime\: int, ssl_verify_result\: int, redirect_count\: int, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Http3CheckService.php
+
+		-
+			message: '#^Offset ''primary_ip'' on array\{url\: string, content_type\: string\|null, http_code\: int, header_size\: int, request_size\: int, filetime\: int, ssl_verify_result\: int, redirect_count\: int, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Http3CheckService.php
+
+		-
+			message: '#^Offset ''primary_ip'' on array\{url\: string, content_type\: string\|null, http_code\: int\<100, max\>, header_size\: int, request_size\: int, filetime\: int, ssl_verify_result\: int, redirect_count\: int, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Http3CheckService.php
+
+		-
+			message: '#^Offset ''primary_port'' on array\{url\: string, content_type\: string\|null, http_code\: int, header_size\: int, request_size\: int, filetime\: int, ssl_verify_result\: int, redirect_count\: int, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Http3CheckService.php
+
+		-
+			message: '#^Offset ''primary_port'' on array\{url\: string, content_type\: string\|null, http_code\: int\<100, max\>, header_size\: int, request_size\: int, filetime\: int, ssl_verify_result\: int, redirect_count\: int, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Http3CheckService.php
+
+		-
+			message: '#^Offset ''starttransfer_time'' on array\{url\: string, content_type\: string\|null, http_code\: int, header_size\: int, request_size\: int, filetime\: int, ssl_verify_result\: int, redirect_count\: int, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Http3CheckService.php
+
+		-
+			message: '#^Offset ''starttransfer_time'' on array\{url\: string, content_type\: string\|null, http_code\: int\<100, max\>, header_size\: int, request_size\: int, filetime\: int, ssl_verify_result\: int, redirect_count\: int, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Http3CheckService.php
+
+		-
+			message: '#^Offset ''total_time'' on \(array\{url\: string, content_type\: string\|null, http_code\: int, header_size\: int, request_size\: int, filetime\: int, ssl_verify_result\: int, redirect_count\: int, \.\.\.\}\|false\) on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Http3CheckService.php
+
+		-
+			message: '#^Offset ''total_time'' on array\{url\: string, content_type\: string\|null, http_code\: int, header_size\: int, request_size\: int, filetime\: int, ssl_verify_result\: int, redirect_count\: int, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Http3CheckService.php
+
+		-
+			message: '#^Offset ''url'' on array\{url\: string, content_type\: string\|null, http_code\: int, header_size\: int, request_size\: int, filetime\: int, ssl_verify_result\: int, redirect_count\: int, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Http3CheckService.php
+
+		-
+			message: '#^Offset ''url'' on array\{url\: string, content_type\: string\|null, http_code\: int\<100, max\>, header_size\: int, request_size\: int, filetime\: int, ssl_verify_result\: int, redirect_count\: int, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Http3CheckService.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<mixed\>\) to function array_filter does not contain falsy values, the array will always stay the same\.$#'
+			identifier: arrayFilter.same
+			count: 1
+			path: app/Services/PublicNetworkGuard.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between array\{mixed\} and array\{\} will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Services/RealtimeRegisterService.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/ExampleTest.php
