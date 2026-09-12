@@ -52,98 +52,184 @@ class RealtimeRegisterService
 
         $domainLower = strtolower($domain);
 
-        // Map fullDomain → tld so we can match async responses
+        // Map fullDomain → tld so we can match async responses. Two entries can
+        // collapse into one (a duplicate TLD), which is exactly why the read
+        // loop below has to be driven by what is still outstanding rather than
+        // by a count of the TLDs we were asked about: one command was sent, one
+        // reply comes back, and counting to 2 used to park the request in
+        // fgets() until the 90 s socket timeout.
         $pending = [];
         foreach ($tlds as $tld) {
             $pending["{$domainLower}.{$tld}"] = $tld;
         }
 
-        // Fire all IS commands without waiting
-        foreach (array_keys($pending) as $fullDomain) {
-            fwrite($this->socket, "IS {$fullDomain}\r\n");
-        }
+        $resolved = $this->exchange($pending, $onResult);
 
-        // Read responses as they arrive; call $onResult for each valid one
-        $resolved = [];
+        // Everything still outstanding falls back, including the TLDs of any
+        // reply that never arrived. No second pass over $tlds: a duplicate TLD
+        // resolved under its one command must not also be reported as pending.
         $fallback = [];
-        // Give 90 s for the full list — server-side parallel processing is fast
-        $deadline = time() + 90;
-
-        while (count($resolved) + count($fallback) < count($tlds) && time() < $deadline) {
-            $line = $this->readLine($this->socket);
-
-            if ($line === false || $line === '') {
-                // Socket died — mark remaining as fallback
-                $this->socket = null;
-                $this->loggedIn = false;
-                break;
-            }
-
-            if (preg_match(self::RESPONSE_PATTERN, $line, $m)) {
-                $responseDomain = strtolower($m[1]);
-                $responseStatus = strtolower($m[2]);
-
-                if (isset($pending[$responseDomain])) {
-                    $tld = $pending[$responseDomain];
-                    $status = match ($responseStatus) {
-                        'available' => 'available',
-                        'not available' => 'taken',
-                        default => null,
-                    };
-
-                    if ($status !== null) {
-                        $resolved[$tld] = true;
-                        $onResult($tld, $status);
-                    } else {
-                        $fallback[] = $tld;
-                    }
-                }
-            }
-        }
-
-        // Any TLDs we never got a response for → fallback
         foreach ($tlds as $tld) {
-            if (! isset($resolved[$tld]) && ! in_array($tld, $fallback)) {
-                $fallback[] = $tld;
+            if (! isset($resolved[$tld])) {
+                $fallback[$tld] = true;
             }
         }
 
-        return $fallback;
-    }
-
-    /**
-     * Blocking batch check (used when streaming is not needed, e.g. cache fill).
-     *
-     * @param  array<string>  $tlds
-     * @return array<string, string|null>
-     */
-    public function checkBatch(string $domain, array $tlds): array
-    {
-        $results = [];
-        $fallback = $this->pipelineStream($domain, $tlds, function (string $tld, string $status) use (&$results) {
-            $results[$tld] = $status;
-        });
-
-        foreach ($fallback as $tld) {
-            $results[$tld] = null;
-        }
-
-        return $results;
+        return array_keys($fallback);
     }
 
     public function __destruct()
     {
         if ($this->socket) {
             @fwrite($this->socket, "QUIT\r\n");
-            @fclose($this->socket);
-            $this->socket = null;
-            $this->loggedIn = false;
+            $this->dropSocket();
         }
     }
 
     // -------------------------------------------------------------------------
     // Internal helpers
     // -------------------------------------------------------------------------
+
+    /**
+     * Send the IS burst and read the replies in one select-driven loop.
+     *
+     * Three things had to change here. The writes were unchecked, so a peer
+     * that had gone away raised "fwrite(): Send of N bytes failed with errno=32
+     * Broken pipe" — a warning Laravel rethrows as an ErrorException, which
+     * truncated the SSE stream instead of falling back to RDAP. The burst also
+     * wrote N commands before reading anything, which only works while the
+     * whole burst fits in our send buffer plus the peer's receive window: a
+     * socket pair blocks after 278 commands, and nothing was draining the
+     * replies the peer was trying to write back. And the reads were blocking
+     * fgets() calls with the deadline checked only between them, so one missing
+     * reply parked the request for the 90 s socket timeout.
+     *
+     * Interleaving the two directions under one stream_select() with a
+     * wall-clock deadline fixes all three: neither side can block the other,
+     * every write result is inspected, and the loop ends when the set we are
+     * actually waiting for is empty.
+     *
+     * @param  array<string, string>  $pending  fullDomain => tld, consumed as replies land
+     * @param  callable(string, string): void  $onResult
+     * @return array<string, true> the TLDs that got a verdict
+     */
+    private function exchange(array $pending, callable $onResult): array
+    {
+        $resolved = [];
+        $deadline = microtime(true) + max(1, (int) config('domain-checker.realtime_register_budget', 60));
+        $readTimeout = max(1, (int) config('domain-checker.realtime_register_read_timeout', 5));
+
+        $outbox = '';
+        foreach (array_keys($pending) as $fullDomain) {
+            $outbox .= "IS {$fullDomain}\r\n";
+        }
+
+        // Non-blocking for the duration: stream_select() decides when to move,
+        // so neither fwrite() nor fread() can park the request.
+        stream_set_blocking($this->socket, false);
+        $inbox = '';
+        $lastProgress = microtime(true);
+
+        while ($pending !== [] && microtime(true) < $deadline) {
+            $read = [$this->socket];
+            $write = $outbox !== '' ? [$this->socket] : [];
+            $except = [];
+
+            $ready = @stream_select($read, $write, $except, 0, 200_000);
+
+            if ($ready === false) {
+                $this->dropSocket();
+
+                return $resolved;
+            }
+
+            if ($write !== []) {
+                $bytes = @fwrite($this->socket, substr($outbox, 0, 8192));
+
+                if ($bytes === false) {
+                    // Broken pipe: hand the rest back as a fallback.
+                    $this->dropSocket();
+
+                    return $resolved;
+                }
+
+                if ($bytes > 0) {
+                    $outbox = substr($outbox, $bytes);
+                    $lastProgress = microtime(true);
+                }
+            }
+
+            if ($read !== []) {
+                $chunk = @fread($this->socket, 8192);
+
+                if (($chunk === false || $chunk === '') && feof($this->socket)) {
+                    $this->dropSocket(); // real EOF — the rest is a fallback
+
+                    return $resolved;
+                }
+
+                if (is_string($chunk) && $chunk !== '') {
+                    $inbox .= $chunk;
+                    $lastProgress = microtime(true);
+
+                    while (($newline = strpos($inbox, "\n")) !== false) {
+                        $line = rtrim(substr($inbox, 0, $newline), "\r\n");
+                        $inbox = substr($inbox, $newline + 1);
+
+                        $this->consumeLine($line, $pending, $resolved, $onResult);
+                    }
+                }
+            }
+
+            // Nothing moving in either direction for a whole read timeout: the
+            // remaining replies are not coming, so stop waiting for them.
+            if ($outbox === '' && microtime(true) - $lastProgress > $readTimeout) {
+                break;
+            }
+        }
+
+        // The socket outlives this call, and the login/handshake reads expect it
+        // the way they left it.
+        if ($this->socket) {
+            stream_set_blocking($this->socket, true);
+        }
+
+        return $resolved;
+    }
+
+    /**
+     * @param  array<string, string>  $pending
+     * @param  array<string, true>  $resolved
+     * @param  callable(string, string): void  $onResult
+     */
+    private function consumeLine(string $line, array &$pending, array &$resolved, callable $onResult): void
+    {
+        if ($line === '' || ! preg_match(self::RESPONSE_PATTERN, $line, $m)) {
+            return; // banners, keep-alives, framing we do not know
+        }
+
+        $responseDomain = strtolower($m[1]);
+
+        if (! isset($pending[$responseDomain])) {
+            return; // a reply for something we are not waiting for
+        }
+
+        $tld = $pending[$responseDomain];
+        unset($pending[$responseDomain]);
+
+        $status = match (strtolower($m[2])) {
+            'available' => 'available',
+            'not available' => 'taken',
+            default => null,
+        };
+
+        if ($status === null) {
+            return; // 'error' / 'invalid domain' — let RDAP try
+        }
+
+        $resolved[$tld] = true;
+        $onResult($tld, $status);
+    }
 
     private function ensureConnected(): bool
     {
@@ -152,9 +238,7 @@ class RealtimeRegisterService
         }
 
         if ($this->socket) {
-            @fclose($this->socket);
-            $this->socket = null;
-            $this->loggedIn = false;
+            $this->dropSocket();
         }
 
         $this->socket = $this->openSocket();
@@ -163,13 +247,17 @@ class RealtimeRegisterService
             return false;
         }
 
-        fwrite($this->socket, "LOGIN {$this->apiKey()}\r\n");
+        if (@fwrite($this->socket, "LOGIN {$this->apiKey()}\r\n") === false) {
+            $this->dropSocket();
+
+            return false;
+        }
+
         $response = $this->readLine($this->socket);
 
         if (! str_starts_with((string) $response, '100')) {
             Log::debug('IsProxy login failed', ['response' => $response]);
-            @fclose($this->socket);
-            $this->socket = null;
+            $this->dropSocket();
 
             return false;
         }
@@ -194,7 +282,7 @@ class RealtimeRegisterService
             return null;
         }
 
-        stream_set_timeout($socket, 90); // long read timeout for large batches
+        stream_set_timeout($socket, max(1, (int) config('domain-checker.realtime_register_read_timeout', 5)));
 
         fwrite($socket, "STARTTLS\r\n");
         $line = $this->readLine($socket);
@@ -219,9 +307,24 @@ class RealtimeRegisterService
         return $socket;
     }
 
+    /**
+     * Close the socket for real. Setting the property to null on its own leaked
+     * the descriptor for the rest of the request, and left __destruct() with
+     * nothing to close.
+     */
+    private function dropSocket(): void
+    {
+        if ($this->socket) {
+            @fclose($this->socket);
+        }
+
+        $this->socket = null;
+        $this->loggedIn = false;
+    }
+
     private function readLine(mixed $socket): string|false
     {
-        $line = fgets($socket, 4096);
+        $line = @fgets($socket, 4096);
 
         return $line !== false ? rtrim($line, "\r\n") : false;
     }
