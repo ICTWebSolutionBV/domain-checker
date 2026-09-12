@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Spatie\LaravelPasskeys\Actions\FindPasskeyToAuthenticateAction;
+use Spatie\LaravelPasskeys\Actions\GeneratePasskeyAuthenticationOptionsAction;
 use Spatie\LaravelPasskeys\Support\Config;
 
 class PasskeyLoginController extends Controller
@@ -14,7 +15,7 @@ class PasskeyLoginController extends Controller
     {
         $action = Config::getAction(
             'generate_passkey_authentication_options',
-            \Spatie\LaravelPasskeys\Actions\GeneratePasskeyAuthenticationOptionsAction::class,
+            GeneratePasskeyAuthenticationOptionsAction::class,
         );
 
         $options = $action->execute();

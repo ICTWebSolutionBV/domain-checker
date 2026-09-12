@@ -21,7 +21,7 @@ class DomainAvailabilityService
      * results stream back in parallel — total time ≈ slowest single TLD.
      * RDAP/WHOIS is used for TLDs the IsProxy service can't resolve.
      *
-     * @param  array<string>                   $tlds
+     * @param  array<string>  $tlds
      * @param  callable(string, string): void  $onResult
      */
     public function streamCheck(string $domain, array $tlds, callable $onResult): void
@@ -82,7 +82,7 @@ class DomainAvailabilityService
      * time — which was the dominant cost of a full-list run and emitted nothing
      * to the stream while it ran.
      *
-     * @param  array<string>                   $tlds
+     * @param  array<string>  $tlds
      * @param  callable(string, string): void  $onResult
      */
     private function streamWithRdap(string $domain, array $tlds, callable $onResult): void

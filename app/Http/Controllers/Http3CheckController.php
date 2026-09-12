@@ -45,7 +45,7 @@ class Http3CheckController extends Controller
                 if ($payload === false) {
                     $payload = json_encode(['type' => 'error', 'detail' => 'encoding-failed']);
                 }
-                echo 'data: ' . $payload . "\n\n";
+                echo 'data: '.$payload."\n\n";
                 // ob_flush() only works if an output buffer exists; flush()
                 // always pushes to SAPI.
                 if (ob_get_level() > 0) {
@@ -63,21 +63,21 @@ class Http3CheckController extends Controller
                 $this->service->check($host, $emit);
             } catch (\Throwable $e) {
                 \Log::error('Http3Check stream failed', [
-                    'host'      => $host,
+                    'host' => $host,
                     'exception' => $e,
                 ]);
                 $emit([
-                    'type'    => 'done',
-                    'result'  => 'error',
-                    'h3'      => false,
-                    'summary' => 'Check aborted: ' . $e->getMessage(),
+                    'type' => 'done',
+                    'result' => 'error',
+                    'h3' => false,
+                    'summary' => 'Check aborted: '.$e->getMessage(),
                 ]);
             }
         }, 200, [
-            'Content-Type'      => 'text/event-stream',
-            'Cache-Control'     => 'no-cache',
+            'Content-Type' => 'text/event-stream',
+            'Cache-Control' => 'no-cache',
             'X-Accel-Buffering' => 'no',
-            'Connection'        => 'keep-alive',
+            'Connection' => 'keep-alive',
         ]);
     }
 }

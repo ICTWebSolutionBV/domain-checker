@@ -27,7 +27,7 @@ class MyIpController extends Controller
         }
 
         return Inertia::render('MyIp', [
-            'ip'     => $ip,
+            'ip' => $ip,
             'result' => $result,
         ]);
     }

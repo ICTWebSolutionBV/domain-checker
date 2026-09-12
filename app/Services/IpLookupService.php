@@ -35,7 +35,7 @@ class IpLookupService
             $hostname = @gethostbyaddr($input);
 
             return [
-                'ip'       => $input,
+                'ip' => $input,
                 'hostname' => ($hostname && $hostname !== $input) ? $hostname : null,
             ];
         }
@@ -47,7 +47,7 @@ class IpLookupService
         }
 
         return [
-            'ip'       => $ip,
+            'ip' => $ip,
             'hostname' => $input,
         ];
     }
@@ -66,10 +66,10 @@ class IpLookupService
         // Reject private/reserved ranges.
         if (! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
             return [
-                'ip'       => $ip,
+                'ip' => $ip,
                 'hostname' => $hostname,
-                'private'  => true,
-                'message'  => 'This IP is in a private or reserved range and cannot be geolocated.',
+                'private' => true,
+                'message' => 'This IP is in a private or reserved range and cannot be geolocated.',
             ];
         }
 
@@ -111,31 +111,31 @@ class IpLookupService
             }
 
             return [
-                'ip'             => $data['query'] ?? $ip,
-                'hostname'       => $hostname ?: ($data['reverse'] ?? null),
-                'continent'      => $data['continent'] ?? null,
+                'ip' => $data['query'] ?? $ip,
+                'hostname' => $hostname ?: ($data['reverse'] ?? null),
+                'continent' => $data['continent'] ?? null,
                 'continent_code' => $data['continentCode'] ?? null,
-                'country'        => $data['country'] ?? null,
-                'country_code'   => $data['countryCode'] ?? null,
-                'region'         => $data['region'] ?? null,
-                'region_name'    => $data['regionName'] ?? null,
-                'city'           => $data['city'] ?? null,
-                'district'       => $data['district'] ?: null,
-                'zip'            => $data['zip'] ?: null,
-                'lat'            => $data['lat'] ?? null,
-                'lon'            => $data['lon'] ?? null,
-                'timezone'       => $data['timezone'] ?? null,
-                'utc_offset'     => $data['offset'] ?? null,
-                'currency'       => $data['currency'] ?? null,
-                'isp'            => $data['isp'] ?? null,
-                'org'            => $data['org'] ?? null,
-                'as'             => $data['as'] ?? null,
-                'as_name'        => $data['asname'] ?? null,
-                'reverse_dns'    => $data['reverse'] ?: null,
-                'mobile'         => (bool) ($data['mobile'] ?? false),
-                'proxy'          => (bool) ($data['proxy'] ?? false),
-                'hosting'        => (bool) ($data['hosting'] ?? false),
-                'fetched_at'     => now()->toIso8601String(),
+                'country' => $data['country'] ?? null,
+                'country_code' => $data['countryCode'] ?? null,
+                'region' => $data['region'] ?? null,
+                'region_name' => $data['regionName'] ?? null,
+                'city' => $data['city'] ?? null,
+                'district' => $data['district'] ?: null,
+                'zip' => $data['zip'] ?: null,
+                'lat' => $data['lat'] ?? null,
+                'lon' => $data['lon'] ?? null,
+                'timezone' => $data['timezone'] ?? null,
+                'utc_offset' => $data['offset'] ?? null,
+                'currency' => $data['currency'] ?? null,
+                'isp' => $data['isp'] ?? null,
+                'org' => $data['org'] ?? null,
+                'as' => $data['as'] ?? null,
+                'as_name' => $data['asname'] ?? null,
+                'reverse_dns' => $data['reverse'] ?: null,
+                'mobile' => (bool) ($data['mobile'] ?? false),
+                'proxy' => (bool) ($data['proxy'] ?? false),
+                'hosting' => (bool) ($data['hosting'] ?? false),
+                'fetched_at' => now()->toIso8601String(),
             ];
         } catch (\Throwable $e) {
             Log::warning("IP lookup failed for {$ip}: {$e->getMessage()}");

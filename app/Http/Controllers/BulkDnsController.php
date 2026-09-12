@@ -23,14 +23,14 @@ class BulkDnsController extends Controller
     public function lookup(Request $request): JsonResponse
     {
         $request->validate([
-            'domains'   => ['required', 'array', 'min:1', 'max:100'],
+            'domains' => ['required', 'array', 'min:1', 'max:100'],
             'domains.*' => ['nullable', 'string', 'max:2048'],
-            'type'      => ['required', Rule::in(['MX', 'NS', 'TXT', 'A', 'AAAA', 'CNAME'])],
+            'type' => ['required', Rule::in(['MX', 'NS', 'TXT', 'A', 'AAAA', 'CNAME'])],
         ]);
 
-        $type    = (string) $request->input('type');
+        $type = (string) $request->input('type');
         $results = [];
-        $ips     = [];
+        $ips = [];
 
         foreach ((array) $request->input('domains') as $raw) {
             $domain = strtolower(trim((string) $raw));
@@ -42,7 +42,7 @@ class BulkDnsController extends Controller
                 continue;
             }
 
-            $ip      = $this->service->resolveIp($domain);
+            $ip = $this->service->resolveIp($domain);
             $records = $this->service->lookupRecords($domain, $type);
 
             $results[] = ['domain' => $domain, 'ip' => $ip, 'records' => $records];

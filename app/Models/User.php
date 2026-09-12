@@ -12,14 +12,13 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\LaravelPasskeys\Models\Concerns\HasPasskeys;
 use Spatie\LaravelPasskeys\Models\Concerns\InteractsWithPasskeys;
-use Spatie\LaravelPasskeys\Models\Passkey;
 
 #[Fillable(['name', 'first_name', 'last_name', 'email', 'password', 'role'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements HasPasskeys
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable, InteractsWithPasskeys;
+    use HasFactory, InteractsWithPasskeys, Notifiable, TwoFactorAuthenticatable;
 
     protected function casts(): array
     {

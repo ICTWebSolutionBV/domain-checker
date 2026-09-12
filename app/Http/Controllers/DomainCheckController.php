@@ -37,7 +37,7 @@ class DomainCheckController extends Controller
             'domain' => ['required', 'string', 'max:63', 'regex:/^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?$/'],
             // The full IANA list is ~8 KB of comma-separated labels; anything an
             // order of magnitude past that is not a browser of ours.
-            'tlds'   => ['required', 'string', 'max:20000'],
+            'tlds' => ['required', 'string', 'max:20000'],
         ]);
 
         $domain = strtolower(trim($request->string('domain')));
@@ -57,7 +57,7 @@ class DomainCheckController extends Controller
         }
 
         return $this->sseStream(function () use ($domain, $tlds): void {
-            $total   = count($tlds);
+            $total = count($tlds);
             $checked = 0;
 
             // streamCheck sends all RTR commands at once (pipelined), emitting each
