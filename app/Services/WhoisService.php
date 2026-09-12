@@ -232,6 +232,7 @@ class WhoisService
         $timeout = (int) config('domain-checker.timeouts.whois', 8);
         $concurrency = max(1, (int) config('domain-checker.concurrency.whois', 24));
         $maxBytes = (int) config('domain-checker.whois_max_response', 65536);
+        $port = (int) config('domain-checker.whois_port', 43);
         $deadline = microtime(true) + (int) config('domain-checker.whois_wave_budget', 30);
 
         $queue = $jobs;
@@ -263,7 +264,7 @@ class WhoisService
                 unset($queue[$key]);
 
                 $socket = @stream_socket_client(
-                    "tcp://{$job['server']}:43",
+                    "tcp://{$job['server']}:{$port}",
                     $errno,
                     $errstr,
                     $timeout,

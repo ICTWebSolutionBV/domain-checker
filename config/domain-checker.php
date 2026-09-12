@@ -65,6 +65,9 @@ return [
     /* Largest WHOIS response we will read before giving up on the socket. */
     'whois_max_response' => 65536,
 
+    /* Port 43 everywhere in practice; configurable so the wave is testable. */
+    'whois_port' => (int) env('DOMAIN_CHECKER_WHOIS_PORT', 43),
+
     /*
      * IsProxy read discipline: a per-read timeout so a missing reply cannot park
      * the request in fgets(), and a budget for the whole batch.
