@@ -13,9 +13,41 @@ export function useBulkDomainCheck() {
     let abortController = null
     let runId = 0
 
+    // One flush per frame instead of one reactive write and one re-render per
+    // stream event — the same batching as useDomainCheck, where it is the
+    // difference between a usable page and a wedged renderer.
+    let pending = new Map()
+    let pendingChecked = null
+    let pendingTotal = null
+    let raf = null
+
+    function flush() {
+        raf = null
+        pending.forEach((status, key) => { results[key] = status })
+        pending.clear()
+        if (pendingChecked !== null) { checkedCount.value = pendingChecked; pendingChecked = null }
+        if (pendingTotal !== null) { totalCount.value = pendingTotal; pendingTotal = null }
+    }
+
+    function queue(key, status) {
+        pending.set(key, status)
+        if (raf === null) raf = requestAnimationFrame(flush)
+    }
+
+    function cancelFlush() {
+        if (raf !== null) cancelAnimationFrame(raf)
+        raf = null
+        pending.clear()
+        pendingChecked = null
+        pendingTotal = null
+    }
+
     // See useDomainCheck: without this an abandoned check holds the stream and
     // a server worker open, and keeps writing into destroyed state.
-    onScopeDispose(() => abortController?.abort())
+    onScopeDispose(() => {
+        abortController?.abort()
+        cancelFlush()
+    })
 
     function downgradePending() {
         Object.keys(results).forEach(domain => {
@@ -28,6 +60,7 @@ export function useBulkDomainCheck() {
 
         const myRun = ++runId
 
+        cancelFlush()
         Object.keys(results).forEach(key => delete results[key])
         Object.keys(checkedDomains).forEach(key => delete checkedDomains[key])
         domains.forEach(d => (results[d] = 'checking'))
@@ -70,6 +103,7 @@ export function useBulkDomainCheck() {
             while (true) {
                 const { done, value } = await reader.read()
                 if (done) {
+                    flush()
                     // No {"done":true} sentinel means the stream died
                     // mid-flight; say so instead of leaving rows spinning.
                     if (!isDone.value) {
@@ -90,16 +124,17 @@ export function useBulkDomainCheck() {
                     try {
                         const parsed = JSON.parse(dataLine.slice(6))
                         if (parsed.done) {
+                            flush()
                             isDone.value = true
                             return
                         }
                         if (parsed.domain && parsed.status) {
-                            results[parsed.domain] = parsed.status
+                            queue(parsed.domain, parsed.status)
                             if (parsed.checked_domain && parsed.checked_domain !== parsed.domain) {
                                 checkedDomains[parsed.domain] = parsed.checked_domain
                             }
-                            if (parsed.checked) checkedCount.value = parsed.checked
-                            if (parsed.total)   totalCount.value  = parsed.total
+                            if (parsed.checked) pendingChecked = parsed.checked
+                            if (parsed.total)   pendingTotal  = parsed.total
                         }
                     } catch {
                         // ignore malformed events
@@ -108,6 +143,7 @@ export function useBulkDomainCheck() {
             }
         } catch (err) {
             if (err.name === 'AbortError') return
+            flush()
             error.value = 'error'
             downgradePending()
         } finally {
@@ -115,9 +151,21 @@ export function useBulkDomainCheck() {
         }
     }
 
+    function stop() {
+        if (!isChecking.value) return
+        abortController?.abort()
+        abortController = null
+        cancelFlush()
+        runId++
+        downgradePending()
+        isChecking.value = false
+        isDone.value = true
+    }
+
     function reset() {
         abortController?.abort()
         abortController = null
+        cancelFlush()
         runId++
         Object.keys(results).forEach(key => delete results[key])
         Object.keys(checkedDomains).forEach(key => delete checkedDomains[key])
@@ -128,5 +176,5 @@ export function useBulkDomainCheck() {
         totalCount.value = 0
     }
 
-    return { results, checkedDomains, isDone, isChecking, checkedCount, totalCount, error, check, reset }
+    return { results, checkedDomains, isDone, isChecking, checkedCount, totalCount, error, check, stop, reset }
 }
