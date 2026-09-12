@@ -136,15 +136,28 @@ class PublicNetworkGuard
     }
 
     /**
+     * Build a single CURLOPT_RESOLVE entry pinning the host to the addresses we
+     * already vetted. It must be ONE entry with a comma-separated address list:
+     * libcurl keeps only the last entry per host:port, so one entry per IP would
+     * pin us to whichever address happened to come last (usually an AAAA record,
+     * unreachable on an IPv4-only host). IPv6 addresses must be bracketed or the
+     * entry is malformed and curl refuses to connect at all.
+     *
      * @param  list<string>  $ips
      * @return list<string>
      */
     public function curlResolveEntries(string $host, int $port, array $ips): array
     {
-        return array_map(
-            fn (string $ip) => "{$host}:{$port}:{$ip}",
+        if ($ips === []) {
+            return [];
+        }
+
+        $addresses = array_map(
+            fn (string $ip) => $this->formatConnectHost($ip),
             $ips,
         );
+
+        return ["{$host}:{$port}:".implode(',', $addresses)];
     }
 
     public function formatConnectHost(string $ip): string
