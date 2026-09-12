@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\StreamsServerSentEvents;
 use App\Services\DomainAvailabilityService;
 use App\Services\TldRepository;
+use App\Support\DomainName;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -28,6 +29,10 @@ class DomainCheckController extends Controller
 
     public function check(Request $request): StreamedResponse
     {
+        $request->merge([
+            'domain' => DomainName::toAscii((string) $request->input('domain', '')),
+        ]);
+
         $request->validate([
             'domain' => ['required', 'string', 'max:63', 'regex:/^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?$/'],
             // The full IANA list is ~8 KB of comma-separated labels; anything an

@@ -17,6 +17,7 @@ return [
         'tld_list_ttl'  => 86400,   // 24 hours
         'result_ttl'    => 900,     // 15 minutes
         'whois_server_ttl' => 86400, // 24 hours — IANA's TLD -> WHOIS server map
+        'unknown_ttl'   => 60,      // a non-answer is worth retrying soon
     ],
 
     'realtime_register' => [

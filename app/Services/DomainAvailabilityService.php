@@ -50,7 +50,7 @@ class DomainAvailabilityService
                 $domain,
                 $uncached,
                 function (string $tld, string $status) use ($domain, $ttl, $onResult): void {
-                    Cache::put("domain_check_{$domain}_{$tld}", $status, $ttl);
+                    $this->cacheResult($domain, $tld, $status, $ttl);
                     $onResult($tld, $status);
                 }
             );
@@ -99,9 +99,26 @@ class DomainAvailabilityService
             foreach ($batch as $tld) {
                 $rdapResult = $rdapResults[$tld] ?? null;
                 $status     = $rdapResult ?? $this->whois->check($domain, $tld) ?? 'unknown';
-                Cache::put("domain_check_{$domain}_{$tld}", $status, $ttl);
+                $this->cacheResult($domain, $tld, $status, $ttl);
                 $onResult($tld, $status);
             }
         }
+    }
+
+    /**
+     * Cache a verdict -- but treat 'unknown' as a failure, not an answer.
+     *
+     * 'unknown' means a registry refused us, timed out or answered in a shape
+     * we could not read. Storing that for the full 15 minutes made every retry
+     * return the same non-answer instantly, so a blip during a client call
+     * lasted the whole call. A short TTL still damps hammering.
+     */
+    private function cacheResult(string $domain, string $tld, string $status, int $ttl): void
+    {
+        if ($status === 'unknown') {
+            $ttl = (int) config('domain-checker.cache.unknown_ttl', 60);
+        }
+
+        Cache::put("domain_check_{$domain}_{$tld}", $status, $ttl);
     }
 }
