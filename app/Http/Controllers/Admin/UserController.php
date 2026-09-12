@@ -16,6 +16,9 @@ use Inertia\Inertia;
 
 class UserController extends Controller
 {
+    /** Rows per page on the index. Neither list was paginated at all. */
+    private const PER_PAGE = 25;
+
     /**
      * Roles assignable by the current actor. Only super admins can grant
      * the super_admin role; regular admins are limited to user/admin.
@@ -29,14 +32,31 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-        // Auto-cleanup: remove invites that have been accepted or whose email
-        // already has a User account.
-        UserInvite::whereNotNull('used_at')
-            ->orWhereIn('email', User::pluck('email'))
-            ->delete();
+        // Spent invites are hidden rather than deleted. This page used to run a
+        // DELETE on a plain GET, which re-fired on every refresh, Inertia
+        // partial reload and browser prefetch; `php artisan invites:prune`
+        // (schedule it) does the actual removal now. The email filter is a
+        // subquery, so the whole user table no longer has to be loaded into an
+        // unbounded IN (...) list to render one page.
+        $invites = UserInvite::query()
+            ->with('inviter:id,name')
+            ->whereNull('used_at')
+            ->whereNotIn('email', User::query()->select('email'))
+            ->latest()
+            ->paginate(self::PER_PAGE, ['*'], 'invites_page')
+            ->withQueryString();
+
+        // withCount instead of hasPasskeysEnabled() per row: that accessor is
+        // ->passkeys()->exists(), which made the page cost one query per user
+        // (21 users measured at 22 queries).
+        $users = User::query()
+            ->withCount('passkeys')
+            ->latest()
+            ->paginate(self::PER_PAGE, ['*'], 'users_page')
+            ->withQueryString();
 
         return Inertia::render('Admin/Users/Index', [
-            'users' => User::latest()->get()->map(fn ($user) => [
+            'users' => $users->through(fn (User $user) => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
@@ -44,10 +64,10 @@ class UserController extends Controller
                 'created_at' => $user->created_at->toISOString(),
                 'two_factor' => [
                     'totp_enabled' => $user->hasTotpEnabled(),
-                    'passkeys_enabled' => $user->hasPasskeysEnabled(),
+                    'passkeys_enabled' => $user->passkeys_count > 0,
                 ],
             ]),
-            'invites' => UserInvite::with('inviter')->latest()->get()->map(fn ($invite) => [
+            'invites' => $invites->through(fn (UserInvite $invite) => [
                 'id' => $invite->id,
                 'email' => $invite->email,
                 'role' => $invite->role,
@@ -175,7 +195,7 @@ class UserController extends Controller
             'expires_at' => now()->addHours($data['expires_hours']),
         ]);
 
-        Mail::to($invite->email)->send(new UserInviteMail($invite));
+        Mail::to($invite->email)->queue(new UserInviteMail($invite));
 
         return back()->with('success', 'Invite sent.');
     }
@@ -207,7 +227,7 @@ class UserController extends Controller
             'invited_by' => $request->user()->id,
         ]);
 
-        Mail::to($invite->email)->send(new UserInviteMail($invite));
+        Mail::to($invite->email)->queue(new UserInviteMail($invite));
 
         return back()->with('success', 'Invite resent.');
     }
