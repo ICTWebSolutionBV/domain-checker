@@ -33,7 +33,7 @@ function blankBlock(label) {
     }
 }
 
-const DOMAIN_RE = /^(?:[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i
+const DOMAIN_RE = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i
 
 function normalizeDomain(raw) {
     let v = String(raw || '').trim().toLowerCase()
@@ -195,7 +195,7 @@ async function copyAll() {
         await navigator.clipboard.writeText(buildClipboardText())
         copied.value = true
         setTimeout(() => { copied.value = false }, 2200)
-    } catch (e) {
+    } catch {
         copyError.value = 'Could not access the clipboard. Select the preview text below and copy manually.'
     }
 }

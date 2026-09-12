@@ -79,6 +79,32 @@ jobs:
       - name: Pint (style only, no fixes)
         run: vendor/bin/pint --test
 
+  analyse:
+    name: Static analysis
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_sqlite, sqlite3, mbstring, intl, sodium, bcmath
+          coverage: none
+
+      - name: Cache Composer downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: composer-8.4-${{ hashFiles('composer.lock') }}
+
+      - run: composer install --no-interaction --prefer-dist
+
+      # phpstan-baseline.neon holds the findings that existed when analysis was
+      # introduced. A pull request may not grow it: fix the finding, or annotate
+      # the type the analyser is missing.
+      - run: vendor/bin/phpstan analyse --no-progress --memory-limit=512M
+
   frontend:
     name: Frontend
     if: github.event_name != 'schedule'
@@ -104,6 +130,8 @@ jobs:
       - run: composer install --no-interaction --prefer-dist --no-scripts --no-dev
 
       - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
       - run: npm run build
 
   audit:

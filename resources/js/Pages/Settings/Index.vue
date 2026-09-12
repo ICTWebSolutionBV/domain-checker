@@ -7,7 +7,7 @@ import { useClipboard } from '@/composables/useClipboard'
 import { browserSupportsWebAuthn, startRegistration } from '@simplewebauthn/browser'
 import {
     User, Lock, ShieldCheck, ShieldOff, Fingerprint, Plus, Trash2,
-    Loader2, QrCode, Copy, CheckCheck, Key, RefreshCw, Plug, Eye, EyeOff, X
+    Loader2, Copy, CheckCheck, Key, Plug, Eye, EyeOff, X
 } from '@lucide/vue'
 
 const props = defineProps({

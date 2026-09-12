@@ -13,7 +13,7 @@ import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
  * the visual design stays entirely with the caller.
  */
 
-const props = defineProps({
+defineProps({
     /** id of the heading that names the dialog — preferred over `label`. */
     labelledby: { type: String, default: undefined },
     /** Accessible name for dialogs without a visible heading (the drawer). */

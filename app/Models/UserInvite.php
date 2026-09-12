@@ -4,7 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property string $email
+ * @property string|null $first_name
+ * @property string|null $last_name
+ * @property string $token
+ * @property string $role
+ * @property int|null $invited_by
+ * @property Carbon $expires_at
+ * @property Carbon|null $used_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read User|null $inviter
+ */
 class UserInvite extends Model
 {
     protected $fillable = [

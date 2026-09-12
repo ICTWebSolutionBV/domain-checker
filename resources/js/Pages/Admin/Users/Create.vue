@@ -3,7 +3,7 @@ import { Head, useForm, Link } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import FormField from '@/Components/FormField.vue'
 
-const props = defineProps({
+defineProps({
     assignableRoles: { type: Array, default: () => ['user', 'admin'] },
 })
 

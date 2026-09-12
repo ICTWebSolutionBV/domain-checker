@@ -9,7 +9,6 @@ class DomainAvailabilityService
     public function __construct(
         private readonly RdapService $rdap,
         private readonly WhoisService $whois,
-        private readonly TldRepository $tldRepository,
         private readonly RealtimeRegisterService $rtr,
     ) {}
 
