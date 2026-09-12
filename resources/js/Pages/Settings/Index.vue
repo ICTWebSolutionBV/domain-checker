@@ -4,6 +4,7 @@ import { Head, useForm, usePage, Link } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import FormField from '@/Components/FormField.vue'
 import { useClipboard } from '@/composables/useClipboard'
+import { browserSupportsWebAuthn, startRegistration } from '@simplewebauthn/browser'
 import {
     User, Lock, ShieldCheck, ShieldOff, Fingerprint, Plus, Trash2,
     Loader2, QrCode, Copy, CheckCheck, Key, RefreshCw, Plug, Eye, EyeOff, X
@@ -45,7 +46,7 @@ const disableForm = useForm({ password: '' })
 const passkeyName = ref('')
 const passkeyLoading = ref(false)
 const passkeyError = ref('')
-const supportsPasskeys = typeof window !== 'undefined' && window.browserSupportsWebAuthn?.()
+const supportsPasskeys = typeof window !== 'undefined' && browserSupportsWebAuthn()
 
 // The old version flipped to the success checkmark regardless of whether the
 // write resolved — a false positive on any non-secure origin.
@@ -61,7 +62,7 @@ async function registerPasskey() {
         // returns HTML, which surfaced to the user as "Unexpected token '<'".
         if (!optionsRes.ok) throw new Error('Could not start passkey registration. Please reload and try again.')
         const options = await optionsRes.json()
-        const regResponse = await window.startRegistration({ optionsJSON: options })
+        const regResponse = await startRegistration({ optionsJSON: options })
         const form = useForm({
             name: passkeyName.value.trim(),
             passkey_response: JSON.stringify(regResponse),
