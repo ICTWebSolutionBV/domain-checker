@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Vite;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -21,6 +22,10 @@ class SecurityHeaders
 {
     public function handle(Request $request, Closure $next): Response
     {
+        // Has to happen before the view renders: the Blade shell reads this
+        // nonce for the theme script and for @routes.
+        Vite::useCspNonce();
+
         $response = $next($request);
 
         $headers = [
@@ -35,6 +40,10 @@ class SecurityHeaders
             $headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains';
         }
 
+        if ($this->isHtml($response)) {
+            $headers['Content-Security-Policy'] = $this->contentSecurityPolicy();
+        }
+
         foreach ($headers as $header => $value) {
             if (! $response->headers->has($header)) {
                 $response->headers->set($header, $value);
@@ -42,5 +51,78 @@ class SecurityHeaders
         }
 
         return $response;
+    }
+
+    /**
+     * The policy is deliberately readable rather than clever.
+     *
+     * - script-src has no 'unsafe-inline' and no 'unsafe-eval': the Vue
+     *   templates are compiled at build time, so nothing needs to evaluate
+     *   strings at runtime.
+     * - style-src carries the nonce plus fonts.bunny.net, which serves the
+     *   webfont stylesheet. Self-hosting that font would let both the
+     *   stylesheet and the font host drop out of here entirely.
+     * - connect-src is 'self' because every check streams from our own SSE
+     *   endpoints; the registry traffic happens server-side.
+     */
+    private function contentSecurityPolicy(): string
+    {
+        $nonce = Vite::cspNonce();
+
+        // The bundle is not necessarily served from the origin the visitor is
+        // on: Vite emits absolute URLs built from ASSET_URL or APP_URL, so a
+        // CDN -- or a proxied hostname in front of a dev server -- puts the
+        // assets on a different origin than 'self'. Leaving that out renders a
+        // blank page with every script and stylesheet refused.
+        $assetOrigins = $this->assetOrigins();
+        $script = trim("'self' 'nonce-{$nonce}' ".$assetOrigins);
+        $style = trim("'self' 'nonce-{$nonce}' https://fonts.bunny.net ".$assetOrigins);
+        $font = trim("'self' https://fonts.bunny.net ".$assetOrigins);
+        $img = trim("'self' data: ".$assetOrigins);
+        $connect = trim("'self' ".$assetOrigins);
+
+        return implode('; ', [
+            "default-src 'self'",
+            "script-src {$script}",
+            "style-src {$style}",
+            "font-src {$font}",
+            "img-src {$img}",
+            "connect-src {$connect}",
+            "base-uri 'self'",
+            "form-action 'self'",
+            "frame-ancestors 'none'",
+            "object-src 'none'",
+        ]);
+    }
+
+    /**
+     * Origins the asset bundle can legitimately come from, space separated.
+     */
+    private function assetOrigins(): string
+    {
+        $origins = [];
+
+        foreach ([config('app.asset_url'), config('app.url')] as $url) {
+            $parts = parse_url((string) $url);
+
+            if (empty($parts['scheme']) || empty($parts['host'])) {
+                continue;
+            }
+
+            $origin = $parts['scheme'].'://'.$parts['host'];
+
+            if (! empty($parts['port'])) {
+                $origin .= ':'.$parts['port'];
+            }
+
+            $origins[$origin] = true;
+        }
+
+        return implode(' ', array_keys($origins));
+    }
+
+    private function isHtml(Response $response): bool
+    {
+        return str_contains((string) $response->headers->get('Content-Type', 'text/html'), 'text/html');
     }
 }
