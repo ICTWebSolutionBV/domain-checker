@@ -1,0 +1,126 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly advisory sweep, so a new CVE is noticed without someone pushing.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  php:
+    name: PHP ${{ matrix.php }}
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 8.4 is the declared floor and what the production box runs; 8.5 is
+        # what the dev machines already have, so both have to stay green.
+        php: ['8.4', '8.5']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          # pdo_sqlite backs phpunit.xml's :memory: database; intl is required
+          # by composer.json for the punycode conversion on both check paths.
+          extensions: pdo_sqlite, sqlite3, mbstring, intl, sodium, bcmath
+          coverage: none
+
+      - name: Cache Composer downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: composer-${{ matrix.php }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ matrix.php }}-
+
+      - run: composer validate --strict --no-check-publish
+      - run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: PHPUnit
+        run: php artisan test
+
+      - name: Verify the production caches build
+        # The one production-only bug class this project has actually hit was a
+        # rate limiter that only went missing under route:cache (b5cddc9).
+        # `optimize` compiles config, routes, views and events, so it catches it.
+        run: php artisan optimize
+
+  pint:
+    name: Pint
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Pint (style only, no fixes)
+        run: vendor/bin/pint --test
+
+  frontend:
+    name: Frontend
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Vite 8 and laravel-vite-plugin 3 require ^20.19 || >=22.12; see the
+          # engines field in package.json.
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+  audit:
+    name: Advisories
+    # Weekly only: a push does not change the advisory databases, and a fresh
+    # CVE has to be noticed without one.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: intl
+          coverage: none
+
+      - name: composer audit
+        # --locked audits exactly what is deployed, without installing.
+        run: composer audit --locked
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: npm audit
+        # high and above only, so a low-severity transitive advisory in the
+        # build toolchain does not turn the weekly run permanently red.
+        run: npm audit --audit-level=high
