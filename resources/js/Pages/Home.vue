@@ -5,6 +5,7 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import { useDomainCheck } from '@/composables/useDomainCheck'
 import { useBulkDomainCheck } from '@/composables/useBulkDomainCheck'
 import BulkCheckInput from '@/Components/BulkCheckInput.vue'
+import Dialog from '@/Components/Dialog.vue'
 import {
     Search, Globe, CheckCircle, XCircle, HelpCircle, Loader2,
     Copy, Check, ClipboardList, X, UserCircle, Building2
@@ -816,10 +817,14 @@ function statusConfig(status) {
         >
             <div v-if="showModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" @click.self="closeModal">
                 <!-- Backdrop -->
-                <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeModal" />
+                <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeModal" aria-hidden="true" />
 
                 <!-- Modal panel -->
-                <div class="relative w-full max-w-2xl bg-surface rounded-t-2xl sm:rounded-2xl shadow-overlay border border-hairline dark:border-gray-700 overflow-hidden max-h-[calc(100dvh-0.75rem)] sm:max-h-[90vh] flex flex-col">
+                <Dialog
+                    labelledby="registration-modal-title"
+                    class="relative w-full max-w-2xl bg-surface rounded-t-2xl sm:rounded-2xl shadow-overlay border border-hairline dark:border-gray-700 overflow-hidden max-h-[calc(100dvh-0.75rem)] sm:max-h-[90vh] flex flex-col"
+                    @close="closeModal"
+                >
 
                     <!-- Header -->
                     <div class="flex items-center justify-between gap-3 px-4 sm:px-8 py-3.5 sm:py-4 border-b border-hairline shrink-0">
@@ -828,7 +833,7 @@ function statusConfig(status) {
                                 <ClipboardList class="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                             </div>
                             <div class="min-w-0">
-                                <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Fill in details and request</h2>
+                                <h2 id="registration-modal-title" class="text-sm font-semibold text-gray-900 dark:text-white">Fill in details and request</h2>
                                 <p class="ui-help hidden min-[380px]:block">Add your details so we can process your order</p>
                             </div>
                         </div>
@@ -1003,7 +1008,7 @@ function statusConfig(status) {
                             {{ copied ? 'Copied!' : 'Copy to clipboard' }}
                         </button>
                     </div>
-                </div>
+                </Dialog>
             </div>
         </Transition>
     </AppLayout>

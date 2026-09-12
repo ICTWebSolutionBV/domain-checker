@@ -2,6 +2,7 @@
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { Link, usePage, router } from '@inertiajs/vue3'
 import { useTheme } from '@/composables/useTheme'
+import Dialog from '@/Components/Dialog.vue'
 import { Sun, Moon, SunMoon, Globe, Globe2, LogIn, Settings, LogOut, Users, Zap, MapPin, ArrowRightLeft, Route, Wifi, Menu, X } from 'lucide-vue-next'
 
 const page = usePage()
@@ -110,6 +111,8 @@ onUnmounted(() => {
                     @click="menuOpen = !menuOpen"
                     class="sm:hidden flex items-center justify-center w-10 h-10 rounded-xl text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                     :aria-label="menuOpen ? 'Close menu' : 'Open menu'"
+                    :aria-expanded="menuOpen"
+                    aria-controls="mobile-drawer"
                 >
                     <X v-if="menuOpen" class="w-5 h-5" />
                     <Menu v-else class="w-5 h-5" />
@@ -124,7 +127,13 @@ onUnmounted(() => {
 
         <!-- Mobile drawer (slides in from right) -->
         <Transition enter-active-class="transition-transform duration-250 ease-out" enter-from-class="translate-x-full" enter-to-class="translate-x-0" leave-active-class="transition-transform duration-200 ease-in" leave-from-class="translate-x-0" leave-to-class="translate-x-full">
-            <div v-if="menuOpen" class="fixed top-0 right-0 h-full w-72 bg-white dark:bg-gray-900 z-50 sm:hidden shadow-2xl flex flex-col">
+            <Dialog
+                v-if="menuOpen"
+                id="mobile-drawer"
+                label="Site menu"
+                class="fixed top-0 right-0 h-full w-72 bg-white dark:bg-gray-900 z-50 sm:hidden shadow-2xl flex flex-col"
+                @close="menuOpen = false"
+            >
                 <!-- Drawer header -->
                 <div class="flex items-center justify-between px-5 h-14 border-b border-hairline shrink-0">
                     <Link :href="route('home')" class="flex items-center gap-2.5 font-semibold text-gray-900 dark:text-white" @click="menuOpen = false">
@@ -133,13 +142,13 @@ onUnmounted(() => {
                         </div>
                         <span class="text-sm">Domain Checker</span>
                     </Link>
-                    <button @click="menuOpen = false" class="flex items-center justify-center w-9 h-9 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <button @click="menuOpen = false" class="flex items-center justify-center w-9 h-9 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" aria-label="Close menu">
                         <X class="w-5 h-5" />
                     </button>
                 </div>
 
                 <!-- Drawer nav items -->
-                <nav class="flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-1">
+                <nav class="flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-1" aria-label="Site menu">
                     <Link :href="route('http3')" class="flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:scale-[0.98]">
                         <Zap class="w-5 h-5 text-indigo-500 shrink-0" />
                         HTTP/3 Checker
@@ -197,7 +206,7 @@ onUnmounted(() => {
                         </Link>
                     </template>
                 </nav>
-            </div>
+            </Dialog>
         </Transition>
 
         <!-- Flash messages -->
