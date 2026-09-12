@@ -97,7 +97,10 @@ watch(domainInput, (val) => {
         autoCheckTimer = setTimeout(() => handleCheck(), 400)
     }
 })
-onUnmounted(() => clearTimeout(autoCheckTimer))
+onUnmounted(() => {
+    clearTimeout(autoCheckTimer)
+    clearTimeout(liveThrottle)
+})
 
 const hasResults = computed(() => Object.keys(results).length > 0)
 
@@ -175,11 +178,58 @@ const pinnedSummary = computed(() => {
     }
 })
 
-const statusCounts = computed(() => {
+function countStatuses(map) {
     const counts = { available: 0, taken: 0, unknown: 0, checking: 0 }
-    Object.values(results).forEach(s => { counts[s] = (counts[s] || 0) + 1 })
+    Object.values(map).forEach(s => { counts[s] = (counts[s] || 0) + 1 })
     return counts
-})
+}
+
+const statusCounts = computed(() => countStatuses(results))
+const bulkStatusCounts = computed(() => countStatuses(bulkResults))
+
+// Streaming results are the whole point of the product and they were
+// announced to a screen reader exactly never: there was no live region
+// anywhere in the app. One polite region, throttled — announcing all 46 (or
+// 1287) individual updates would be worse than silence.
+const liveMessage = ref('')
+let liveThrottle = null
+
+function announceProgress() {
+    const single = mode.value === 'single'
+    const checking = single ? isChecking.value : bulkIsChecking.value
+    const checked = single ? checkedCount.value : bulkCheckedCount.value
+    const total = single ? totalCount.value : bulkTotalCount.value
+    const counts = single ? statusCounts.value : bulkStatusCounts.value
+    const subject = single ? searchedDomain.value : 'domains'
+
+    if (!total) {
+        liveMessage.value = ''
+        return
+    }
+    if (checking) {
+        liveMessage.value = `Checking ${subject}: ${checked} of ${total} done, ${counts.available} available so far.`
+        return
+    }
+    liveMessage.value = `Finished checking ${subject}. ${counts.available} available, ${counts.taken} taken, ${counts.unknown} unknown.`
+}
+
+watch(
+    [checkedCount, isChecking, bulkCheckedCount, bulkIsChecking, mode],
+    () => {
+        const checking = mode.value === 'single' ? isChecking.value : bulkIsChecking.value
+        if (!checking) {
+            clearTimeout(liveThrottle)
+            liveThrottle = null
+            announceProgress()
+            return
+        }
+        if (liveThrottle) return
+        liveThrottle = setTimeout(() => {
+            liveThrottle = null
+            announceProgress()
+        }, 2500)
+    }
+)
 
 const progressPercent = computed(() => {
     if (totalCount.value === 0) return 0
@@ -380,7 +430,10 @@ function statusConfig(status) {
 
 <template>
     <AppLayout>
-        <Head title="Domain Checker" />
+        <Head title="Find your perfect domain name" />
+
+        <!-- Streaming progress and result counts, for screen readers only -->
+        <p class="sr-only" aria-live="polite" aria-atomic="true">{{ liveMessage }}</p>
 
         <!-- Hero -->
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10 text-center">
@@ -425,6 +478,7 @@ function statusConfig(status) {
             >
                 <div v-if="mode === 'single' && error" class="max-w-2xl mx-auto mb-4">
                     <div
+                        role="alert"
                         class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium border"
                         :class="error === 'rate_limited'
                             ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300'
@@ -448,6 +502,7 @@ function statusConfig(status) {
             >
                 <div v-if="mode === 'bulk' && bulkError" class="max-w-2xl mx-auto mb-4">
                     <div
+                        role="alert"
                         class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium border"
                         :class="bulkError === 'rate_limited'
                             ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300'
