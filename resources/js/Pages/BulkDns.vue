@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onScopeDispose } from 'vue'
 import { Head } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { Search, Loader2, Copy, Check, X, AlertTriangle, Globe2, Eye, EyeOff } from 'lucide-vue-next'
@@ -13,6 +13,13 @@ const error     = ref('')
 const results   = ref([])
 const copied    = ref(false)
 const showGeo   = ref(true)
+// The type the rendered rows actually came from. Switching MX -> NS while the
+// MX request was in flight used to drop the NS call, land the MX response in
+// `results`, and label both the toolbar and the last column "NS".
+const resultsType = ref('MX')
+
+let abortController = null
+onScopeDispose(() => abortController?.abort())
 
 const hasResults = computed(() => results.value.length > 0)
 
@@ -29,7 +36,12 @@ watch(selectedType, () => { if (hasResults.value) runLookup() })
 
 async function runLookup() {
     const domains = parsedDomains.value
-    if (!domains.length || loading.value) return
+    if (!domains.length) return
+
+    abortController?.abort()
+    abortController = new AbortController()
+    const signal = abortController.signal
+    const requestedType = selectedType.value
 
     loading.value = true
     error.value   = ''
@@ -39,13 +51,14 @@ async function runLookup() {
         const token = document.querySelector('meta[name="csrf-token"]')?.content
         const res = await fetch('/dns/lookup', {
             method: 'POST',
+            signal,
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
                 ...(token ? { 'X-CSRF-TOKEN': token } : {}),
             },
-            body: JSON.stringify({ domains, type: selectedType.value }),
+            body: JSON.stringify({ domains, type: requestedType }),
         })
 
         const body = await res.json().catch(() => ({}))
@@ -58,10 +71,12 @@ async function runLookup() {
         }
 
         results.value = body.results ?? []
+        resultsType.value = requestedType
     } catch (e) {
-        error.value = e.message || 'Network error.'
+        if (e.name === 'AbortError') return
+        error.value = 'Could not reach the DNS service. Please try again.'
     } finally {
-        loading.value = false
+        if (!signal.aborted) loading.value = false
     }
 }
 
@@ -86,7 +101,7 @@ function ipLookupUrl(ip) {
 
 async function copyTable() {
     const geoHeaders = showGeo.value ? ['Country', 'Region', 'City', 'ISP', 'ASN'] : []
-    const header = ['Domain', 'IP', ...geoHeaders, selectedType.value].join('\t')
+    const header = ['Domain', 'IP', ...geoHeaders, resultsType.value].join('\t')
     const rows = results.value.map(row => {
         const geo = showGeo.value ? [
             row.geo?.country ?? '—',
@@ -227,7 +242,7 @@ async function copyTable() {
                         <p class="text-sm text-gray-500 dark:text-gray-400">
                             <span class="font-medium text-gray-900 dark:text-white">{{ results.length }}</span>
                             domain{{ results.length !== 1 ? 's' : '' }} &middot;
-                            <span class="font-mono font-medium text-indigo-600 dark:text-indigo-400">{{ selectedType }}</span> records
+                            <span class="font-mono font-medium text-indigo-600 dark:text-indigo-400">{{ resultsType }}</span> records
                         </p>
 
                         <div class="flex items-center gap-2">
@@ -290,8 +305,8 @@ async function copyTable() {
                                                 ASN
                                             </th>
                                         </template>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 whitespace-nowrap font-mono">
-                                            {{ selectedType }}
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 whitespace-nowrap font-mono">
+                                            {{ resultsType }}
                                         </th>
                                     </tr>
                                 </thead>
@@ -355,16 +370,16 @@ async function copyTable() {
                                                         :key="i"
                                                         class="font-mono text-xs leading-relaxed"
                                                     >
-                                                        <template v-if="selectedType === 'MX'">
+                                                        <template v-if="resultsType === 'MX'">
                                                             <span class="inline-flex items-center gap-1.5">
                                                                 <span class="inline-block px-1.5 py-0.5 rounded text-xs font-semibold bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400">{{ rec.priority }}</span>
                                                                 <span class="text-gray-700 dark:text-gray-300">{{ rec.value }}</span>
                                                             </span>
                                                         </template>
-                                                        <template v-else-if="selectedType === 'TXT'">
+                                                        <template v-else-if="resultsType === 'TXT'">
                                                             <span class="text-gray-700 dark:text-gray-300 break-all">{{ rec.value }}</span>
                                                         </template>
-                                                        <template v-else-if="selectedType === 'A' || selectedType === 'AAAA'">
+                                                        <template v-else-if="resultsType === 'A' || resultsType === 'AAAA'">
                                                             <a :href="ipLookupUrl(rec.value)" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ rec.value }}</a>
                                                         </template>
                                                         <template v-else>

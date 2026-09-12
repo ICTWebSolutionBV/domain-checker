@@ -19,6 +19,7 @@ const props = defineProps({
 const { results, isDone, isChecking, checkedCount, totalCount, error, check, reset } = useDomainCheck()
 const {
     results: bulkResults,
+    checkedDomains: bulkCheckedDomains,
     isChecking: bulkIsChecking,
     checkedCount: bulkCheckedCount,
     totalCount: bulkTotalCount,
@@ -28,6 +29,12 @@ const {
 } = useBulkDomainCheck()
 
 const mode = ref('single') // 'single' | 'bulk'
+
+const ERROR_MESSAGES = {
+    rate_limited: 'Too many requests — please wait a moment before checking again.',
+    incomplete: 'The connection dropped before every extension was checked — the unfinished ones are marked unknown. Please try again.',
+    error: 'Something went wrong. Please try again.',
+}
 
 const domainInput = ref('')
 const searchedDomain = ref('')
@@ -308,7 +315,14 @@ function switchMode(newMode) {
 }
 
 const bulkResultEntries = computed(() =>
-    Object.entries(bulkResults).map(([domain, status]) => ({ domain, status }))
+    Object.entries(bulkResults).map(([domain, status]) => ({
+        domain,
+        status,
+        // Present when the backend reduced a subdomain to its registrable
+        // domain (blog.google.com → google.com); without it the row just says
+        // "taken" about a name the registry has never heard of.
+        checkedDomain: bulkCheckedDomains[domain] ?? null,
+    }))
 )
 
 const bulkAvailableEntries = computed(() => bulkResultEntries.value.filter(e => e.status === 'available'))
@@ -481,13 +495,12 @@ function statusConfig(status) {
                     <div
                         role="alert"
                         class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium border"
-                        :class="error === 'rate_limited'
-                            ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300'
-                            : 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'"
+                        :class="error === 'error'
+                            ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
+                            : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300'"
                     >
-                        <component :is="error === 'rate_limited' ? HelpCircle : XCircle" class="w-4 h-4 shrink-0" />
-                        <span v-if="error === 'rate_limited'">Too many requests — please wait a moment before checking again.</span>
-                        <span v-else>Something went wrong. Please try again.</span>
+                        <component :is="error === 'error' ? XCircle : HelpCircle" class="w-4 h-4 shrink-0" aria-hidden="true" />
+                        <span>{{ ERROR_MESSAGES[error] ?? ERROR_MESSAGES.error }}</span>
                     </div>
                 </div>
             </Transition>
@@ -505,13 +518,12 @@ function statusConfig(status) {
                     <div
                         role="alert"
                         class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium border"
-                        :class="bulkError === 'rate_limited'
-                            ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300'
-                            : 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'"
+                        :class="bulkError === 'error'
+                            ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
+                            : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300'"
                     >
-                        <component :is="bulkError === 'rate_limited' ? HelpCircle : XCircle" class="w-4 h-4 shrink-0" />
-                        <span v-if="bulkError === 'rate_limited'">Too many requests — please wait a moment before checking again.</span>
-                        <span v-else>Something went wrong. Please try again.</span>
+                        <component :is="bulkError === 'error' ? XCircle : HelpCircle" class="w-4 h-4 shrink-0" aria-hidden="true" />
+                        <span>{{ ERROR_MESSAGES[bulkError] ?? ERROR_MESSAGES.error }}</span>
                     </div>
                 </div>
             </Transition>
@@ -782,8 +794,11 @@ function statusConfig(status) {
                     />
                     <span v-else class="shrink-0 w-5 h-5" aria-hidden="true" />
 
-                    <span class="flex-1 min-w-0 text-sm font-medium text-gray-900 dark:text-gray-100 truncate" :title="entry.domain">
-                        {{ entry.domain }}
+                    <span
+                        class="flex-1 min-w-0 text-sm font-medium text-gray-900 dark:text-gray-100 truncate"
+                        :title="entry.checkedDomain ? `${entry.domain} — checked as ${entry.checkedDomain}` : entry.domain"
+                    >
+                        {{ entry.domain }}<span v-if="entry.checkedDomain" class="font-normal text-gray-600 dark:text-gray-400"> · checked {{ entry.checkedDomain }}</span>
                     </span>
 
                     <span

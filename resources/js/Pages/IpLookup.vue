@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onScopeDispose } from 'vue'
 import { Head, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import {
@@ -20,6 +20,9 @@ const loading = ref(false)
 const error = ref('')
 const result = ref(null)
 const recent = ref([])
+
+let abortController = null
+onScopeDispose(() => abortController?.abort())
 
 function loadHistory() {
     try {
@@ -67,7 +70,13 @@ function clearHistory() {
 
 async function lookup() {
     const q = input.value.trim()
-    if (!q || loading.value) return
+    if (!q) return
+
+    // Clicking a history row while a lookup was running used to do nothing at
+    // all; now the in-flight request is dropped and the new one starts.
+    abortController?.abort()
+    abortController = new AbortController()
+    const signal = abortController.signal
 
     loading.value = true
     error.value = ''
@@ -83,6 +92,7 @@ async function lookup() {
         const token = document.querySelector('meta[name="csrf-token"]')?.content
         const res = await fetch('/ip/lookup', {
             method: 'POST',
+            signal,
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
@@ -102,9 +112,10 @@ async function lookup() {
         result.value = body.result
         addToHistory(body.result)
     } catch (e) {
-        error.value = e.message || 'Network error.'
+        if (e.name === 'AbortError') return
+        error.value = 'Could not reach the lookup service. Please try again.'
     } finally {
-        loading.value = false
+        if (!signal.aborted) loading.value = false
     }
 }
 
