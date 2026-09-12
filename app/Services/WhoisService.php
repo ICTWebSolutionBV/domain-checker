@@ -121,8 +121,10 @@ class WhoisService
             return;
         }
 
-        $this->queryMany($jobs, function (string $tld, ?string $response) use ($onResult): void {
-            $onResult($tld, $response === null ? 'unknown' : $this->parseAvailability($response));
+        $this->queryMany($jobs, function (string $tld, ?string $response) use ($domain, $onResult): void {
+            $onResult($tld, $response === null
+                ? 'unknown'
+                : $this->parseAvailability($response, "{$domain}.{$tld}"));
         });
     }
 
@@ -371,7 +373,7 @@ class WhoisService
         }
     }
 
-    private function parseAvailability(string $response): string
+    private function parseAvailability(string $response, string $queriedDomain = ''): string
     {
         // Drop negated phrasings first, so "not available for registration"
         // cannot be mistaken for the registry saying the name is free.
@@ -383,6 +385,15 @@ class WhoisService
             }
         }
 
+        // A registry answering *about a domain* always echoes the name it was
+        // asked about. Several registries instead answer an unauthorised query
+        // with a terms-of-use notice -- whois.nic.es sends 2 KB of conditions
+        // of use -- and prose like that trips the "looks registered" patterns,
+        // which reported a free .es domain as taken. No echo, no verdict.
+        if (! $this->mentionsDomain($response, $queriedDomain)) {
+            return 'unknown';
+        }
+
         foreach (self::REGISTERED_PATTERNS as $pattern) {
             if (preg_match($pattern, $response)) {
                 return 'taken';
@@ -390,5 +401,14 @@ class WhoisService
         }
 
         return 'unknown';
+    }
+
+    private function mentionsDomain(string $response, string $queriedDomain): bool
+    {
+        if ($queriedDomain === '') {
+            return true;
+        }
+
+        return stripos($response, $queriedDomain) !== false;
     }
 }

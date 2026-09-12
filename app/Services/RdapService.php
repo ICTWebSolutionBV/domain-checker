@@ -48,7 +48,7 @@ class RdapService
         }
 
         $timeout = (int) config('domain-checker.timeouts.rdap', 5);
-        $concurrency = max(1, (int) config('domain-checker.concurrency.rdap', 64));
+        $concurrency = $this->concurrencyFor($targets);
 
         // Every RDAP verdict is carried by the status code, and a 404 -- the
         // answer we care about most -- counts as "failed" to the HTTP client, so
@@ -109,5 +109,45 @@ class RdapService
             200 => 'taken',
             default => null,
         };
+    }
+
+    /**
+     * Pick an in-flight ceiling that no single registry will read as abuse.
+     *
+     * RDAP servers are shared by whole families of TLDs -- one Identity Digital
+     * endpoint answers for .info, .studio, .agency, .digital, .media, .news and
+     * a couple of hundred more -- so a flat global ceiling aims the entire
+     * burst at one host, which answers 429. A 429 is not a verdict, so the
+     * TLDs then fall through to WHOIS or come out 'unknown': the family
+     * disappears from the results for reasons the user cannot see.
+     *
+     * So the ceiling is the global limit, reduced to what the busiest single
+     * host in this batch should receive.
+     *
+     * @param  array<string, string>  $targets
+     */
+    private function concurrencyFor(array $targets): int
+    {
+        $global = max(1, (int) config('domain-checker.concurrency.rdap', 64));
+        $perHost = max(1, (int) config('domain-checker.concurrency.rdap_per_host', 8));
+
+        $perHostCounts = [];
+
+        foreach ($targets as $url) {
+            $host = parse_url($url, PHP_URL_HOST) ?: $url;
+            $perHostCounts[$host] = ($perHostCounts[$host] ?? 0) + 1;
+        }
+
+        $hosts = count($perHostCounts);
+        $busiest = $perHostCounts === [] ? 1 : max($perHostCounts);
+
+        // With many hosts and few requests each, the global limit already
+        // spreads the load. It is the lopsided batch -- one host holding most
+        // of the work -- that needs holding back.
+        if ($busiest <= $perHost) {
+            return min($global, max(1, count($targets)));
+        }
+
+        return max($perHost, min($global, $hosts * $perHost));
     }
 }
