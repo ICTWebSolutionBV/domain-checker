@@ -40,7 +40,11 @@ class DomainCheckController extends Controller
         if (empty($tlds)) {
             return response()->stream(function () {
                 echo "data: {\"done\":true}\n\n";
-                ob_flush();
+                // ob_flush() only works if an output buffer exists; flush()
+                // always pushes to SAPI (php artisan serve has no buffer).
+                if (ob_get_level() > 0) {
+                    @ob_flush();
+                }
                 flush();
             }, 200, $this->sseHeaders());
         }
@@ -59,13 +63,21 @@ class DomainCheckController extends Controller
                 function (string $tld, string $status) use (&$checked, $total): void {
                     $checked++;
                     echo 'data: '.json_encode(['tld' => $tld, 'status' => $status, 'checked' => $checked, 'total' => $total])."\n\n";
-                    ob_flush();
+                    // ob_flush() only works if an output buffer exists; flush()
+                    // always pushes to SAPI (php artisan serve has no buffer).
+                    if (ob_get_level() > 0) {
+                        @ob_flush();
+                    }
                     flush();
                 }
             );
 
             echo "data: {\"done\":true}\n\n";
-            ob_flush();
+            // ob_flush() only works if an output buffer exists; flush()
+            // always pushes to SAPI (php artisan serve has no buffer).
+            if (ob_get_level() > 0) {
+                @ob_flush();
+            }
             flush();
         }, 200, $this->sseHeaders());
     }

@@ -37,7 +37,11 @@ class BulkDomainCheckController extends Controller
         if (empty($domains)) {
             return response()->stream(function () {
                 echo "data: {\"done\":true}\n\n";
-                ob_flush();
+                // ob_flush() only works if an output buffer exists; flush()
+                // always pushes to SAPI (php artisan serve has no buffer).
+                if (ob_get_level() > 0) {
+                    @ob_flush();
+                }
                 flush();
             }, 200, $this->sseHeaders());
         }
@@ -64,14 +68,22 @@ class BulkDomainCheckController extends Controller
                             'checked' => $checked,
                             'total'   => $total,
                         ])."\n\n";
-                        ob_flush();
+                        // ob_flush() only works if an output buffer exists; flush()
+                        // always pushes to SAPI (php artisan serve has no buffer).
+                        if (ob_get_level() > 0) {
+                            @ob_flush();
+                        }
                         flush();
                     }
                 );
             }
 
             echo "data: {\"done\":true}\n\n";
-            ob_flush();
+            // ob_flush() only works if an output buffer exists; flush()
+            // always pushes to SAPI (php artisan serve has no buffer).
+            if (ob_get_level() > 0) {
+                @ob_flush();
+            }
             flush();
         }, 200, $this->sseHeaders());
     }
