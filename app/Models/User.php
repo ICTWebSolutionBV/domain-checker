@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\QueuedResetPassword;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -28,6 +29,16 @@ class User extends Authenticatable implements HasPasskeys
         ];
     }
 
+    /**
+     * Queue the reset mail instead of sending it inside the request: the
+     * framework's ResetPassword notification is not queueable, so both the
+     * public forgot-password form and the admin action blocked on SMTP.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new QueuedResetPassword($token));
+    }
+
     public function isAdmin(): bool
     {
         return in_array($this->role, ['admin', 'super_admin'], true);
@@ -43,8 +54,16 @@ class User extends Authenticatable implements HasPasskeys
         return ! is_null($this->two_factor_secret) && ! is_null($this->two_factor_confirmed_at);
     }
 
+    /**
+     * Prefer a count loaded by withCount('passkeys'): calling this per row is
+     * one query per user, which is where the admin index's N+1 came from.
+     */
     public function hasPasskeysEnabled(): bool
     {
+        if (! is_null($this->passkeys_count)) {
+            return $this->passkeys_count > 0;
+        }
+
         return $this->passkeys()->exists();
     }
 

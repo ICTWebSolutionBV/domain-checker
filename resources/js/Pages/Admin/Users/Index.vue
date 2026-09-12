@@ -3,10 +3,13 @@ import { ref } from 'vue'
 import { Head, Link, useForm, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import FormField from '@/Components/FormField.vue'
+import Pagination from '@/Components/Pagination.vue'
 
+// Both lists are paginated now, so each prop is a Laravel paginator: rows in
+// .data, page links in .links.
 defineProps({
-    users: Array,
-    invites: Array,
+    users: Object,
+    invites: Object,
     assignableRoles: { type: Array, default: () => ['user', 'admin'] },
 })
 
@@ -150,7 +153,7 @@ const twoFactorSummary = (user) => {
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                        <tr v-for="user in users" :key="user.id">
+                        <tr v-for="user in users.data" :key="user.id">
                             <td class="px-4 py-3 text-gray-900 dark:text-white font-medium">{{ user.name }}</td>
                             <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ user.email }}</td>
                             <td class="px-4 py-3">
@@ -172,10 +175,11 @@ const twoFactorSummary = (user) => {
                     </tbody>
                 </table>
                 </div>
+                <Pagination :paginator="users" />
             </div>
 
             <!-- Pending invites -->
-            <div v-if="invites.length" class="ui-card rounded-xl">
+            <div v-if="invites.data.length" class="ui-card rounded-xl">
                 <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
                     <h2 class="font-semibold text-gray-900 dark:text-white">Pending Invites</h2>
                 </div>
@@ -192,7 +196,7 @@ const twoFactorSummary = (user) => {
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                        <tr v-for="invite in invites" :key="invite.id">
+                        <tr v-for="invite in invites.data" :key="invite.id">
                             <td class="px-4 py-3 text-gray-900 dark:text-white">{{ invite.email }}</td>
                             <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ roleLabel(invite.role) }}</td>
                             <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
@@ -215,6 +219,7 @@ const twoFactorSummary = (user) => {
                     </tbody>
                 </table>
                 </div>
+                <Pagination :paginator="invites" />
             </div>
         </div>
     </AppLayout>
