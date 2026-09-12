@@ -723,7 +723,7 @@ const showPreview = ref(false)
 
             <!-- Preview -->
             <div v-if="showPreview" class="mt-4 ui-panel-muted rounded-2xl p-5">
-                <p class="ui-section-title mb-2.5">Preview</p>
+                <h2 class="ui-section-title mb-2.5">Preview</h2>
                 <pre class="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-mono leading-relaxed">{{
                     previewText
                 }}</pre>

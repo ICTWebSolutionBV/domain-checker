@@ -757,7 +757,7 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                     <button
                         @click="filterMode = 'all'"
                         :aria-pressed="filterMode === 'all'"
-                        class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors font-medium"
+                        class="flex min-h-6 items-center gap-1.5 rounded-lg px-2.5 py-1 font-medium transition-colors"
                         :class="
                             filterMode === 'all'
                                 ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
@@ -770,7 +770,7 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                         v-if="statusCounts.available"
                         @click="filterMode = 'available'"
                         :aria-pressed="filterMode === 'available'"
-                        class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors font-medium"
+                        class="flex min-h-6 items-center gap-1.5 rounded-lg px-2.5 py-1 font-medium transition-colors"
                         :class="
                             filterMode === 'available'
                                 ? 'bg-emerald-600 text-white'
@@ -784,7 +784,7 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                         v-if="statusCounts.taken"
                         @click="filterMode = 'taken'"
                         :aria-pressed="filterMode === 'taken'"
-                        class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors font-medium"
+                        class="flex min-h-6 items-center gap-1.5 rounded-lg px-2.5 py-1 font-medium transition-colors"
                         :class="
                             filterMode === 'taken'
                                 ? 'bg-red-600 text-white'
@@ -1181,7 +1181,7 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                     <div class="overflow-y-auto flex-1">
                         <!-- Selected domains -->
                         <div class="px-4 sm:px-8 py-4 border-b border-hairline">
-                            <p class="ui-section-title mb-2.5">Selected domains</p>
+                            <h3 class="ui-section-title mb-2.5">Selected domains</h3>
                             <div class="flex flex-wrap gap-2">
                                 <span
                                     v-for="domain in selectedList"
@@ -1230,7 +1230,7 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
 
                             <!-- Personal & company -->
                             <div class="space-y-3">
-                                <p class="ui-section-title">Contact details</p>
+                                <h3 class="ui-section-title">Contact details</h3>
                                 <FormField label="Company name" hint="(optional)" label-class="text-sm" v-slot="field">
                                     <div class="relative">
                                         <Building2
@@ -1290,7 +1290,7 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
 
                             <!-- Address -->
                             <div class="space-y-3">
-                                <p class="ui-section-title">Address</p>
+                                <h3 class="ui-section-title">Address</h3>
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <FormField
                                         label="Street"
