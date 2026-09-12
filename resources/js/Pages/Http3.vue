@@ -266,7 +266,8 @@ const pendingKeys = computed(() => {
             </div>
 
             <!-- Results -->
-            <div v-if="checks.length || verdict" class="space-y-4">
+            <section v-if="checks.length || verdict" aria-labelledby="http3-results-heading" class="space-y-4">
+                <h2 id="http3-results-heading" class="sr-only">Check results</h2>
                 <!-- Checked URL -->
                 <p v-if="displayUrl" role="status" class="text-xs text-gray-500 dark:text-gray-400 text-center">
                     {{ isChecking ? 'Checking' : 'Checked' }}
@@ -582,7 +583,7 @@ const pendingKeys = computed(() => {
                         actual QUIC connection using curl (requires curl compiled with QUIC/HTTP3 support).
                     </p>
                 </div>
-            </div>
+            </section>
 
             <!-- Empty state -->
             <div v-else-if="!isChecking" class="text-center py-12 text-gray-500 dark:text-gray-400">

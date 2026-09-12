@@ -3,6 +3,7 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { Link, usePage, router } from '@inertiajs/vue3'
 import { useTheme } from '@/composables/useTheme'
 import Dialog from '@/Components/Dialog.vue'
+import NavLink from '@/Components/NavLink.vue'
 import {
     Sun,
     Moon,
@@ -27,6 +28,16 @@ const auth = computed(() => page.props.auth)
 const flash = computed(() => page.props.flash)
 
 const { theme, cycleTheme } = useTheme()
+
+// The drawer keeps its own, larger styling; it just needed to say which page
+// it is on -- both to a screen reader and, through NavLink, visibly.
+const isCurrent = (name) => {
+    try {
+        return route().current(name)
+    } catch {
+        return false
+    }
+}
 
 const themeIcon = computed(() => {
     if (theme.value === 'dark') return Moon
@@ -86,41 +97,21 @@ onUnmounted(() => {
 
                 <!-- Desktop nav -->
                 <div class="hidden sm:flex items-center gap-2">
-                    <Link
-                        :href="route('http3')"
-                        class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
+                    <NavLink route-name="http3" label="HTTP/3">
                         <Zap class="w-4 h-4" />
-                        <span>HTTP/3</span>
-                    </Link>
-                    <Link
-                        :href="route('my-ip')"
-                        class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
+                    </NavLink>
+                    <NavLink route-name="my-ip" label="My IP">
                         <Wifi class="w-4 h-4" />
-                        <span>My IP</span>
-                    </Link>
-                    <Link
-                        :href="route('ip')"
-                        class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
+                    </NavLink>
+                    <NavLink route-name="ip" label="IP Lookup">
                         <MapPin class="w-4 h-4" />
-                        <span>IP Lookup</span>
-                    </Link>
-                    <Link
-                        :href="route('redirect')"
-                        class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
+                    </NavLink>
+                    <NavLink route-name="redirect" label="Redirects">
                         <Route class="w-4 h-4" />
-                        <span>Redirects</span>
-                    </Link>
-                    <Link
-                        :href="route('dns-bulk')"
-                        class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
+                    </NavLink>
+                    <NavLink route-name="dns-bulk" label="DNS">
                         <Globe2 class="w-4 h-4" />
-                        <span>DNS</span>
-                    </Link>
+                    </NavLink>
                     <Link
                         :href="route('transfer')"
                         class="relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-700 hover:bg-emerald-800 shadow-sm shadow-emerald-700/30 hover:shadow-emerald-700/50 transition-all"
@@ -250,6 +241,7 @@ onUnmounted(() => {
                 <nav class="flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-1" aria-label="Site menu">
                     <Link
                         :href="route('http3')"
+                        :aria-current="isCurrent('http3') ? 'page' : undefined"
                         class="flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:scale-[0.98]"
                     >
                         <Zap class="w-5 h-5 text-indigo-500 shrink-0" />
@@ -257,6 +249,7 @@ onUnmounted(() => {
                     </Link>
                     <Link
                         :href="route('my-ip')"
+                        :aria-current="isCurrent('my-ip') ? 'page' : undefined"
                         class="flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:scale-[0.98]"
                     >
                         <Wifi class="w-5 h-5 text-indigo-500 shrink-0" />
@@ -264,6 +257,7 @@ onUnmounted(() => {
                     </Link>
                     <Link
                         :href="route('ip')"
+                        :aria-current="isCurrent('ip') ? 'page' : undefined"
                         class="flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:scale-[0.98]"
                     >
                         <MapPin class="w-5 h-5 text-indigo-500 shrink-0" />
@@ -271,6 +265,7 @@ onUnmounted(() => {
                     </Link>
                     <Link
                         :href="route('redirect')"
+                        :aria-current="isCurrent('redirect') ? 'page' : undefined"
                         class="flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:scale-[0.98]"
                     >
                         <Route class="w-5 h-5 text-indigo-500 shrink-0" />
@@ -278,6 +273,7 @@ onUnmounted(() => {
                     </Link>
                     <Link
                         :href="route('dns-bulk')"
+                        :aria-current="isCurrent('dns-bulk') ? 'page' : undefined"
                         class="flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:scale-[0.98]"
                     >
                         <Globe2 class="w-5 h-5 text-indigo-500 shrink-0" />

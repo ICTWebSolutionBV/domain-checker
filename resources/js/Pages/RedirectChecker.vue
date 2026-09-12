@@ -250,7 +250,8 @@ onMounted(() => {
             </div>
 
             <!-- Results -->
-            <div v-if="hops.length" class="space-y-4">
+            <section v-if="hops.length" aria-labelledby="redirect-results-heading" class="space-y-4">
+                <h2 id="redirect-results-heading" class="sr-only">Redirect chain</h2>
                 <!-- Verdict -->
                 <div v-if="verdictConfig" :class="['border rounded-2xl p-5 flex items-center gap-4', verdictConfig.bg]">
                     <div
@@ -386,7 +387,7 @@ onMounted(() => {
                         test bot vs. browser redirect differences.
                     </p>
                 </div>
-            </div>
+            </section>
 
             <!-- Empty state -->
             <div v-else-if="!loading && !error" class="text-center py-12 text-gray-500 dark:text-gray-400">
