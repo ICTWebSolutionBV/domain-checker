@@ -68,93 +68,305 @@ class WhoisService
      */
     public function check(string $domain, string $tld): string
     {
-        $server = $this->findWhoisServer($tld);
+        $status = 'unknown';
 
-        if (! $server) {
-            return 'unknown';
-        }
+        $this->streamCheck($domain, [$tld], function (string $t, string $s) use (&$status): void {
+            $status = $s;
+        });
 
-        $response = $this->query($server, "{$domain}.{$tld}");
-
-        if ($response === null) {
-            return 'unknown';
-        }
-
-        return $this->parseAvailability($response);
+        return $status;
     }
 
     /**
-     * Resolve a TLD's authoritative WHOIS server via IANA.
+     * Check many TLDs concurrently, calling $onResult($tld, $status) as each
+     * registry answers.
+     *
+     * WHOIS used to be walked one TLD at a time, and every check paid *two*
+     * sequential socket round-trips (IANA for the server, then the registry).
+     * On the full IANA list that was 181 TLDs x ~380 ms = over a minute of
+     * strictly serial waiting, during which the SSE stream emitted nothing. The
+     * sockets are independent, so they are now driven together with
+     * stream_select() under a bounded concurrency and a wall-clock budget.
+     *
+     * @param  array<string>  $tlds
+     * @param  callable(string, string): void  $onResult
+     */
+    public function streamCheck(string $domain, array $tlds, callable $onResult): void
+    {
+        $tlds = array_values(array_unique($tlds));
+
+        if ($tlds === []) {
+            return;
+        }
+
+        $servers = $this->findWhoisServers($tlds);
+
+        $jobs = [];
+
+        foreach ($tlds as $tld) {
+            $server = $servers[$tld] ?? null;
+
+            if ($server === null) {
+                // No port-43 service for this TLD -- an honest non-answer, and
+                // there is nothing to wait for, so emit it now.
+                $onResult($tld, 'unknown');
+
+                continue;
+            }
+
+            $jobs[$tld] = ['server' => $server, 'query' => "{$domain}.{$tld}"];
+        }
+
+        if ($jobs === []) {
+            return;
+        }
+
+        $this->queryMany($jobs, function (string $tld, ?string $response) use ($onResult): void {
+            $onResult($tld, $response === null ? 'unknown' : $this->parseAvailability($response));
+        });
+    }
+
+    /**
+     * Resolve each TLD's authoritative WHOIS server via IANA.
      *
      * Cached: the mapping changes maybe once a year, while an uncached lookup
      * costs a second socket round-trip on every single check and gets us
      * throttled by whois.iana.org on a full-list run — after which every TLD
-     * on the WHOIS path silently degrades to 'unknown'.
+     * on the WHOIS path silently degrades to 'unknown'. The cache is read in
+     * one batch and the misses are resolved concurrently, so a cold full-list
+     * run pays one IANA wave instead of 181 serial round-trips.
+     *
+     * @param  array<string>  $tlds
+     * @return array<string, string|null>
      */
-    private function findWhoisServer(string $tld): ?string
+    private function findWhoisServers(array $tlds): array
     {
         $ttl = (int) config('domain-checker.cache.whois_server_ttl', 86400);
 
-        $server = Cache::remember(
-            "whois_server:{$tld}",
-            $ttl,
-            function () use ($tld): string {
-                $ianaResponse = $this->query(self::IANA_WHOIS, $tld);
+        $keys = [];
+        foreach ($tlds as $tld) {
+            $keys[$tld] = "whois_server:{$tld}";
+        }
 
-                // Anchor to the line and require a dotted hostname. IANA leaves
-                // the field empty for TLDs with no port-43 service (.uk since
-                // Nominet moved to RDAP), and an unanchored \s+ then walks past
-                // the newline and captures the next field name -- we spent those
-                // lookups calling fsockopen('status:', 43).
-                if ($ianaResponse && preg_match('/^whois:[ \t]*([a-z0-9][a-z0-9.-]*\.[a-z]{2,})[ \t]*\r?$/im', $ianaResponse, $matches)) {
-                    return strtolower(trim($matches[1]));
-                }
+        $cached = Cache::many(array_values($keys));
 
-                // Cache the miss too, but see below: a failed lookup gets a
-                // short TTL so a throttled IANA does not poison a whole day.
-                return '';
-            },
-        );
+        $servers = [];
+        $jobs = [];
 
-        if ($server === '') {
-            Cache::put("whois_server:{$tld}", '', 300);
+        foreach ($tlds as $tld) {
+            $hit = $cached[$keys[$tld]] ?? null;
 
+            if ($hit !== null) {
+                $servers[$tld] = $hit === '' ? null : $hit;
+
+                continue;
+            }
+
+            $jobs[$tld] = ['server' => self::IANA_WHOIS, 'query' => $tld];
+        }
+
+        if ($jobs === []) {
+            return $servers;
+        }
+
+        $found = [];
+        $missing = [];
+
+        $this->queryMany($jobs, function (string $tld, ?string $response) use (&$found, &$missing, &$servers): void {
+            $server = $this->parseIanaWhoisServer($response);
+            $servers[$tld] = $server;
+
+            if ($server === null) {
+                $missing["whois_server:{$tld}"] = '';
+            } else {
+                $found["whois_server:{$tld}"] = $server;
+            }
+        });
+
+        if ($found !== []) {
+            Cache::putMany($found, $ttl);
+        }
+
+        // A miss gets a short TTL, so a throttled IANA does not pin a whole day
+        // of 'unknown' onto every WHOIS-backed TLD.
+        if ($missing !== []) {
+            Cache::putMany($missing, 300);
+        }
+
+        return $servers;
+    }
+
+    /**
+     * Anchor to the line and require a dotted hostname. IANA leaves the field
+     * empty for TLDs with no port-43 service (.uk since Nominet moved to RDAP),
+     * and an unanchored \s+ then walks past the newline and captures the next
+     * field name -- we spent those lookups calling fsockopen('status:', 43).
+     */
+    private function parseIanaWhoisServer(?string $response): ?string
+    {
+        if ($response === null) {
             return null;
         }
 
-        return $server;
+        if (preg_match('/^whois:[ \t]*([a-z0-9][a-z0-9.-]*\.[a-z]{2,})[ \t]*\r?$/im', $response, $matches)) {
+            return strtolower(trim($matches[1]));
+        }
+
+        return null;
     }
 
-    private function query(string $server, string $query): ?string
+    /**
+     * Run many port-43 queries at once, calling $onResponse($key, $body) as each
+     * socket finishes. $body is null when the server never answered.
+     *
+     * Every socket is bounded three ways: the connect timeout, an idle timeout
+     * per socket, and a wall-clock budget for the wave. The last one is what
+     * stops the old `while (! feof($socket))` shape, where a server trickling
+     * one byte just under the read timeout could hold the loop open forever.
+     *
+     * @param  array<string, array{server: string, query: string}>  $jobs
+     * @param  callable(string, string|null): void  $onResponse
+     */
+    private function queryMany(array $jobs, callable $onResponse): void
     {
-        $timeout = config('domain-checker.timeouts.whois', 8);
+        $timeout = (int) config('domain-checker.timeouts.whois', 8);
+        $concurrency = max(1, (int) config('domain-checker.concurrency.whois', 24));
+        $maxBytes = (int) config('domain-checker.whois_max_response', 65536);
+        $deadline = microtime(true) + (int) config('domain-checker.whois_wave_budget', 30);
 
-        try {
-            $socket = @fsockopen($server, 43, $errno, $errstr, $timeout);
+        $queue = $jobs;
 
-            if (! $socket) {
-                return null;
+        /**
+         * key => [socket, phase ('connecting'|'reading'), pending write, buffer,
+         * idle expiry]
+         *
+         * @var array<string, array<string, mixed>> $open
+         */
+        $open = [];
+
+        $finish = function (string $key, ?string $body) use (&$open, $onResponse): void {
+            if (isset($open[$key])) {
+                @fclose($open[$key]['socket']);
+                unset($open[$key]);
             }
 
-            stream_set_timeout($socket, $timeout);
-            fwrite($socket, "{$query}\r\n");
+            $onResponse($key, $body);
+        };
 
-            $response = '';
-            while (! feof($socket)) {
-                $chunk = fread($socket, 4096);
-                if ($chunk === false) {
-                    break;
+        while (($queue !== [] || $open !== []) && microtime(true) < $deadline) {
+            // Top up to the concurrency ceiling. The connect is asynchronous, so
+            // a slow registry delays only its own socket instead of every socket
+            // queued behind it.
+            while ($queue !== [] && count($open) < $concurrency) {
+                $key = array_key_first($queue);
+                $job = $queue[$key];
+                unset($queue[$key]);
+
+                $socket = @stream_socket_client(
+                    "tcp://{$job['server']}:43",
+                    $errno,
+                    $errstr,
+                    $timeout,
+                    STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT,
+                );
+
+                if (! $socket) {
+                    Log::debug('WHOIS connect failed', ['server' => $job['server'], 'error' => $errstr]);
+                    $onResponse($key, null);
+
+                    continue;
                 }
-                $response .= $chunk;
+
+                stream_set_blocking($socket, false);
+
+                $open[$key] = [
+                    'socket' => $socket,
+                    'phase' => 'connecting',
+                    'write' => "{$job['query']}\r\n",
+                    'buffer' => '',
+                    'expires' => microtime(true) + $timeout,
+                ];
             }
 
-            fclose($socket);
+            if ($open === []) {
+                continue;
+            }
 
-            return $response ?: null;
-        } catch (\Exception $e) {
-            Log::debug('WHOIS query failed', ['server' => $server, 'query' => $query, 'error' => $e->getMessage()]);
+            $read = $write = [];
 
-            return null;
+            foreach ($open as $key => $state) {
+                if ($state['phase'] === 'connecting') {
+                    $write[$key] = $state['socket'];
+                } else {
+                    $read[$key] = $state['socket'];
+                }
+            }
+
+            $except = [];
+            $wait = max(0.05, min(1.0, $deadline - microtime(true)));
+            $ready = @stream_select($read, $write, $except, 0, min(999_999, (int) ($wait * 1_000_000)));
+
+            if ($ready === false) {
+                break;
+            }
+
+            foreach ($write as $key => $socket) {
+                // Writable means the connect either completed or failed; fwrite
+                // tells us which.
+                $bytes = @fwrite($socket, $open[$key]['write']);
+
+                if ($bytes === false || $bytes === 0) {
+                    $finish($key, null);
+
+                    continue;
+                }
+
+                $open[$key]['write'] = substr($open[$key]['write'], $bytes);
+                $open[$key]['expires'] = microtime(true) + $timeout;
+
+                if ($open[$key]['write'] === '') {
+                    $open[$key]['phase'] = 'reading';
+                }
+            }
+
+            foreach ($read as $key => $socket) {
+                $chunk = @fread($socket, 8192);
+
+                if ($chunk === false || $chunk === '') {
+                    if (feof($socket)) {
+                        // The registry said everything it was going to say.
+                        $finish($key, $open[$key]['buffer'] !== '' ? $open[$key]['buffer'] : null);
+                    }
+
+                    continue;
+                }
+
+                $open[$key]['buffer'] .= $chunk;
+                $open[$key]['expires'] = microtime(true) + $timeout;
+
+                if (strlen($open[$key]['buffer']) >= $maxBytes) {
+                    $finish($key, substr($open[$key]['buffer'], 0, $maxBytes));
+                }
+            }
+
+            // Idle sockets: whatever arrived is all we are going to get.
+            $now = microtime(true);
+            foreach ($open as $key => $state) {
+                if ($state['expires'] <= $now) {
+                    $finish($key, $state['buffer'] !== '' ? $state['buffer'] : null);
+                }
+            }
+        }
+
+        // Budget spent: report what is still open with whatever it sent, and
+        // close every descriptor rather than leaving it to the end of the
+        // request.
+        foreach ($open as $key => $state) {
+            $finish($key, $state['buffer'] !== '' ? $state['buffer'] : null);
+        }
+
+        foreach (array_keys($queue) as $key) {
+            $onResponse($key, null);
         }
     }
 

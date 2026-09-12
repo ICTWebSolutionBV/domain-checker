@@ -16,13 +16,16 @@ class LookupVerdictTest extends TestCase
         config(['domain-checker.cache.result_ttl' => 900, 'domain-checker.cache.unknown_ttl' => 60]);
 
         $this->mock(RealtimeRegisterService::class, fn ($m) => $m->shouldReceive('isConfigured')->andReturnFalse());
-        $this->mock(RdapService::class, fn ($m) => $m->shouldReceive('checkBatch')->andReturn(['zz' => null]));
-        $this->mock(WhoisService::class, fn ($m) => $m->shouldReceive('check')->andReturn('unknown'));
+        // RDAP has no server for it, so it comes back as needing WHOIS.
+        $this->mock(RdapService::class, fn ($m) => $m->shouldReceive('streamCheck')->andReturn(['zz']));
+        $this->mock(WhoisService::class, fn ($m) => $m->shouldReceive('streamCheck')->andReturnUsing(
+            fn (string $domain, array $tlds, callable $onResult) => $onResult('zz', 'unknown'),
+        ));
 
-        Cache::shouldReceive('get')->andReturnNull();
+        Cache::shouldReceive('many')->andReturn(['domain_check_example_zz' => null]);
         // The point of the fix: a non-answer must not sit in the cache for the
         // full 15 minutes, or a blip during a client call lasts the whole call.
-        Cache::shouldReceive('put')->once()->with('domain_check_example_zz', 'unknown', 60);
+        Cache::shouldReceive('putMany')->once()->with(['domain_check_example_zz' => 'unknown'], 60);
 
         app(DomainAvailabilityService::class)->streamCheck('example', ['zz'], fn () => null);
     }
@@ -32,10 +35,16 @@ class LookupVerdictTest extends TestCase
         config(['domain-checker.cache.result_ttl' => 900, 'domain-checker.cache.unknown_ttl' => 60]);
 
         $this->mock(RealtimeRegisterService::class, fn ($m) => $m->shouldReceive('isConfigured')->andReturnFalse());
-        $this->mock(RdapService::class, fn ($m) => $m->shouldReceive('checkBatch')->andReturn(['nl' => 'available']));
+        $this->mock(RdapService::class, fn ($m) => $m->shouldReceive('streamCheck')->andReturnUsing(
+            function (string $domain, array $tlds, callable $onResult): array {
+                $onResult('nl', 'available');
 
-        Cache::shouldReceive('get')->andReturnNull();
-        Cache::shouldReceive('put')->once()->with('domain_check_example_nl', 'available', 900);
+                return [];
+            },
+        ));
+
+        Cache::shouldReceive('many')->andReturn(['domain_check_example_nl' => null]);
+        Cache::shouldReceive('putMany')->once()->with(['domain_check_example_nl' => 'available'], 900);
 
         app(DomainAvailabilityService::class)->streamCheck('example', ['nl'], fn () => null);
     }
