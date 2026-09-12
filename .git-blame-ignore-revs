@@ -6,3 +6,6 @@
 
 # style: apply Pint repo-wide (PHP only, no behaviour change)
 724cbf07e34fd5583f1a0fb1ec042ba9f0915c86
+
+# style: apply Prettier to the frontend (no behaviour change)
+ee126fcbafb656efb970dbf7ff2f4123ca341afe
