@@ -25,9 +25,11 @@ Route::post('/passkeys/authenticate', [PasskeyLoginController::class, 'login'])-
 // Guest routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
-    Route::post('/login', [LoginController::class, 'store'])->middleware('throttle:5,1');
+    // throttle:login carries a per-account ceiling as well as a per-IP one,
+    // so rotating X-Forwarded-For does not buy unlimited guesses.
+    Route::post('/login', [LoginController::class, 'store'])->middleware('throttle:login');
     Route::get('/two-factor', [TwoFactorController::class, 'challenge'])->name('two-factor.challenge');
-    Route::post('/two-factor', [TwoFactorController::class, 'verify'])->middleware('throttle:10,1')->name('two-factor.verify');
+    Route::post('/two-factor', [TwoFactorController::class, 'verify'])->middleware('throttle:two-factor')->name('two-factor.verify');
     Route::post('/two-factor/cancel', [TwoFactorController::class, 'cancel'])->name('two-factor.cancel');
 
     // Password reset

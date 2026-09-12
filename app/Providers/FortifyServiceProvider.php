@@ -36,13 +36,23 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::redirectUserForTwoFactorAuthenticationUsing(RedirectIfTwoFactorAuthenticatable::class);
 
         RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
+            $email = Str::transliterate(Str::lower((string) $request->input(Fortify::username())));
 
-            return Limit::perMinute(5)->by($throttleKey);
+            // Two limits on purpose. The per-IP one is the fast guard, but the
+            // client IP comes from a header we cannot fully trust, so it can be
+            // rotated. The per-account one cannot: whoever is guessing has to
+            // name the account they are guessing at.
+            return [
+                Limit::perMinute(5)->by($email.'|'.$request->ip()),
+                Limit::perMinute(20)->by('account:'.$email),
+            ];
         });
 
         RateLimiter::for('two-factor', function (Request $request) {
-            return Limit::perMinute(5)->by($request->session()->get('login.id'));
+            // Keyed on the pending-login session, which no header can spoof.
+            return Limit::perMinute(5)->by(
+                (string) ($request->session()->get('login.id') ?: $request->session()->getId()),
+            );
         });
     }
 }

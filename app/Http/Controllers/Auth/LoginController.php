@@ -32,9 +32,16 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
-        if ($request->user()->two_factor_secret && ! session('two_factor_verified')) {
+        $user = $request->user();
+
+        // The grant is per user, not per session: an unscoped
+        // 'two_factor_verified' flag let a second account logging in through
+        // the same browser session inherit someone else's second factor.
+        $alreadyVerified = session('two_factor_verified_for') === $user->id;
+
+        if ($user->two_factor_secret && ! $alreadyVerified) {
             Auth::logout();
-            $request->session()->put('login.id', $request->input('email'));
+            $request->session()->put('login.id', $user->id);
             $request->session()->put('login.remember', $request->boolean('remember'));
 
             return redirect()->route('two-factor.challenge');
