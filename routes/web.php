@@ -2,19 +2,19 @@
 
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Http3CheckController;
-use App\Http\Controllers\IpLookupController;
-use App\Http\Controllers\MyIpController;
 use App\Http\Controllers\Auth\PasskeyLoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\BulkDnsController;
 use App\Http\Controllers\BulkDomainCheckController;
 use App\Http\Controllers\DomainCheckController;
+use App\Http\Controllers\Http3CheckController;
 use App\Http\Controllers\InviteController;
+use App\Http\Controllers\IpLookupController;
+use App\Http\Controllers\MyIpController;
+use App\Http\Controllers\RedirectCheckController;
 use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\TldController;
-use App\Http\Controllers\RedirectCheckController;
 use App\Http\Controllers\TransferRequestController;
 use Illuminate\Support\Facades\Route;
 

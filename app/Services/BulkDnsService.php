@@ -9,8 +9,10 @@ use Illuminate\Support\Facades\Log;
 class BulkDnsService
 {
     private const DNS_CACHE_TTL = 300;
+
     private const GEO_CACHE_TTL = 3600;
-    private const GEO_WORKERS   = 4;
+
+    private const GEO_WORKERS = 4;
 
     public function resolveIp(string $domain): ?string
     {
@@ -36,14 +38,13 @@ class BulkDnsService
             return [];
         }
 
-        $ips = array_values(array_unique(array_filter($ips, fn ($ip) =>
-            $ip && filter_var($ip, FILTER_VALIDATE_IP)
+        $ips = array_values(array_unique(array_filter($ips, fn ($ip) => $ip && filter_var($ip, FILTER_VALIDATE_IP)
                 && filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)
         )));
 
         // Split into cached vs uncached
-        $result    = [];
-        $uncached  = [];
+        $result = [];
+        $uncached = [];
 
         foreach ($ips as $ip) {
             $cached = Cache::get("geo:{$ip}");
@@ -60,8 +61,8 @@ class BulkDnsService
 
         // Divide into up to GEO_WORKERS chunks and fire concurrently
         $workerCount = min(self::GEO_WORKERS, count($uncached));
-        $chunks      = array_chunk($uncached, (int) ceil(count($uncached) / $workerCount));
-        $fields      = 'status,query,country,countryCode,regionName,city,isp,as';
+        $chunks = array_chunk($uncached, (int) ceil(count($uncached) / $workerCount));
+        $fields = 'status,query,country,countryCode,regionName,city,isp,as';
 
         try {
             $responses = Http::pool(function ($pool) use ($chunks, $fields) {
@@ -88,15 +89,15 @@ class BulkDnsService
                     continue;
                 }
 
-                $ip  = $item['query'];
+                $ip = $item['query'];
                 $raw = $item['as'] ?? '';
                 $geo = [
-                    'country'      => $item['country'] ?? null,
+                    'country' => $item['country'] ?? null,
                     'country_code' => $item['countryCode'] ?? null,
-                    'region'       => $item['regionName'] ?? null,
-                    'city'         => $item['city'] ?? null,
-                    'isp'          => $item['isp'] ?? null,
-                    'asn'          => $raw ? (preg_match('/^AS(\d+)/', $raw, $m) ? $m[1] : $raw) : null,
+                    'region' => $item['regionName'] ?? null,
+                    'city' => $item['city'] ?? null,
+                    'isp' => $item['isp'] ?? null,
+                    'asn' => $raw ? (preg_match('/^AS(\d+)/', $raw, $m) ? $m[1] : $raw) : null,
                 ];
 
                 $result[$ip] = $geo;
@@ -110,11 +111,11 @@ class BulkDnsService
     private function fetchRecords(string $domain, string $type): array
     {
         $typeMap = [
-            'MX'    => DNS_MX,
-            'NS'    => DNS_NS,
-            'TXT'   => DNS_TXT,
-            'A'     => DNS_A,
-            'AAAA'  => DNS_AAAA,
+            'MX' => DNS_MX,
+            'NS' => DNS_NS,
+            'TXT' => DNS_TXT,
+            'A' => DNS_A,
+            'AAAA' => DNS_AAAA,
             'CNAME' => DNS_CNAME,
         ];
 
@@ -130,11 +131,11 @@ class BulkDnsService
             }
 
             return match ($type) {
-                'MX'    => array_map(fn ($r) => ['value' => rtrim($r['target'], '.'), 'priority' => $r['pri']], $records),
-                'NS'    => array_map(fn ($r) => ['value' => rtrim($r['target'], '.')], $records),
-                'TXT'   => array_map(fn ($r) => ['value' => $r['txt'] ?? implode('', $r['entries'] ?? [])], $records),
-                'A'     => array_map(fn ($r) => ['value' => $r['ip']], $records),
-                'AAAA'  => array_map(fn ($r) => ['value' => $r['ipv6']], $records),
+                'MX' => array_map(fn ($r) => ['value' => rtrim($r['target'], '.'), 'priority' => $r['pri']], $records),
+                'NS' => array_map(fn ($r) => ['value' => rtrim($r['target'], '.')], $records),
+                'TXT' => array_map(fn ($r) => ['value' => $r['txt'] ?? implode('', $r['entries'] ?? [])], $records),
+                'A' => array_map(fn ($r) => ['value' => $r['ip']], $records),
+                'AAAA' => array_map(fn ($r) => ['value' => $r['ipv6']], $records),
                 'CNAME' => array_map(fn ($r) => ['value' => rtrim($r['target'], '.')], $records),
                 default => [],
             };

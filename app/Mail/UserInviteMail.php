@@ -37,11 +37,11 @@ class UserInviteMail extends Mailable implements ShouldQueue
         return new Content(
             view: 'emails.invite',
             with: [
-                'inviteUrl'   => route('invite.show', $this->invite->token),
+                'inviteUrl' => route('invite.show', $this->invite->token),
                 'inviterName' => $this->invite->inviter?->name ?? config('app.name'),
-                'firstName'   => $this->invite->first_name,
-                'expiresAt'   => $this->invite->expires_at,
-                'appName'     => config('app.name'),
+                'firstName' => $this->invite->first_name,
+                'expiresAt' => $this->invite->expires_at,
+                'appName' => config('app.name'),
             ],
         );
     }

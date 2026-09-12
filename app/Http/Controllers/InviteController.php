@@ -15,7 +15,7 @@ class InviteController extends Controller
     public function show(string $token)
     {
         $invite = UserInvite::where('token', $token)->first();
-        $user   = Auth::user();
+        $user = Auth::user();
 
         // If a valid invite exists for a different logged-in user, sign them out.
         if ($invite && $invite->isValid() && $user && $user->email !== $invite->email) {
@@ -60,10 +60,10 @@ class InviteController extends Controller
         }
 
         return Inertia::render('Auth/AcceptInvite', [
-            'token'      => $invite->token,
-            'email'      => $invite->email,
+            'token' => $invite->token,
+            'email' => $invite->email,
             'first_name' => $invite->first_name ?? '',
-            'last_name'  => $invite->last_name ?? '',
+            'last_name' => $invite->last_name ?? '',
             'expires_at' => $invite->expires_at->toISOString(),
         ]);
     }
@@ -78,8 +78,8 @@ class InviteController extends Controller
 
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:100'],
-            'last_name'  => ['nullable', 'string', 'max:100'],
-            'password'   => ['required', 'confirmed', Password::defaults()],
+            'last_name' => ['nullable', 'string', 'max:100'],
+            'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
         if (User::where('email', $invite->email)->exists()) {
@@ -90,11 +90,11 @@ class InviteController extends Controller
 
         $user = User::create([
             'first_name' => $validated['first_name'],
-            'last_name'  => $validated['last_name'] ?? null,
-            'name'       => trim($validated['first_name'].' '.($validated['last_name'] ?? '')),
-            'email'      => $invite->email,
-            'password'   => Hash::make($validated['password']),
-            'role'       => $invite->role,
+            'last_name' => $validated['last_name'] ?? null,
+            'name' => trim($validated['first_name'].' '.($validated['last_name'] ?? '')),
+            'email' => $invite->email,
+            'password' => Hash::make($validated['password']),
+            'role' => $invite->role,
         ]);
 
         // Remove all pending invites for this email.

@@ -45,7 +45,7 @@ class BulkDomainCheckController extends Controller
         }
 
         return $this->sseStream(function () use ($domains): void {
-            $total   = count($domains);
+            $total = count($domains);
             $checked = 0;
 
             foreach ($domains as $fullDomain) {

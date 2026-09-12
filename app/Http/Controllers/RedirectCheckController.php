@@ -17,7 +17,7 @@ class RedirectCheckController extends Controller
     public function index(Request $request): Response
     {
         return Inertia::render('RedirectChecker', [
-            'initialUrl'      => $request->query('url', ''),
+            'initialUrl' => $request->query('url', ''),
             'userAgentOptions' => RedirectCheckService::userAgentOptions(),
         ]);
     }
@@ -25,12 +25,12 @@ class RedirectCheckController extends Controller
     public function check(Request $request): JsonResponse
     {
         $request->validate([
-            'url'        => ['required', 'string', 'max:2048'],
+            'url' => ['required', 'string', 'max:2048'],
             'user_agent' => ['nullable', 'string', 'max:64'],
         ]);
 
         $url = trim((string) $request->string('url'));
-        $ua  = (string) $request->string('user_agent', 'default');
+        $ua = (string) $request->string('user_agent', 'default');
 
         $result = $this->service->check($url, $ua);
 
