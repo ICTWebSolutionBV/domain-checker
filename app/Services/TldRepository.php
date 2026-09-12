@@ -8,6 +8,18 @@ use Illuminate\Support\Facades\Log;
 
 class TldRepository
 {
+    /**
+     * Per-instance memos. findRdapServer() used to cost a database read plus an
+     * unserialize of the 62 KB bootstrap plus an O(590) scan on every call --
+     * 0.64 ms x 1500 TLDs, and 1500 extra cache queries, for a full-list run.
+     *
+     * @var array<string, string>|null
+     */
+    private ?array $rdapServers = null;
+
+    /** @var array<string>|null */
+    private ?array $allTlds = null;
+
     public function getPopularTlds(): array
     {
         return config('domain-checker.popular_tlds', []);
@@ -15,7 +27,7 @@ class TldRepository
 
     public function getAllTlds(): array
     {
-        return Cache::remember('iana_tld_list', config('domain-checker.cache.tld_list_ttl'), function () {
+        return $this->allTlds ??= Cache::remember('iana_tld_list', config('domain-checker.cache.tld_list_ttl'), function () {
             try {
                 $response = Http::timeout(10)->get(config('domain-checker.iana_tld_list_url'));
 
@@ -98,18 +110,42 @@ class TldRepository
 
     public function findRdapServer(string $tld): ?string
     {
-        $tld = strtolower($tld);
-        $services = $this->getRdapBootstrap();
+        return $this->rdapServers()[strtolower($tld)] ?? null;
+    }
 
-        foreach ($services as $service) {
-            [$tlds, $servers] = $service;
-            foreach ($tlds as $serviceTld) {
-                if (strtolower($serviceTld) === $tld) {
-                    return rtrim($servers[0] ?? '', '/');
+    /**
+     * The bootstrap inverted into tld => server, built once and memoised.
+     *
+     * Entries with an empty server are dropped: rtrim('', '/') used to be
+     * returned as a server, which produced the relative URL "/domain/x.com".
+     * Guzzle threw while the pool was being built and every TLD in that chunk
+     * degraded to 'unknown'.
+     *
+     * @return array<string, string>
+     */
+    private function rdapServers(): array
+    {
+        return $this->rdapServers ??= Cache::remember(
+            'rdap_server_map',
+            config('domain-checker.cache.bootstrap_ttl'),
+            function (): array {
+                $map = [];
+
+                foreach ($this->getRdapBootstrap() as $service) {
+                    [$tlds, $servers] = $service;
+                    $server = rtrim((string) ($servers[0] ?? ''), '/');
+
+                    if ($server === '') {
+                        continue;
+                    }
+
+                    foreach ($tlds as $serviceTld) {
+                        $map[strtolower($serviceTld)] = $server;
+                    }
                 }
-            }
-        }
 
-        return null;
+                return $map;
+            },
+        );
     }
 }
