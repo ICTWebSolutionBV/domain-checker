@@ -118,6 +118,19 @@ class UserController extends Controller
             'role' => ['required', 'in:'.implode(',', $assignable)],
         ]);
 
+        // destroy() already refuses to act on your own account; the same has to
+        // hold for a role change, or a super admin can demote themselves (or the
+        // last remaining super admin) and lock the role out of the install.
+        if ($user->id === $request->user()->id && $data['role'] !== $user->role) {
+            return back()->with('error', 'You cannot change your own role.');
+        }
+
+        if ($user->role === 'super_admin'
+            && $data['role'] !== 'super_admin'
+            && User::where('role', 'super_admin')->count() <= 1) {
+            return back()->with('error', 'This is the last super admin -- promote someone else first.');
+        }
+
         $user->update([
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'] ?? null,

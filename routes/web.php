@@ -83,8 +83,12 @@ Route::middleware('auth')->group(function () {
     Route::put('/settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile');
     Route::put('/settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password');
 
-    // API integrations
-    Route::put('/settings/api', [SettingsController::class, 'updateApiSettings'])->name('settings.api');
+    // API integrations -- one global registrar credential shared by every
+    // check, so it belongs behind the same boundary as user management, not
+    // with the per-user settings above.
+    Route::put('/settings/api', [SettingsController::class, 'updateApiSettings'])
+        ->middleware('admin')
+        ->name('settings.api');
 
     // 2FA management
     Route::post('/settings/two-factor/init', [SettingsController::class, 'initTwoFactor'])->name('settings.two-factor.init');

@@ -181,6 +181,8 @@ class SettingsController extends Controller
 
     public function updateApiSettings(Request $request): RedirectResponse
     {
+        abort_unless($request->user()->isAdmin(), 403);
+
         $request->validate([
             'api_key' => ['nullable', 'string', 'max:500'],
             'host' => ['nullable', 'string', 'max:255'],
