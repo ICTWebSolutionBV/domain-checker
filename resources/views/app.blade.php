@@ -13,7 +13,7 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700&display=swap" rel="stylesheet" />
 
-        <script>
+        <script nonce="{{ Illuminate\Support\Facades\Vite::cspNonce() }}">
             // Immediately apply theme before first paint to avoid flash
             (function() {
                 const theme = localStorage.getItem('theme') || 'auto';
@@ -23,7 +23,7 @@
             })();
         </script>
 
-        @routes
+        @routes(nonce: Illuminate\Support\Facades\Vite::cspNonce())
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @inertiaHead
     </head>
