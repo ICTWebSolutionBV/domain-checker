@@ -2,14 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\StreamsServerSentEvents;
 use App\Services\DomainAvailabilityService;
+use App\Services\TldRepository;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BulkDomainCheckController extends Controller
 {
+    use StreamsServerSentEvents;
+
     public function __construct(
         private readonly DomainAvailabilityService $availability,
+        private readonly TldRepository $tldRepository,
     ) {}
 
     public function check(Request $request): StreamedResponse
@@ -35,66 +40,34 @@ class BulkDomainCheckController extends Controller
         $domains = array_unique(array_slice($domains, 0, 50));
 
         if (empty($domains)) {
-            return response()->stream(function () {
-                echo "data: {\"done\":true}\n\n";
-                // ob_flush() only works if an output buffer exists; flush()
-                // always pushes to SAPI (php artisan serve has no buffer).
-                if (ob_get_level() > 0) {
-                    @ob_flush();
-                }
-                flush();
-            }, 200, $this->sseHeaders());
+            return $this->sseStream(fn () => null);
         }
 
-        return response()->stream(function () use ($domains) {
-            set_time_limit(0);
-
+        return $this->sseStream(function () use ($domains): void {
             $total   = count($domains);
             $checked = 0;
 
             foreach ($domains as $fullDomain) {
-                $parts = explode('.', $fullDomain, 2);
-                $name  = $parts[0];
-                $tld   = $parts[1];
+                $split = $this->tldRepository->splitDomain($fullDomain);
+
+                if ($split === null) {
+                    continue;
+                }
 
                 $this->availability->streamCheck(
-                    $name,
-                    [$tld],
+                    $split['name'],
+                    [$split['tld']],
                     function (string $resolvedTld, string $status) use ($fullDomain, &$checked, $total): void {
                         $checked++;
-                        echo 'data: '.json_encode([
-                            'domain'  => $fullDomain,
-                            'status'  => $status,
+                        $this->push('data: '.json_encode([
+                            'domain' => $fullDomain,
+                            'status' => $status,
                             'checked' => $checked,
-                            'total'   => $total,
-                        ])."\n\n";
-                        // ob_flush() only works if an output buffer exists; flush()
-                        // always pushes to SAPI (php artisan serve has no buffer).
-                        if (ob_get_level() > 0) {
-                            @ob_flush();
-                        }
-                        flush();
+                            'total' => $total,
+                        ]));
                     }
                 );
             }
-
-            echo "data: {\"done\":true}\n\n";
-            // ob_flush() only works if an output buffer exists; flush()
-            // always pushes to SAPI (php artisan serve has no buffer).
-            if (ob_get_level() > 0) {
-                @ob_flush();
-            }
-            flush();
-        }, 200, $this->sseHeaders());
-    }
-
-    private function sseHeaders(): array
-    {
-        return [
-            'Content-Type'      => 'text/event-stream',
-            'Cache-Control'     => 'no-cache',
-            'X-Accel-Buffering' => 'no',
-            'Connection'        => 'keep-alive',
-        ];
+        });
     }
 }
