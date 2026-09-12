@@ -165,9 +165,74 @@ class PublicNetworkGuard
         return str_contains($ip, ':') ? "[{$ip}]" : $ip;
     }
 
+    /**
+     * Ranges PHP's own NO_PRIV_RANGE|NO_RES_RANGE filter lets through.
+     *
+     * The one that matters operationally is 100.64.0.0/10: shared address
+     * space, which is where carrier-grade NAT and Tailscale live, so without
+     * this list a public visitor could aim the network tools at hosts on our
+     * own tailnet. The rest are protocol assignments, benchmarking and
+     * documentation space -- nothing a domain tool has business connecting to.
+     */
+    private const BLOCKED_RANGES = [
+        '0.0.0.0/8',          // this network
+        '100.64.0.0/10',      // shared address space (CGNAT, Tailscale)
+        '192.0.0.0/24',       // IETF protocol assignments
+        '192.0.2.0/24',       // TEST-NET-1
+        '192.88.99.0/24',     // 6to4 relay anycast
+        '198.18.0.0/15',      // benchmarking
+        '198.51.100.0/24',    // TEST-NET-2
+        '203.0.113.0/24',     // TEST-NET-3
+        '224.0.0.0/4',        // multicast
+        '240.0.0.0/4',        // reserved
+        '64:ff9b::/96',       // NAT64
+        '100::/64',           // discard-only
+        '2001:db8::/32',      // documentation
+        '2002::/16',          // 6to4
+        'ff00::/8',           // multicast
+    ];
+
     private function isPublicIp(string $ip): bool
     {
-        return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false;
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            return false;
+        }
+
+        foreach (self::BLOCKED_RANGES as $range) {
+            if ($this->ipInRange($ip, $range)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function ipInRange(string $ip, string $cidr): bool
+    {
+        [$subnet, $bits] = explode('/', $cidr);
+
+        $address = @inet_pton($ip);
+        $network = @inet_pton($subnet);
+
+        // Different families (4 vs 16 bytes) simply do not overlap.
+        if ($address === false || $network === false || strlen($address) !== strlen($network)) {
+            return false;
+        }
+
+        $wholeBytes = intdiv((int) $bits, 8);
+        $spareBits = (int) $bits % 8;
+
+        if ($wholeBytes > 0 && strncmp($address, $network, $wholeBytes) !== 0) {
+            return false;
+        }
+
+        if ($spareBits === 0) {
+            return true;
+        }
+
+        $mask = chr((0xFF << (8 - $spareBits)) & 0xFF);
+
+        return ($address[$wholeBytes] & $mask) === ($network[$wholeBytes] & $mask);
     }
 
     private function isValidHostname(string $host): bool

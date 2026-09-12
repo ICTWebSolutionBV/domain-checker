@@ -3,7 +3,9 @@
 namespace Tests\Unit;
 
 use App\Services\PublicNetworkGuard;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 
 class PublicNetworkGuardTest extends TestCase
 {
@@ -15,6 +17,53 @@ class PublicNetworkGuardTest extends TestCase
         $this->assertNull($guard->inspectHttpUrl('http://10.0.0.1'));
         $this->assertNull($guard->inspectHttpUrl('http://localhost'));
         $this->assertNull($guard->inspectHttpUrl('http://example.local'));
+    }
+
+    /**
+     * PHP's NO_PRIV_RANGE|NO_RES_RANGE filter passes all of these. 100.64/10 is
+     * the one with teeth: that is where Tailscale and carrier-grade NAT live,
+     * so a public visitor could otherwise aim the tools at our own tailnet.
+     */
+    #[DataProvider('reservedAddresses')]
+    public function test_reserved_ranges_php_considers_public_are_rejected(string $ip): void
+    {
+        $this->assertFalse($this->isPublicIp($ip), "{$ip} must not count as public");
+    }
+
+    public static function reservedAddresses(): array
+    {
+        return [
+            'CGNAT / Tailscale' => ['100.64.0.1'],
+            'multicast' => ['224.0.0.1'],
+            'IETF protocol assignments' => ['192.0.0.1'],
+            '6to4 relay anycast' => ['192.88.99.1'],
+            'benchmarking' => ['198.18.0.1'],
+            'TEST-NET-3' => ['203.0.113.5'],
+            'NAT64' => ['64:ff9b::808:808'],
+            '6to4' => ['2002::1'],
+        ];
+    }
+
+    #[DataProvider('publicAddresses')]
+    public function test_real_public_addresses_still_pass(string $ip): void
+    {
+        $this->assertTrue($this->isPublicIp($ip), "{$ip} must count as public");
+    }
+
+    public static function publicAddresses(): array
+    {
+        return [
+            ['8.8.8.8'],
+            ['1.1.1.1'],
+            ['2606:4700::1111'],
+        ];
+    }
+
+    private function isPublicIp(string $ip): bool
+    {
+        $method = new ReflectionMethod(PublicNetworkGuard::class, 'isPublicIp');
+
+        return (bool) $method->invoke(new PublicNetworkGuard, $ip);
     }
 
     public function test_curl_resolve_entries_are_one_entry_with_bracketed_ipv6(): void
