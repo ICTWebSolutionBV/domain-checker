@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { Search, Loader2 } from 'lucide-vue-next'
+import { Search, Loader2 } from '@lucide/vue'
 
 const props = defineProps({
     isChecking: Boolean,

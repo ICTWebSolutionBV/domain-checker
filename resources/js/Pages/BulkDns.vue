@@ -3,7 +3,7 @@ import { ref, computed, watch, onScopeDispose } from 'vue'
 import { Head } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { useClipboard } from '@/composables/useClipboard'
-import { Search, Loader2, Copy, Check, X, AlertTriangle, Globe2, Eye, EyeOff } from 'lucide-vue-next'
+import { Search, Loader2, Copy, Check, X, AlertTriangle, Globe2, Eye, EyeOff } from '@lucide/vue'
 
 const DNS_TYPES = ['MX', 'NS', 'TXT', 'A', 'AAAA', 'CNAME']
 

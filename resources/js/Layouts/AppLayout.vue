@@ -3,7 +3,7 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { Link, usePage, router } from '@inertiajs/vue3'
 import { useTheme } from '@/composables/useTheme'
 import Dialog from '@/Components/Dialog.vue'
-import { Sun, Moon, SunMoon, Globe, Globe2, LogIn, Settings, LogOut, Users, Zap, MapPin, ArrowRightLeft, Route, Wifi, Menu, X } from 'lucide-vue-next'
+import { Sun, Moon, SunMoon, Globe, Globe2, LogIn, Settings, LogOut, Users, Zap, MapPin, ArrowRightLeft, Route, Wifi, Menu, X } from '@lucide/vue'
 
 const page = usePage()
 const auth = computed(() => page.props.auth)

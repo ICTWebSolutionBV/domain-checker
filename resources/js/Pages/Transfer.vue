@@ -6,7 +6,7 @@ import FormField from '@/Components/FormField.vue'
 import {
     ArrowRightLeft, Plus, Trash2, ChevronDown, ChevronUp,
     Copy, Check, X, UserCircle, Building2, Globe, Info, Pencil,
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 function blankBlock(label) {
