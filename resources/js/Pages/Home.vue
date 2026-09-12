@@ -508,6 +508,7 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
             <div class="ui-surface-light inline-flex items-center justify-center gap-1 mb-6 p-1 rounded-2xl">
                 <button
                     @click="switchMode('single')"
+                    :aria-pressed="mode === 'single'"
                     class="px-4 py-2 rounded-xl text-sm font-medium transition-colors"
                     :class="mode === 'single'
                         ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
@@ -517,6 +518,7 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                 </button>
                 <button
                     @click="switchMode('bulk')"
+                    :aria-pressed="mode === 'bulk'"
                     class="px-4 py-2 rounded-xl text-sm font-medium transition-colors"
                     :class="mode === 'bulk'
                         ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
@@ -616,6 +618,7 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                 <div class="flex items-center justify-center gap-3 mt-4">
                     <button
                         @click="selectedGroup = 'popular'"
+                        :aria-pressed="selectedGroup === 'popular'"
                         class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                         :class="selectedGroup === 'popular'
                             ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
@@ -626,6 +629,7 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                     <button
                         @click="loadAllTlds"
                         :disabled="loadingAllTlds"
+                        :aria-pressed="selectedGroup === 'all'"
                         class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5"
                         :class="selectedGroup === 'all'
                             ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
@@ -712,6 +716,7 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                 <div class="flex flex-wrap items-center gap-3 text-xs">
                     <button
                         @click="filterMode = 'all'"
+                        :aria-pressed="filterMode === 'all'"
                         class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors font-medium"
                         :class="filterMode === 'all' ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
                     >
@@ -720,6 +725,7 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                     <button
                         v-if="statusCounts.available"
                         @click="filterMode = 'available'"
+                        :aria-pressed="filterMode === 'available'"
                         class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors font-medium"
                         :class="filterMode === 'available' ? 'bg-emerald-600 text-white' : 'text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'"
                     >
@@ -729,6 +735,7 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                     <button
                         v-if="statusCounts.taken"
                         @click="filterMode = 'taken'"
+                        :aria-pressed="filterMode === 'taken'"
                         class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors font-medium"
                         :class="filterMode === 'taken' ? 'bg-red-600 text-white' : 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30'"
                     >
