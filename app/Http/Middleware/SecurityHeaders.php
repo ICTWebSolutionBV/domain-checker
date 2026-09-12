@@ -59,9 +59,9 @@ class SecurityHeaders
      * - script-src has no 'unsafe-inline' and no 'unsafe-eval': the Vue
      *   templates are compiled at build time, so nothing needs to evaluate
      *   strings at runtime.
-     * - style-src carries the nonce plus fonts.bunny.net, which serves the
-     *   webfont stylesheet. Self-hosting that font would let both the
-     *   stylesheet and the font host drop out of here entirely.
+     * - style-src and font-src name no third party: the webfont is served
+     *   from our own build output, so nothing about rendering this page
+     *   depends on a host we do not control.
      * - connect-src is 'self' because every check streams from our own SSE
      *   endpoints; the registry traffic happens server-side.
      */
@@ -76,8 +76,8 @@ class SecurityHeaders
         // blank page with every script and stylesheet refused.
         $assetOrigins = $this->assetOrigins();
         $script = trim("'self' 'nonce-{$nonce}' ".$assetOrigins);
-        $style = trim("'self' 'nonce-{$nonce}' https://fonts.bunny.net ".$assetOrigins);
-        $font = trim("'self' https://fonts.bunny.net ".$assetOrigins);
+        $style = trim("'self' 'nonce-{$nonce}' ".$assetOrigins);
+        $font = trim("'self' ".$assetOrigins);
         $img = trim("'self' data: ".$assetOrigins);
         $connect = trim("'self' ".$assetOrigins);
 
