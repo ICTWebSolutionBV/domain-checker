@@ -421,21 +421,21 @@ function statusConfig(status) {
         case 'taken':
             return {
                 icon: XCircle,
-                badgeClass: 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800',
+                badgeClass: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800',
                 rowClass: 'hover:bg-red-50/50 dark:hover:bg-red-950/10',
                 label: 'Taken',
             }
         case 'checking':
             return {
                 icon: Loader2,
-                badgeClass: 'bg-gray-100 dark:bg-gray-800 text-gray-400 border border-gray-200 dark:border-gray-700',
+                badgeClass: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700',
                 rowClass: '',
                 label: 'Checking…',
             }
         default:
             return {
                 icon: HelpCircle,
-                badgeClass: 'bg-gray-100 dark:bg-gray-800 text-gray-400 border border-gray-200 dark:border-gray-700',
+                badgeClass: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700',
                 rowClass: '',
                 label: 'Unknown',
             }
@@ -665,7 +665,7 @@ function statusConfig(status) {
                         v-if="statusCounts.available"
                         @click="filterMode = 'available'"
                         class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors font-medium"
-                        :class="filterMode === 'available' ? 'bg-emerald-600 text-white' : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'"
+                        :class="filterMode === 'available' ? 'bg-emerald-600 text-white' : 'text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'"
                     >
                         <CheckCircle class="w-3.5 h-3.5" />
                         {{ statusCounts.available }} available
@@ -674,12 +674,12 @@ function statusConfig(status) {
                         v-if="statusCounts.taken"
                         @click="filterMode = 'taken'"
                         class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors font-medium"
-                        :class="filterMode === 'taken' ? 'bg-red-500 text-white' : 'text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30'"
+                        :class="filterMode === 'taken' ? 'bg-red-600 text-white' : 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30'"
                     >
                         <XCircle class="w-3.5 h-3.5" />
                         {{ statusCounts.taken }} taken
                     </button>
-                    <span v-if="statusCounts.unknown" class="flex items-center gap-1.5 text-gray-400 px-2.5 py-1">
+                    <span v-if="statusCounts.unknown" class="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 px-2.5 py-1">
                         <HelpCircle class="w-3.5 h-3.5" />
                         {{ statusCounts.unknown }} unknown
                     </span>
@@ -823,7 +823,7 @@ function statusConfig(status) {
                     <div class="font-mono text-xs text-gray-500">.{{ tld }}</div>
                 </div>
             </div>
-            <p class="text-sm text-gray-500 dark:text-gray-500">Enter a domain name above to check availability</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Enter a domain name above to check availability</p>
         </div>
 
         <!-- Sticky clipboard bar -->
@@ -837,7 +837,7 @@ function statusConfig(status) {
         >
             <div v-if="selectedList.length > 0" class="fixed bottom-0 inset-x-0 z-50 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:p-4">
                 <!-- Hint line -->
-                <p class="text-center text-xs font-medium text-gray-600 dark:text-gray-500 mb-2 hidden sm:block">
+                <p class="text-center text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 hidden sm:block">
                     Fill in your registration details so we can process your order
                 </p>
                 <div class="max-w-2xl mx-auto bg-gray-900 dark:bg-gray-800 border border-gray-700 dark:border-gray-600 rounded-2xl shadow-overlay px-3 py-3 sm:px-4 flex flex-col sm:flex-row sm:items-center gap-3">

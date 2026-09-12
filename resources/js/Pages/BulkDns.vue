@@ -157,7 +157,7 @@ async function copyTable() {
                             autocomplete="off"
                             class="ui-input px-4 py-3 font-mono resize-y"
                         />
-                        <p class="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                        <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                             {{ parsedDomains.length }} domain{{ parsedDomains.length !== 1 ? 's' : '' }} detected
                         </p>
                     </div>
@@ -330,7 +330,7 @@ async function copyTable() {
                                                 rel="noopener noreferrer"
                                                 class="font-mono text-indigo-600 dark:text-indigo-400 hover:underline"
                                             >{{ row.ip }}</a>
-                                            <span v-else class="text-gray-300 dark:text-gray-600">—</span>
+                                            <span v-else class="text-gray-500 dark:text-gray-400">—</span>
                                         </td>
 
                                         <!-- Geo columns -->
@@ -341,7 +341,7 @@ async function copyTable() {
                                                     <span class="text-base leading-none">{{ countryFlag(row.geo.country_code) }}</span>
                                                     {{ row.geo.country }}
                                                 </span>
-                                                <span v-else class="text-gray-300 dark:text-gray-600">—</span>
+                                                <span v-else class="text-gray-500 dark:text-gray-400">—</span>
                                             </td>
                                             <!-- Region -->
                                             <td class="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">
@@ -356,7 +356,7 @@ async function copyTable() {
                                                 {{ row.geo?.isp || '—' }}
                                             </td>
                                             <!-- ASN -->
-                                            <td class="px-4 py-3 font-mono text-gray-500 dark:text-gray-500 whitespace-nowrap">
+                                            <td class="px-4 py-3 font-mono text-gray-500 dark:text-gray-400 whitespace-nowrap">
                                                 {{ row.geo?.asn || '—' }}
                                             </td>
                                         </template>
@@ -388,7 +388,7 @@ async function copyTable() {
                                                     </div>
                                                 </div>
                                             </template>
-                                            <span v-else class="text-gray-300 dark:text-gray-600">—</span>
+                                            <span v-else class="text-gray-500 dark:text-gray-400">—</span>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -397,7 +397,7 @@ async function copyTable() {
                     </div>
 
                     <!-- Footer note -->
-                    <p class="mt-3 text-xs text-gray-400 dark:text-gray-600 text-center">
+                    <p class="mt-3 text-xs text-gray-500 dark:text-gray-400 text-center">
                         DNS cached 5 min · Geo cached 1 h · 4 concurrent geo workers · Data may lag behind live propagation
                     </p>
                 </div>
@@ -410,7 +410,7 @@ async function copyTable() {
                         <div class="font-mono text-xs font-bold text-gray-500">{{ t }}</div>
                     </div>
                 </div>
-                <p class="text-sm text-gray-400 dark:text-gray-500">
+                <p class="text-sm text-gray-500 dark:text-gray-400">
                     Enter domains above and choose a record type to look up
                 </p>
             </div>

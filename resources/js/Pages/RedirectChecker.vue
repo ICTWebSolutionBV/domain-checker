@@ -232,7 +232,7 @@ onMounted(() => {
 
                         <!-- Connector arrow between hops -->
                         <div v-if="index > 0" class="flex items-center gap-2 px-4 py-1.5 bg-gray-50 dark:bg-gray-900/60 border-y border-gray-100 dark:border-gray-800">
-                            <div class="flex items-center gap-1 text-gray-400 dark:text-gray-600 text-xs">
+                            <div class="flex items-center gap-1 text-gray-500 dark:text-gray-400 text-xs">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
                                 </svg>
@@ -291,7 +291,7 @@ onMounted(() => {
                                     </div>
                                 </div>
                             </div>
-                            <div v-else-if="expandedHops.has(index)" class="border-t border-gray-100 dark:border-gray-800 px-4 py-3 text-xs text-gray-400 italic">
+                            <div v-else-if="expandedHops.has(index)" class="border-t border-gray-100 dark:border-gray-800 px-4 py-3 text-xs text-gray-500 dark:text-gray-400 italic">
                                 No response headers captured.
                             </div>
                         </div>
@@ -309,7 +309,7 @@ onMounted(() => {
             </div>
 
             <!-- Empty state -->
-            <div v-else-if="!loading && !error" class="text-center py-12 text-gray-400 dark:text-gray-600">
+            <div v-else-if="!loading && !error" class="text-center py-12 text-gray-500 dark:text-gray-400">
                 <svg class="w-12 h-12 mx-auto mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
                 </svg>
