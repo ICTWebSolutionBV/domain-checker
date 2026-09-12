@@ -244,7 +244,7 @@ const pendingKeys = computed(() => {
             </form>
 
             <!-- Error -->
-            <div v-if="error" class="mb-6 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 text-sm">
+            <div v-if="error" role="alert" class="mb-6 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 text-sm">
                 {{ error }}
             </div>
 
@@ -252,8 +252,8 @@ const pendingKeys = computed(() => {
             <div v-if="checks.length || verdict" class="space-y-4">
 
                 <!-- Checked URL -->
-                <p v-if="displayUrl" class="text-xs text-gray-400 dark:text-gray-500 text-center">
-                    Checking <span class="font-mono text-gray-600 dark:text-gray-400">{{ displayUrl }}</span>
+                <p v-if="displayUrl" role="status" class="text-xs text-gray-500 dark:text-gray-500 text-center">
+                    {{ isChecking ? 'Checking' : 'Checked' }} <span class="font-mono text-gray-600 dark:text-gray-400">{{ displayUrl }}</span>
                 </p>
 
                 <!-- Verdict card -->

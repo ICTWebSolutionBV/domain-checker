@@ -198,14 +198,14 @@ async function copyTable() {
                 leave-from-class="opacity-100 translate-y-0"
                 leave-to-class="opacity-0 -translate-y-1"
             >
-                <div v-if="error" class="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 text-sm">
+                <div v-if="error" role="alert" class="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 text-sm">
                     <AlertTriangle class="w-4 h-4 shrink-0" />
                     {{ error }}
                 </div>
             </Transition>
 
             <!-- Loading state -->
-            <div v-if="loading" class="flex flex-col items-center justify-center py-16 gap-4">
+            <div v-if="loading" role="status" class="flex flex-col items-center justify-center py-16 gap-4">
                 <Loader2 class="w-8 h-8 animate-spin text-indigo-500" />
                 <p class="text-sm text-gray-500 dark:text-gray-400">
                     Looking up {{ parsedDomains.length }} domain{{ parsedDomains.length !== 1 ? 's' : '' }}…

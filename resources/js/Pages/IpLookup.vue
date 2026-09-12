@@ -207,7 +207,7 @@ onMounted(() => {
             </form>
 
             <!-- Error -->
-            <div v-if="error" class="mt-6 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950 text-rose-800 dark:text-rose-200 px-4 py-3 text-sm flex items-center gap-2">
+            <div v-if="error" role="alert" class="mt-6 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950 text-rose-800 dark:text-rose-200 px-4 py-3 text-sm flex items-center gap-2">
                 <AlertTriangle class="w-4 h-4 shrink-0" />
                 {{ error }}
             </div>

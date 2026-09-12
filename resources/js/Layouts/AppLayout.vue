@@ -42,8 +42,11 @@ onUnmounted(() => {
             <div class="absolute inset-x-0 bottom-0 h-96 bg-gradient-to-t from-canvas to-transparent" />
             <div class="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-canvas to-transparent" />
         </div>
+        <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[60] focus:px-3 focus:py-2 focus:rounded-xl focus:bg-indigo-600 focus:text-white focus:text-sm focus:font-semibold">
+            Skip to content
+        </a>
         <!-- Navbar -->
-        <nav class="border-b border-hairline bg-white/85 dark:bg-gray-950/80 backdrop-blur-md sticky top-0 z-50 shadow-[0_1px_2px_0_rgb(15_23_42_/_0.04)] dark:shadow-none">
+        <nav aria-label="Main" class="border-b border-hairline bg-white/85 dark:bg-gray-950/80 backdrop-blur-md sticky top-0 z-50 shadow-[0_1px_2px_0_rgb(15_23_42_/_0.04)] dark:shadow-none">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
                 <!-- Logo -->
                 <Link :href="route('home')" class="flex items-center gap-2.5 font-semibold text-gray-900 dark:text-white hover:opacity-80 transition-opacity">
@@ -211,18 +214,18 @@ onUnmounted(() => {
 
         <!-- Flash messages -->
         <div v-if="flash.status || flash.success" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-            <div class="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 rounded-xl px-4 py-3 text-sm">
+            <div role="status" class="bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 rounded-xl px-4 py-3 text-sm">
                 {{ flash.success || flash.status }}
             </div>
         </div>
         <div v-if="flash.error" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-            <div class="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 rounded-xl px-4 py-3 text-sm">
+            <div role="alert" class="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 rounded-xl px-4 py-3 text-sm">
                 {{ flash.error }}
             </div>
         </div>
 
         <!-- Page content -->
-        <main>
+        <main id="main">
             <slot />
         </main>
 
