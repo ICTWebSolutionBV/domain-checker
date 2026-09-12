@@ -140,43 +140,49 @@ npm run dev
 - Set branch to `main`.
 - Enable **Install Composer dependencies**.
 
-### 3. Deploy script
+### 3. One-time permissions
 
-Replace the default deploy script with:
+Run this **once** per server, over SSH. It is deliberately not part of the
+deploy script: re-applying permissions on every deploy is how `chmod -R 777
+storage` became permanent, and world-writable compiled Blade under
+`storage/framework/views` is executable PHP that any other account on the box
+can replace.
+
+```bash
+cd {SITE_DIRECTORY}
+sudo chown -R ploi:www-data storage bootstrap/cache
+sudo chmod -R 2775 storage bootstrap/cache
+```
+
+The setgid bit (the `2`) makes every file created later inherit the group, so
+the deploy user and PHP-FPM both keep write access. On a host with ACLs
+available, `sudo setfacl -R -m u:www-data:rwX -m d:u:www-data:rwX storage
+bootstrap/cache` does the same job.
+
+### 4. Deploy script
+
+The deploy steps live in [`deploy.sh`](deploy.sh), tracked in this repository
+so they can be reviewed and corrected in a pull request. Ploi's own deploy
+script should be only:
 
 ```bash
 cd {SITE_DIRECTORY}
 git pull origin main
-
-# Ensure required directories exist and are writable (must run before composer/npm)
-mkdir -p bootstrap/cache
-mkdir -p storage/framework/cache/data
-mkdir -p storage/framework/sessions
-mkdir -p storage/framework/views
-mkdir -p storage/logs
-chmod -R 777 storage      # 777 so both the deploy user and PHP-FPM user can write
-chmod -R 775 bootstrap/cache
-
-# Clear any stale compiled files so PHP can write fresh ones during the build
-php artisan optimize:clear
-
-composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
-
-npm ci
-npm run build
-
-php artisan migrate --force
-php artisan config:cache
-php artisan route:cache
-# view:cache is intentionally omitted — views compile on first request,
-# and view:cache requires storage/framework/views to be writable by the
-# PHP-FPM user which may differ from the deploy user on some Ploi setups.
-php artisan storage:link
-
-echo "Application deployed!"
+bash deploy.sh
 ```
 
-### 4. Environment variables
+`deploy.sh` installs dependencies, builds the assets, takes a `mysqldump`,
+runs the migrations between `artisan down` and `artisan up`, warms the caches
+with `php artisan optimize` (config, routes, views and events) and finishes
+with a `curl` health check against `/up` — so a deploy that leaves the site
+500-ing fails instead of printing "deployed".
+
+**No queue worker is required.** Mail is sent synchronously and the app has no
+jobs or scheduled tasks, so there is no daemon to configure. If mail is ever
+moved to `->queue()`, a worker becomes mandatory and invites will silently
+stop arriving without one.
+
+### 5. Environment variables
 
 In the **Environment** tab, set your `.env`:
 
@@ -206,7 +212,7 @@ MAIL_FROM_ADDRESS=noreply@your-domain.com
 MAIL_FROM_NAME="${APP_NAME}"
 ```
 
-### 5. First super admin user
+### 6. First super admin user
 
 After the first deploy, create your super admin via the Ploi console or SSH:
 
