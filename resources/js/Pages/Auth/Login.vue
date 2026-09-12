@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { Head, useForm, Link } from '@inertiajs/vue3'
 import AuthLayout from '@/Layouts/AuthLayout.vue'
+import FormField from '@/Components/FormField.vue'
 import { Fingerprint, Mail, Lock, Loader2 } from 'lucide-vue-next'
 
 const form = useForm({
@@ -66,7 +67,7 @@ onMounted(() => {
                 <Fingerprint v-else class="w-4 h-4" />
                 {{ passkeyLoading ? 'Authenticating…' : 'Sign in with Passkey' }}
             </button>
-            <p v-if="passkeyError" class="text-red-500 dark:text-red-400 text-xs mt-2 text-center">{{ passkeyError }}</p>
+            <p v-if="passkeyError" role="alert" class="text-red-600 dark:text-red-400 text-xs mt-2 text-center">{{ passkeyError }}</p>
 
             <div class="relative mt-5 mb-5">
                 <div class="absolute inset-0 flex items-center">
@@ -80,13 +81,14 @@ onMounted(() => {
 
         <!-- Password form -->
         <form @submit.prevent="login" class="space-y-4">
-            <div>
-                <label class="ui-label text-sm">Email</label>
+            <FormField label="Email" label-class="text-sm" :error="form.errors.email" v-slot="field">
                 <div class="relative">
-                    <Mail class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Mail class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" aria-hidden="true" />
                     <input
+                        v-bind="field"
                         v-model="form.email"
                         type="email"
+                        name="email"
                         required
                         autofocus
                         autocomplete="username"
@@ -94,24 +96,23 @@ onMounted(() => {
                         :class="form.errors.email ? 'border-red-400' : 'border-gray-300 dark:border-gray-700'"
                     />
                 </div>
-                <p v-if="form.errors.email" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ form.errors.email }}</p>
-            </div>
+            </FormField>
 
-            <div>
-                <label class="ui-label text-sm">Password</label>
+            <FormField label="Password" label-class="text-sm" :error="form.errors.password" v-slot="field">
                 <div class="relative">
-                    <Lock class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Lock class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" aria-hidden="true" />
                     <input
+                        v-bind="field"
                         v-model="form.password"
                         type="password"
+                        name="password"
                         required
                         autocomplete="current-password"
                         class="ui-input pl-9"
                         :class="form.errors.password ? 'border-red-400' : 'border-gray-300 dark:border-gray-700'"
                     />
                 </div>
-                <p v-if="form.errors.password" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ form.errors.password }}</p>
-            </div>
+            </FormField>
 
             <div class="flex items-center justify-between">
                 <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">

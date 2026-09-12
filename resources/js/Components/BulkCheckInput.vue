@@ -38,7 +38,9 @@ function handleKeydown(e) {
 
 <template>
     <div class="max-w-2xl mx-auto w-full">
+        <label for="bulk-domains" class="sr-only">Domains to check, one per line</label>
         <textarea
+            id="bulk-domains"
             v-model="textarea"
             @keydown="handleKeydown"
             rows="5"
@@ -49,7 +51,7 @@ function handleKeydown(e) {
         />
         <div class="flex items-center justify-between mt-2">
             <p class="text-xs text-gray-400 dark:text-gray-500">
-                One domain per line · up to 50
+                One domain per line · up to 50 · Ctrl+Enter to check
                 <span v-if="parsedDomains.length" class="text-gray-600 dark:text-gray-400 font-medium">
                     · {{ parsedDomains.length }} {{ parsedDomains.length === 1 ? 'domain' : 'domains' }} entered
                 </span>

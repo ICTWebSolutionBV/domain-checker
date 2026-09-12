@@ -130,10 +130,11 @@ async function copyTable() {
                 <div class="flex flex-col sm:flex-row gap-6">
                     <!-- Textarea -->
                     <div class="flex-1">
-                        <label class="ui-section-title block mb-2">
-                            Domains <span class="normal-case font-normal">(one per line, max 100)</span>
+                        <label for="dns-domains" class="ui-section-title block mb-2">
+                            Domains <span class="normal-case font-normal">(one per line or comma separated, max 100)</span>
                         </label>
                         <textarea
+                            id="dns-domains"
                             v-model="textarea"
                             rows="10"
                             placeholder="example.com&#10;google.nl&#10;github.com"
@@ -149,14 +150,16 @@ async function copyTable() {
                     <!-- Controls -->
                     <div class="sm:w-52 flex flex-col gap-4">
                         <div>
-                            <label class="ui-section-title block mb-2">
+                            <p id="dns-record-type" class="ui-section-title block mb-2">
                                 Record type
-                            </label>
-                            <div class="grid grid-cols-3 gap-1.5">
+                            </p>
+                            <div class="grid grid-cols-3 gap-1.5" role="group" aria-labelledby="dns-record-type">
                                 <button
                                     v-for="type in DNS_TYPES"
                                     :key="type"
+                                    type="button"
                                     @click="selectedType = type"
+                                    :aria-pressed="selectedType === type"
                                     class="py-2 rounded-lg text-xs font-semibold font-mono transition-colors"
                                     :class="selectedType === type
                                         ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
@@ -230,7 +233,9 @@ async function copyTable() {
                         <div class="flex items-center gap-2">
                             <!-- Geo toggle -->
                             <button
+                                type="button"
                                 @click="showGeo = !showGeo"
+                                :aria-pressed="showGeo"
                                 class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border"
                                 :class="showGeo
                                     ? 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400'

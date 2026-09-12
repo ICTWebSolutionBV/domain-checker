@@ -185,8 +185,10 @@ onMounted(() => {
             <form @submit.prevent="lookup" class="relative">
                 <div class="flex gap-2">
                     <div class="relative flex-1">
-                        <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <label for="ip-query" class="sr-only">IP address or hostname</label>
+                        <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" aria-hidden="true" />
                         <input
+                            id="ip-query"
                             v-model="input"
                             type="text"
                             placeholder="8.8.8.8 or example.com"

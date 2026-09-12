@@ -6,6 +6,7 @@ import { useDomainCheck } from '@/composables/useDomainCheck'
 import { useBulkDomainCheck } from '@/composables/useBulkDomainCheck'
 import BulkCheckInput from '@/Components/BulkCheckInput.vue'
 import Dialog from '@/Components/Dialog.vue'
+import FormField from '@/Components/FormField.vue'
 import {
     Search, Globe, CheckCircle, XCircle, HelpCircle, Loader2,
     Copy, Check, ClipboardList, X, UserCircle, Building2
@@ -519,8 +520,10 @@ function statusConfig(status) {
             <template v-if="mode === 'single'">
                 <div class="flex gap-2 max-w-2xl mx-auto">
                     <div class="flex-1 relative">
-                        <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <label for="domain-search" class="sr-only">Domain name to check</label>
+                        <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" aria-hidden="true" />
                         <input
+                            id="domain-search"
                             v-model="domainInput"
                             @keydown="handleKeydown"
                             type="text"
@@ -956,43 +959,38 @@ function statusConfig(status) {
 
                             <!-- Existing account -->
                             <div class="ui-accent-panel p-3.5 sm:p-4">
-                                <label class="block ui-accent-title mb-0.5">Existing account <span class="font-normal text-indigo-600/70 dark:text-indigo-500">(optional)</span></label>
-                                <p class="ui-accent-help mb-3">Already a customer? Enter your name or company so we link this to the right account.</p>
+                                <label for="reg-existing-account" class="block ui-accent-title mb-0.5">Existing account <span class="font-normal text-indigo-600/70 dark:text-indigo-500">(optional)</span></label>
+                                <p id="reg-existing-account-help" class="ui-accent-help mb-3">Already a customer? Enter your name or company so we link this to the right account.</p>
                                 <div class="relative">
-                                    <UserCircle class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-500 dark:text-indigo-400 pointer-events-none" />
-                                    <input v-model="reg.existingAccount" type="text" placeholder="e.g. John Doe or Example Company" class="ui-input ui-input-accent pl-9" />
+                                    <UserCircle class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-500 dark:text-indigo-400 pointer-events-none" aria-hidden="true" />
+                                    <input id="reg-existing-account" aria-describedby="reg-existing-account-help" v-model="reg.existingAccount" type="text" placeholder="e.g. John Doe or Example Company" class="ui-input ui-input-accent pl-9" />
                                 </div>
                             </div>
 
                             <!-- Personal & company -->
                             <div class="space-y-3">
                                 <p class="ui-section-title">Contact details</p>
-                                <div>
-                                    <label class="ui-label text-sm">Company name <span class="ui-label-hint">(optional)</span></label>
+                                <FormField label="Company name" hint="(optional)" label-class="text-sm" v-slot="field">
                                     <div class="relative">
-                                        <Building2 class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                                        <input v-model="reg.companyName" type="text" placeholder="Example Company" class="ui-input pl-9" />
+                                        <Building2 class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" aria-hidden="true" />
+                                        <input v-bind="field" v-model="reg.companyName" type="text" placeholder="Example Company" class="ui-input pl-9" />
                                     </div>
+                                </FormField>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <FormField label="First name" label-class="text-sm" v-slot="field">
+                                        <input v-bind="field" v-model="reg.firstName" type="text" placeholder="John" class="ui-input" />
+                                    </FormField>
+                                    <FormField label="Last name" label-class="text-sm" v-slot="field">
+                                        <input v-bind="field" v-model="reg.lastName" type="text" placeholder="Doe" class="ui-input" />
+                                    </FormField>
                                 </div>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="ui-label text-sm">First name</label>
-                                        <input v-model="reg.firstName" type="text" placeholder="John" class="ui-input" />
-                                    </div>
-                                    <div>
-                                        <label class="ui-label text-sm">Last name</label>
-                                        <input v-model="reg.lastName" type="text" placeholder="Doe" class="ui-input" />
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="ui-label text-sm">Phone number</label>
-                                        <input v-model="reg.phone" type="tel" placeholder="+31 6 12345678" class="ui-input" />
-                                    </div>
-                                    <div>
-                                        <label class="ui-label text-sm">Email</label>
-                                        <input v-model="reg.email" type="email" placeholder="john@example.com" class="ui-input" />
-                                    </div>
+                                    <FormField label="Phone number" label-class="text-sm" v-slot="field">
+                                        <input v-bind="field" v-model="reg.phone" type="tel" placeholder="+31 6 12345678" class="ui-input" />
+                                    </FormField>
+                                    <FormField label="Email" label-class="text-sm" v-slot="field">
+                                        <input v-bind="field" v-model="reg.email" type="email" placeholder="john@example.com" class="ui-input" />
+                                    </FormField>
                                 </div>
                             </div>
 
@@ -1000,24 +998,20 @@ function statusConfig(status) {
                             <div class="space-y-3">
                                 <p class="ui-section-title">Address</p>
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    <div class="sm:col-span-2">
-                                        <label class="ui-label text-sm">Street</label>
-                                        <input v-model="reg.street" type="text" placeholder="Kerkstraat" class="ui-input" />
-                                    </div>
-                                    <div>
-                                        <label class="ui-label text-sm">House no.</label>
-                                        <input v-model="reg.houseNumber" type="text" placeholder="42A" class="ui-input" />
-                                    </div>
+                                    <FormField label="Street" label-class="text-sm" class="sm:col-span-2" v-slot="field">
+                                        <input v-bind="field" v-model="reg.street" type="text" placeholder="Kerkstraat" class="ui-input" />
+                                    </FormField>
+                                    <FormField label="House no." label-class="text-sm" v-slot="field">
+                                        <input v-bind="field" v-model="reg.houseNumber" type="text" placeholder="42A" class="ui-input" />
+                                    </FormField>
                                 </div>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="ui-label text-sm">Postal code</label>
-                                        <input v-model="reg.postalCode" type="text" placeholder="1234 AB" class="ui-input" />
-                                    </div>
-                                    <div>
-                                        <label class="ui-label text-sm">City</label>
-                                        <input v-model="reg.city" type="text" placeholder="Amsterdam" class="ui-input" />
-                                    </div>
+                                    <FormField label="Postal code" label-class="text-sm" v-slot="field">
+                                        <input v-bind="field" v-model="reg.postalCode" type="text" placeholder="1234 AB" class="ui-input" />
+                                    </FormField>
+                                    <FormField label="City" label-class="text-sm" v-slot="field">
+                                        <input v-bind="field" v-model="reg.city" type="text" placeholder="Amsterdam" class="ui-input" />
+                                    </FormField>
                                 </div>
                             </div>
 
@@ -1025,14 +1019,12 @@ function statusConfig(status) {
                             <div class="space-y-3">
                                 <p class="ui-section-title">Business <span class="normal-case font-normal">(optional)</span></p>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="ui-label text-sm">KVK</label>
-                                        <input v-model="reg.kvk" type="text" placeholder="12345678" class="ui-input" />
-                                    </div>
-                                    <div>
-                                        <label class="ui-label text-sm">VAT ID</label>
-                                        <input v-model="reg.vatId" type="text" placeholder="NL123456789B01" class="ui-input" />
-                                    </div>
+                                    <FormField label="KVK" label-class="text-sm" v-slot="field">
+                                        <input v-bind="field" v-model="reg.kvk" type="text" placeholder="12345678" class="ui-input" />
+                                    </FormField>
+                                    <FormField label="VAT ID" label-class="text-sm" v-slot="field">
+                                        <input v-bind="field" v-model="reg.vatId" type="text" placeholder="NL123456789B01" class="ui-input" />
+                                    </FormField>
                                 </div>
                             </div>
                         </div>

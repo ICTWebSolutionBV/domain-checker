@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { Head } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import FormField from '@/Components/FormField.vue'
 import {
     ArrowRightLeft, Plus, Trash2, ChevronDown, ChevronUp,
     Copy, Check, X, UserCircle, Building2, Globe, Info, Pencil,
@@ -276,19 +277,16 @@ const showPreview = ref(false)
                 </div>
                 <div class="p-5">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="ui-label">Your name</label>
-                            <input v-model="requesterName" type="text" placeholder="John Doe" class="ui-input" />
-                        </div>
-                        <div>
-                            <label class="ui-label">Reply-to email</label>
-                            <input v-model="requesterEmail" type="email" placeholder="john@example.com" class="ui-input" />
-                        </div>
+                        <FormField label="Your name" v-slot="field">
+                            <input v-bind="field" v-model="requesterName" type="text" autocomplete="name" placeholder="John Doe" class="ui-input" />
+                        </FormField>
+                        <FormField label="Reply-to email" v-slot="field">
+                            <input v-bind="field" v-model="requesterEmail" type="email" autocomplete="email" placeholder="john@example.com" class="ui-input" />
+                        </FormField>
                     </div>
-                    <div class="mt-4">
-                        <label class="ui-label">Message <span class="ui-label-hint">(optional)</span></label>
-                        <textarea v-model="requesterNote" rows="2" placeholder="Anything we should know about these transfers — e.g. preferred go-live date." class="ui-input resize-y"></textarea>
-                    </div>
+                    <FormField label="Message" hint="(optional)" class="mt-4" v-slot="field">
+                        <textarea v-bind="field" v-model="requesterNote" rows="2" placeholder="Anything we should know about these transfers — e.g. preferred go-live date." class="ui-input resize-y"></textarea>
+                    </FormField>
                 </div>
             </div>
 
@@ -311,11 +309,12 @@ const showPreview = ref(false)
                                 class="group flex items-center gap-1.5 flex-1 min-w-0 px-2 py-1 -my-1 rounded-lg border border-dashed border-gray-300 dark:border-gray-700 bg-surface/60 dark:bg-transparent hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/20 focus-within:border-indigo-500 focus-within:border-solid focus-within:bg-surface dark:focus-within:bg-gray-900 transition-colors cursor-text"
                                 :title="'Click to rename this group'"
                             >
-                                <Pencil class="w-3 h-3 text-gray-400 group-hover:text-indigo-500 group-focus-within:text-indigo-500 shrink-0" />
+                                <Pencil class="w-3 h-3 text-gray-400 group-hover:text-indigo-500 group-focus-within:text-indigo-500 shrink-0" aria-hidden="true" />
+                                <span class="sr-only">Name of group {{ i + 1 }}</span>
                                 <input
                                     v-model="block.label"
                                     type="text"
-                                    class="bg-transparent text-sm font-medium text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-500 focus:outline-none focus:ring-0 border-0 p-0 truncate min-w-0 flex-1"
+                                    class="bg-transparent text-sm font-medium text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-500 border-0 p-0 truncate min-w-0 flex-1"
                                     :placeholder="`Name this group (e.g. “${i === 0 ? 'My company domains' : 'Client X domains'}”)`"
                                     maxlength="60"
                                 />
@@ -352,8 +351,8 @@ const showPreview = ref(false)
                         <!-- Domains chip input -->
                         <div>
                             <div class="flex items-center gap-2 mb-2.5">
-                                <Globe class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400 shrink-0" />
-                                <p class="ui-section-title">Domains in this group</p>
+                                <Globe class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400 shrink-0" aria-hidden="true" />
+                                <label :for="`transfer-domains-${i}`" class="ui-section-title">Domains in this group</label>
                                 <div class="h-px flex-1 bg-hairline" />
                             </div>
                             <div class="ui-field-shell flex flex-wrap items-center gap-2 px-2.5 py-2">
@@ -373,28 +372,30 @@ const showPreview = ref(false)
                                     </button>
                                 </span>
                                 <input
+                                    :id="`transfer-domains-${i}`"
                                     v-model="block.domainInput"
                                     @keydown="onDomainKeydown(block, $event)"
                                     @paste="onDomainPaste(block)"
                                     @blur="commitDomains(block)"
                                     type="text"
+                                    :aria-describedby="`transfer-domains-${i}-help`"
                                     :placeholder="block.domains.length ? 'Add another…' : 'example.com, another.nl …'"
-                                    class="flex-1 min-w-[180px] bg-transparent border-0 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-0 px-1 py-1"
+                                    class="flex-1 min-w-[180px] bg-transparent border-0 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 px-1 py-1"
                                 />
                             </div>
-                            <p class="mt-2 ui-help flex items-center gap-1.5">
-                                <Info class="w-3 h-3 shrink-0" />
+                            <p :id="`transfer-domains-${i}-help`" class="mt-2 ui-help flex items-center gap-1.5">
+                                <Info class="w-3 h-3 shrink-0" aria-hidden="true" />
                                 Press Enter, comma, or space to add. Paste a list to add many at once.
                             </p>
                         </div>
 
                         <!-- Existing account -->
                         <div class="ui-accent-panel p-3.5 sm:p-4">
-                            <label class="block ui-accent-title mb-0.5">Existing account <span class="font-normal text-indigo-600/70 dark:text-indigo-500">(optional)</span></label>
-                            <p class="ui-accent-help mb-3">Already a customer? Enter the contact name or company so we know which account the domains in this group should land under.</p>
+                            <label :for="`transfer-account-${i}`" class="block ui-accent-title mb-0.5">Existing account <span class="font-normal text-indigo-600/70 dark:text-indigo-500">(optional)</span></label>
+                            <p :id="`transfer-account-${i}-help`" class="ui-accent-help mb-3">Already a customer? Enter the contact name or company so we know which account the domains in this group should land under.</p>
                             <div class="relative">
-                                <UserCircle class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-500 dark:text-indigo-400 pointer-events-none" />
-                                <input v-model="block.existingAccount" type="text" placeholder="e.g. John Doe or Example Company" class="ui-input ui-input-accent pl-9" />
+                                <UserCircle class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-500 dark:text-indigo-400 pointer-events-none" aria-hidden="true" />
+                                <input :id="`transfer-account-${i}`" :aria-describedby="`transfer-account-${i}-help`" v-model="block.existingAccount" type="text" placeholder="e.g. John Doe or Example Company" class="ui-input ui-input-accent pl-9" />
                             </div>
                         </div>
 
@@ -406,82 +407,68 @@ const showPreview = ref(false)
 
                         <!-- New registrant fields -->
                         <div class="space-y-4">
-                            <div>
-                                <label class="ui-label">Company name <span class="ui-label-hint">(optional)</span></label>
+                            <FormField label="Company name" hint="(optional)" v-slot="field">
                                 <div class="relative">
-                                    <Building2 class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                                    <input v-model="block.companyName" type="text" placeholder="Example Company" class="ui-input pl-9" />
+                                    <Building2 class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" aria-hidden="true" />
+                                    <input v-bind="field" v-model="block.companyName" type="text" autocomplete="organization" placeholder="Example Company" class="ui-input pl-9" />
                                 </div>
-                            </div>
+                            </FormField>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="ui-label">First name</label>
-                                    <input v-model="block.firstName" type="text" placeholder="John" class="ui-input" />
-                                </div>
-                                <div>
-                                    <label class="ui-label">Last name</label>
-                                    <input v-model="block.lastName" type="text" placeholder="Doe" class="ui-input" />
-                                </div>
+                                <FormField label="First name" v-slot="field">
+                                    <input v-bind="field" v-model="block.firstName" type="text" autocomplete="given-name" placeholder="John" class="ui-input" />
+                                </FormField>
+                                <FormField label="Last name" v-slot="field">
+                                    <input v-bind="field" v-model="block.lastName" type="text" autocomplete="family-name" placeholder="Doe" class="ui-input" />
+                                </FormField>
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                                <div class="sm:col-span-2">
-                                    <label class="ui-label">Street</label>
-                                    <input v-model="block.street" type="text" placeholder="Kerkstraat" class="ui-input" />
-                                </div>
-                                <div>
-                                    <label class="ui-label">House no.</label>
-                                    <input v-model="block.houseNumber" type="text" placeholder="42A" class="ui-input" />
-                                </div>
+                                <FormField label="Street" class="sm:col-span-2" v-slot="field">
+                                    <input v-bind="field" v-model="block.street" type="text" autocomplete="address-line1" placeholder="Kerkstraat" class="ui-input" />
+                                </FormField>
+                                <FormField label="House no." v-slot="field">
+                                    <input v-bind="field" v-model="block.houseNumber" type="text" autocomplete="address-line2" placeholder="42A" class="ui-input" />
+                                </FormField>
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                                <div>
-                                    <label class="ui-label">Postal code</label>
-                                    <input v-model="block.postalCode" type="text" placeholder="1234 AB" class="ui-input" />
-                                </div>
-                                <div>
-                                    <label class="ui-label">City</label>
-                                    <input v-model="block.city" type="text" placeholder="Amsterdam" class="ui-input" />
-                                </div>
-                                <div>
-                                    <label class="ui-label">Country</label>
-                                    <input v-model="block.country" type="text" placeholder="Netherlands" class="ui-input" />
-                                </div>
+                                <FormField label="Postal code" v-slot="field">
+                                    <input v-bind="field" v-model="block.postalCode" type="text" autocomplete="postal-code" placeholder="1234 AB" class="ui-input" />
+                                </FormField>
+                                <FormField label="City" v-slot="field">
+                                    <input v-bind="field" v-model="block.city" type="text" autocomplete="address-level2" placeholder="Amsterdam" class="ui-input" />
+                                </FormField>
+                                <FormField label="Country" v-slot="field">
+                                    <input v-bind="field" v-model="block.country" type="text" autocomplete="country-name" placeholder="Netherlands" class="ui-input" />
+                                </FormField>
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="ui-label">Phone</label>
-                                    <input v-model="block.phone" type="tel" placeholder="+31 6 12345678" class="ui-input" />
-                                </div>
-                                <div>
-                                    <label class="ui-label">Email</label>
-                                    <input v-model="block.email" type="email" placeholder="john@example.com" class="ui-input" />
-                                </div>
+                                <FormField label="Phone" v-slot="field">
+                                    <input v-bind="field" v-model="block.phone" type="tel" autocomplete="tel" placeholder="+31 6 12345678" class="ui-input" />
+                                </FormField>
+                                <FormField label="Email" v-slot="field">
+                                    <input v-bind="field" v-model="block.email" type="email" autocomplete="email" placeholder="john@example.com" class="ui-input" />
+                                </FormField>
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="ui-label">KVK <span class="ui-label-hint">(optional)</span></label>
-                                    <input v-model="block.kvk" type="text" placeholder="12345678" class="ui-input" />
-                                </div>
-                                <div>
-                                    <label class="ui-label">VAT ID <span class="ui-label-hint">(optional)</span></label>
-                                    <input v-model="block.vatId" type="text" placeholder="NL123456789B01" class="ui-input" />
-                                </div>
+                                <FormField label="KVK" hint="(optional)" v-slot="field">
+                                    <input v-bind="field" v-model="block.kvk" type="text" placeholder="12345678" class="ui-input" />
+                                </FormField>
+                                <FormField label="VAT ID" hint="(optional)" v-slot="field">
+                                    <input v-bind="field" v-model="block.vatId" type="text" placeholder="NL123456789B01" class="ui-input" />
+                                </FormField>
                             </div>
 
-                            <div>
-                                <label class="ui-label">Auth / EPP code <span class="ui-label-hint">(optional — same code applies to every domain in this group)</span></label>
-                                <input v-model="block.authCode" type="text" placeholder="EPP code from current registrar" class="ui-input font-mono" />
-                            </div>
+                            <FormField label="Auth / EPP code" hint="(optional — same code applies to every domain in this group)" v-slot="field">
+                                <input v-bind="field" v-model="block.authCode" type="text" placeholder="EPP code from current registrar" class="ui-input font-mono" />
+                            </FormField>
 
-                            <div>
-                                <label class="ui-label">Notes <span class="ui-label-hint">(optional)</span></label>
-                                <textarea v-model="block.notes" rows="2" placeholder="Anything specific to the domains in this group." class="ui-input resize-y"></textarea>
-                            </div>
+                            <FormField label="Notes" hint="(optional)" v-slot="field">
+                                <textarea v-bind="field" v-model="block.notes" rows="2" placeholder="Anything specific to the domains in this group." class="ui-input resize-y"></textarea>
+                            </FormField>
                         </div>
                     </div>
                 </div>

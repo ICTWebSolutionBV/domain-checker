@@ -216,8 +216,10 @@ const pendingKeys = computed(() => {
             <!-- Search bar -->
             <form @submit.prevent="submitForm" class="flex gap-2 mb-8">
                 <div class="flex-1 relative">
-                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 text-sm select-none pointer-events-none">https://</span>
+                    <label for="http3-host" class="sr-only">Host to check, without https://</label>
+                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 text-sm select-none pointer-events-none" aria-hidden="true">https://</span>
                     <input
+                        id="http3-host"
                         v-model="hostInput"
                         type="text"
                         placeholder="example.com"
