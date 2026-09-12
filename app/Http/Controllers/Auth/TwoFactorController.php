@@ -85,8 +85,10 @@ class TwoFactorController extends Controller
             return false;
         }
 
+        $submitted = strtoupper($code);
+
         foreach ($codes as $index => $candidate) {
-            if (is_string($candidate) && hash_equals($candidate, $code)) {
+            if (is_string($candidate) && hash_equals(strtoupper($candidate), $submitted)) {
                 unset($codes[$index]);
 
                 $user->forceFill([
