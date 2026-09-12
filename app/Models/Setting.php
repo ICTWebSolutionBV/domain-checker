@@ -14,16 +14,33 @@ class Setting extends Model
      */
     public static function get(string $key, mixed $default = null): mixed
     {
-        return Cache::remember("setting_{$key}", 3600, function () use ($key, $default) {
-            try {
-                $value = static::where('key', $key)->value('value');
+        $cached = Cache::get("setting_{$key}");
 
-                return $value !== null ? $value : $default;
-            } catch (\Throwable) {
-                // Table may not exist yet (pending migration) — fall back to default
-                return $default;
-            }
-        });
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        try {
+            $value = static::where('key', $key)->value('value');
+        } catch (\Throwable) {
+            // Table may not exist yet (pending migration), or the database is
+            // briefly unreachable. Returning the default is right; *caching* it
+            // for an hour was not -- a blip during boot pinned the fallback
+            // (rtrConfigured reading false, so RTR silently disabled) for the
+            // whole hour, with nothing to indicate why.
+            return $default;
+        }
+
+        if ($value === null) {
+            // Nothing stored: hand back the default without caching it. An
+            // absent setting costs one indexed lookup per call, which is
+            // cheaper than an hour of wondering why the fallback is in force.
+            return $default;
+        }
+
+        Cache::put("setting_{$key}", $value, 3600);
+
+        return $value;
     }
 
     /**
