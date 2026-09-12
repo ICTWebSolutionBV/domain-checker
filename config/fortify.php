@@ -150,10 +150,16 @@ return [
         // Features::emailVerification(),
         // Features::updateProfileInformation(),
         // Features::updatePasswords(),
-        Features::twoFactorAuthentication([
-            'confirm' => true,
-            'confirmPassword' => true,
-        ]),
+        // Two-factor is implemented by this app's own controllers
+        // (App\Http\Controllers\Auth\TwoFactorController and the settings
+        // controller). Enabling Fortify's feature published nine parallel
+        // routes -- /user/two-factor-authentication and friends -- that write
+        // the same columns with different semantics, which is a way to end up
+        // with a secret the app's own challenge cannot verify.
+        // Features::twoFactorAuthentication([
+        //     'confirm' => true,
+        //     'confirmPassword' => true,
+        // ]),
     ],
 
 ];

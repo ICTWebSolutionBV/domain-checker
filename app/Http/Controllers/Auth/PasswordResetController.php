@@ -26,6 +26,13 @@ class PasswordResetController extends Controller
 
         $status = Password::sendResetLink($request->only('email'));
 
+        // Always answer the same way. Reporting "we can't find a user with
+        // that email address" tells anyone who asks which addresses have
+        // accounts here.
+        if ($status === Password::INVALID_USER) {
+            $status = Password::RESET_LINK_SENT;
+        }
+
         return back()->with('status', __($status));
     }
 
