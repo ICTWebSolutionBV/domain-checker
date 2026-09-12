@@ -93,6 +93,16 @@ jobs:
           node-version: '22'
           cache: npm
 
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: intl
+          coverage: none
+
+      # vite.config.js aliases ziggy-js to vendor/tightenco/ziggy, so the
+      # bundle cannot be built from npm alone.
+      - run: composer install --no-interaction --prefer-dist --no-scripts --no-dev
+
       - run: npm ci
       - run: npm run build
 
