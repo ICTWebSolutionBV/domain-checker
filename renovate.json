@@ -1,0 +1,24 @@
+{
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": ["config:recommended", ":semanticCommitsDisabled"],
+    "timezone": "Europe/Amsterdam",
+    "schedule": ["before 7am on monday"],
+    "prConcurrentLimit": 3,
+    "labels": ["dependencies"],
+    "vulnerabilityAlerts": {
+        "schedule": ["at any time"],
+        "labels": ["dependencies", "security"]
+    },
+    "packageRules": [
+        {
+            "description": "Patch and minor updates travel together, so one PR is one review.",
+            "matchUpdateTypes": ["minor", "patch"],
+            "groupName": "non-major dependencies"
+        },
+        {
+            "description": "Majors wait for a human: Laravel, Vite and PHPUnit majors have each needed code changes in this repo before.",
+            "matchUpdateTypes": ["major"],
+            "dependencyDashboardApproval": true
+        }
+    ]
+}
