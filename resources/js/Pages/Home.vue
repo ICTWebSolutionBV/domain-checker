@@ -619,7 +619,7 @@ function statusConfig(status) {
                 <button
                     v-if="availableEntries.length > 0"
                     @click="toggleSelectAllAvailable"
-                    class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                    class="ui-btn ui-btn-sm ui-btn-accent"
                 >
                     {{ allAvailableSelected ? 'Deselect all' : 'Select all available' }}
                 </button>
@@ -627,52 +627,47 @@ function statusConfig(status) {
 
             <!-- 3-column list grid -->
             <div class="ui-surface-light rounded-2xl p-2 sm:p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-0">
-                <div
-                    v-for="(entry, index) in filteredEntries"
+                <component
+                    :is="entry.status === 'available' ? 'label' : 'div'"
+                    v-for="entry in filteredEntries"
                     :key="entry.tld"
-                    class="flex items-center gap-3 py-2.5 px-3 rounded-xl border-b border-gray-100 dark:border-gray-800/60 transition-colors"
+                    class="flex items-center gap-3 h-11 px-3 rounded-xl border-b border-gray-100 dark:border-gray-800/60 transition-colors focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-inset"
                     :class="[
                         statusConfig(entry.status).rowClass,
                         selected.has(entry.domain) ? 'bg-indigo-50 dark:bg-indigo-950/30 border-transparent' : '',
                         entry.status === 'available' ? 'cursor-pointer' : 'cursor-default',
-                        entry.tld === pinnedTld && pinnedTld ? 'ring-1 ring-indigo-300 dark:ring-indigo-700 bg-indigo-50/60 dark:bg-indigo-950/20 rounded-xl mb-2' : '',
+                        entry.tld === pinnedTld && pinnedTld ? 'ring-1 ring-inset ring-indigo-300 dark:ring-indigo-700 bg-indigo-50/60 dark:bg-indigo-950/20' : '',
                     ]"
-                    @click="entry.status === 'available' ? toggleSelect(entry.domain) : null"
                 >
-                    <!-- Checkbox (only for available) -->
-                    <div class="shrink-0 w-5 h-5">
-                        <div
-                            v-if="entry.status === 'available'"
-                            class="w-5 h-5 rounded border-2 flex items-center justify-center transition-all"
-                            :class="selected.has(entry.domain)
-                                ? 'bg-indigo-600 border-indigo-600'
-                                : 'border-gray-300 dark:border-gray-600 hover:border-indigo-400'"
-                        >
-                            <Check v-if="selected.has(entry.domain)" class="w-3 h-3 text-white" />
-                        </div>
-                        <div v-else class="w-5 h-5" />
-                    </div>
+                    <!-- Checkbox (only for available) — a real one, so the row is
+                         tabbable, Space-toggleable and announced as a checkbox -->
+                    <input
+                        v-if="entry.status === 'available'"
+                        type="checkbox"
+                        class="shrink-0 w-5 h-5 rounded accent-indigo-600 cursor-pointer"
+                        :checked="selected.has(entry.domain)"
+                        @change="toggleSelect(entry.domain)"
+                    />
+                    <span v-else class="shrink-0 w-5 h-5" aria-hidden="true" />
 
                     <!-- Domain name -->
-                    <div class="flex-1 min-w-0">
-                        <span class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate block">
-                            {{ searchedDomain }}<span class="text-indigo-600 dark:text-indigo-400 font-semibold">.{{ entry.tld }}</span>
-                        </span>
-                    </div>
+                    <span class="flex-1 min-w-0 text-sm font-medium text-gray-900 dark:text-gray-100 truncate" :title="entry.domain">
+                        {{ searchedDomain }}<span class="text-indigo-600 dark:text-indigo-400 font-semibold">.{{ entry.tld }}</span>
+                    </span>
 
-                    <!-- Status badge -->
-                    <div class="shrink-0">
-                        <span
-                            v-if="entry.status !== 'checking'"
-                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
-                            :class="statusConfig(entry.status).badgeClass"
-                        >
+                    <!-- Status badge — always occupies its final box, so rows no
+                         longer shift as results land -->
+                    <span
+                        class="shrink-0 inline-flex items-center justify-center gap-1 w-[5.5rem] h-5 rounded-full text-xs font-medium"
+                        :class="entry.status === 'checking' ? 'bg-gray-100 dark:bg-gray-800' : statusConfig(entry.status).badgeClass"
+                    >
+                        <Loader2 v-if="entry.status === 'checking'" class="w-3 h-3 animate-spin text-gray-400" />
+                        <template v-else>
                             <component :is="statusConfig(entry.status).icon" class="w-3 h-3" />
                             {{ statusConfig(entry.status).label }}
-                        </span>
-                        <Loader2 v-else class="w-4 h-4 animate-spin text-gray-400" />
-                    </div>
-                </div>
+                        </template>
+                    </span>
+                </component>
             </div>
         </div>
 
@@ -701,7 +696,7 @@ function statusConfig(status) {
                 <button
                     v-if="bulkAvailableEntries.length > 0"
                     @click="toggleSelectAllBulkAvailable"
-                    class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                    class="ui-btn ui-btn-sm ui-btn-accent"
                 >
                     {{ allBulkAvailableSelected ? 'Deselect all' : 'Select all available' }}
                 </button>
@@ -709,48 +704,41 @@ function statusConfig(status) {
 
             <!-- 3-column list grid -->
             <div class="ui-surface-light rounded-2xl p-2 sm:p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-0">
-                <div
+                <component
+                    :is="entry.status === 'available' ? 'label' : 'div'"
                     v-for="entry in bulkResultEntries"
                     :key="entry.domain"
-                    class="flex items-center gap-3 py-2.5 px-3 rounded-xl border-b border-gray-100 dark:border-gray-800/60 transition-colors"
+                    class="flex items-center gap-3 h-11 px-3 rounded-xl border-b border-gray-100 dark:border-gray-800/60 transition-colors focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-inset"
                     :class="[
                         statusConfig(entry.status).rowClass,
                         selected.has(entry.domain) ? 'bg-indigo-50 dark:bg-indigo-950/30 border-transparent' : '',
                         entry.status === 'available' ? 'cursor-pointer' : 'cursor-default',
                     ]"
-                    @click="entry.status === 'available' ? toggleSelect(entry.domain) : null"
                 >
-                    <div class="shrink-0 w-5 h-5">
-                        <div
-                            v-if="entry.status === 'available'"
-                            class="w-5 h-5 rounded border-2 flex items-center justify-center transition-all"
-                            :class="selected.has(entry.domain)
-                                ? 'bg-indigo-600 border-indigo-600'
-                                : 'border-gray-300 dark:border-gray-600 hover:border-indigo-400'"
-                        >
-                            <Check v-if="selected.has(entry.domain)" class="w-3 h-3 text-white" />
-                        </div>
-                        <div v-else class="w-5 h-5" />
-                    </div>
+                    <input
+                        v-if="entry.status === 'available'"
+                        type="checkbox"
+                        class="shrink-0 w-5 h-5 rounded accent-indigo-600 cursor-pointer"
+                        :checked="selected.has(entry.domain)"
+                        @change="toggleSelect(entry.domain)"
+                    />
+                    <span v-else class="shrink-0 w-5 h-5" aria-hidden="true" />
 
-                    <div class="flex-1 min-w-0">
-                        <span class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate block">
-                            {{ entry.domain }}
-                        </span>
-                    </div>
+                    <span class="flex-1 min-w-0 text-sm font-medium text-gray-900 dark:text-gray-100 truncate" :title="entry.domain">
+                        {{ entry.domain }}
+                    </span>
 
-                    <div class="shrink-0">
-                        <span
-                            v-if="entry.status !== 'checking'"
-                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
-                            :class="statusConfig(entry.status).badgeClass"
-                        >
+                    <span
+                        class="shrink-0 inline-flex items-center justify-center gap-1 w-[5.5rem] h-5 rounded-full text-xs font-medium"
+                        :class="entry.status === 'checking' ? 'bg-gray-100 dark:bg-gray-800' : statusConfig(entry.status).badgeClass"
+                    >
+                        <Loader2 v-if="entry.status === 'checking'" class="w-3 h-3 animate-spin text-gray-400" />
+                        <template v-else>
                             <component :is="statusConfig(entry.status).icon" class="w-3 h-3" />
                             {{ statusConfig(entry.status).label }}
-                        </span>
-                        <Loader2 v-else class="w-4 h-4 animate-spin text-gray-400" />
-                    </div>
-                </div>
+                        </template>
+                    </span>
+                </component>
             </div>
         </div>
 
