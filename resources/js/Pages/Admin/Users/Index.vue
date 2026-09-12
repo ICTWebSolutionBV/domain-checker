@@ -19,6 +19,17 @@ const rolePillClass = (r) => r === 'super_admin'
 
 const showInviteForm = ref(false)
 
+// Every router.delete/post here fired with no onFinish and no pending flag,
+// and none of the buttons was ever disabled — a double-click sent two deletes
+// or two password-reset emails.
+const busy = ref(null)
+
+function mutate(key, run) {
+    if (busy.value) return
+    busy.value = key
+    run({ preserveScroll: true, onFinish: () => { busy.value = null } })
+}
+
 const inviteForm = useForm({
     email: '',
     first_name: '',
@@ -37,31 +48,31 @@ const createInvite = () => {
 }
 
 const deleteUser = (id) => {
-    if (confirm('Are you sure you want to delete this user?')) {
-        router.delete(route('admin.users.destroy', id))
-    }
+    if (!confirm('Are you sure you want to delete this user?')) return
+    mutate(`delete-${id}`, (opts) => router.delete(route('admin.users.destroy', id), opts))
 }
 
-const revokeInvite = (id) => {
-    router.delete(route('admin.invites.destroy', id))
+// Revoking used to fire straight into router.delete with no confirmation at
+// all, while resending an invite and sending a password reset — neither of
+// which destroys anything — both asked first.
+const revokeInvite = (invite) => {
+    if (!confirm(`Revoke the invite for ${invite.email}? The link in their email stops working immediately.`)) return
+    mutate(`revoke-${invite.id}`, (opts) => router.delete(route('admin.invites.destroy', invite.id), opts))
 }
 
 const resendInvite = (invite) => {
-    if (confirm(`Resend invite to ${invite.email}? A fresh link with a new 72-hour expiry will be emailed.`)) {
-        router.post(route('admin.invites.resend', invite.id), {}, { preserveScroll: true })
-    }
+    if (!confirm(`Resend invite to ${invite.email}? A fresh link with a new 72-hour expiry will be emailed.`)) return
+    mutate(`resend-${invite.id}`, (opts) => router.post(route('admin.invites.resend', invite.id), {}, opts))
 }
 
 const sendPasswordReset = (user) => {
-    if (confirm(`Send a password reset email to ${user.email}?`)) {
-        router.post(route('admin.users.password-reset', user.id), {}, { preserveScroll: true })
-    }
+    if (!confirm(`Send a password reset email to ${user.email}?`)) return
+    mutate(`reset-${user.id}`, (opts) => router.post(route('admin.users.password-reset', user.id), {}, opts))
 }
 
 const resetTwoFactor = (user) => {
-    if (confirm(`Reset all 2FA settings for ${user.email}?\n\nThis will remove their authenticator and passkeys.`)) {
-        router.post(route('admin.users.reset-2fa', user.id), {}, { preserveScroll: true })
-    }
+    if (!confirm(`Reset all 2FA settings for ${user.email}?\n\nThis will remove their authenticator and passkeys.`)) return
+    mutate(`2fa-${user.id}`, (opts) => router.post(route('admin.users.reset-2fa', user.id), {}, opts))
 }
 
 const twoFactorSummary = (user) => {
@@ -79,14 +90,14 @@ const twoFactorSummary = (user) => {
             <div class="flex items-center justify-between mb-6">
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Users</h1>
                 <div class="flex gap-2">
-                    <button @click="showInviteForm = !showInviteForm"
+                    <button @click="showInviteForm = !showInviteForm" :aria-expanded="showInviteForm"
                         class="ui-btn ui-btn-primary">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                         Invite
                     </button>
                     <Link :href="route('admin.users.create')"
                         class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-white text-white dark:text-gray-900 font-medium rounded-xl transition-colors text-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                         Create User
                     </Link>
                 </div>
@@ -125,15 +136,17 @@ const twoFactorSummary = (user) => {
             </div>
 
             <!-- Users table -->
-            <div class="ui-card rounded-xl overflow-hidden mb-6">
+            <div class="ui-card rounded-xl mb-6">
+                <div class="overflow-x-auto rounded-xl">
                 <table class="w-full text-sm">
+                    <caption class="sr-only">User accounts</caption>
                     <thead class="bg-gray-50 dark:bg-gray-800/50">
                         <tr>
-                            <th class="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Name</th>
-                            <th class="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Email</th>
-                            <th class="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Role</th>
-                            <th class="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">2FA</th>
-                            <th class="text-right px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Actions</th>
+                            <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Name</th>
+                            <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Email</th>
+                            <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Role</th>
+                            <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">2FA</th>
+                            <th scope="col" class="text-right px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -146,22 +159,38 @@ const twoFactorSummary = (user) => {
                             </td>
                             <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">{{ twoFactorSummary(user) }}</td>
                             <td class="px-4 py-3 text-right whitespace-nowrap">
-                                <Link :href="route('admin.users.edit', user.id)" class="text-indigo-700 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 text-xs font-medium">Edit</Link>
-                                <button @click="sendPasswordReset(user)" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white text-xs font-medium mr-3">Send password reset</button>
-                                <button @click="resetTwoFactor(user)" class="text-amber-700 hover:text-amber-800 dark:text-amber-500 dark:hover:text-amber-400 text-xs font-medium">Reset 2FA</button>
-                                <button @click="deleteUser(user.id)" class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-xs font-medium">Delete</button>
+                                <div class="flex items-center justify-end gap-4">
+                                    <Link :href="route('admin.users.edit', user.id)" class="text-indigo-700 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 text-xs font-medium py-1.5">Edit</Link>
+                                    <button @click="sendPasswordReset(user)" :disabled="!!busy" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white text-xs font-medium py-1.5 disabled:opacity-50">
+                                        {{ busy === `reset-${user.id}` ? 'Sending…' : 'Send password reset' }}
+                                    </button>
+                                    <button @click="resetTwoFactor(user)" :disabled="!!busy" class="text-amber-700 hover:text-amber-800 dark:text-amber-500 dark:hover:text-amber-400 text-xs font-medium py-1.5 disabled:opacity-50">Reset 2FA</button>
+                                    <button @click="deleteUser(user.id)" :disabled="!!busy" class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-xs font-medium py-1.5 disabled:opacity-50">Delete</button>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
                 </table>
+                </div>
             </div>
 
             <!-- Pending invites -->
-            <div v-if="invites.length" class="ui-card rounded-xl overflow-hidden">
+            <div v-if="invites.length" class="ui-card rounded-xl">
                 <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
                     <h2 class="font-semibold text-gray-900 dark:text-white">Pending Invites</h2>
                 </div>
+                <div class="overflow-x-auto rounded-b-xl">
                 <table class="w-full text-sm">
+                    <caption class="sr-only">Pending invitations</caption>
+                    <thead class="bg-gray-50 dark:bg-gray-800/50">
+                        <tr>
+                            <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Email</th>
+                            <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Role</th>
+                            <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Invited by</th>
+                            <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Status</th>
+                            <th scope="col" class="text-right px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Actions</th>
+                        </tr>
+                    </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                         <tr v-for="invite in invites" :key="invite.id">
                             <td class="px-4 py-3 text-gray-900 dark:text-white">{{ invite.email }}</td>
@@ -175,14 +204,17 @@ const twoFactorSummary = (user) => {
                                 <span v-else class="text-xs text-amber-700 dark:text-amber-400">Pending</span>
                             </td>
                             <td class="px-4 py-3 text-right">
-                                <div class="flex items-center justify-end gap-3">
-                                    <button v-if="!invite.used_at && !invite.is_valid" @click="resendInvite(invite)" class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 text-xs font-medium">Resend</button>
-                                    <button v-if="invite.is_valid" @click="revokeInvite(invite.id)" class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-xs font-medium">Revoke</button>
+                                <div class="flex items-center justify-end gap-4">
+                                    <button v-if="!invite.used_at && !invite.is_valid" @click="resendInvite(invite)" :disabled="!!busy" class="text-indigo-700 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 text-xs font-medium py-1.5 disabled:opacity-50">
+                                        {{ busy === `resend-${invite.id}` ? 'Sending…' : 'Resend' }}
+                                    </button>
+                                    <button v-if="invite.is_valid" @click="revokeInvite(invite)" :disabled="!!busy" class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-xs font-medium py-1.5 disabled:opacity-50">Revoke</button>
                                 </div>
                             </td>
                         </tr>
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
     </AppLayout>

@@ -10,7 +10,9 @@ const emit = defineEmits(['check', 'reset'])
 
 const textarea = ref('')
 
-const parsedDomains = computed(() => {
+const LIMIT = 50
+
+const enteredDomains = computed(() => {
     const lines = textarea.value
         .split('\n')
         .map(l => l.trim().toLowerCase()
@@ -18,8 +20,14 @@ const parsedDomains = computed(() => {
             .replace(/^www\./i, '')
         )
         .filter(l => l.length > 0 && l.includes('.'))
-    return [...new Set(lines)].slice(0, 50)
+    return [...new Set(lines)]
 })
+
+const parsedDomains = computed(() => enteredDomains.value.slice(0, LIMIT))
+
+// Pasting 80 domains used to drop 30 of them with nothing but a count to
+// hint at it.
+const discardedCount = computed(() => Math.max(0, enteredDomains.value.length - LIMIT))
 
 function handleCheck() {
     if (!parsedDomains.value.length || props.isChecking) return
@@ -58,13 +66,18 @@ function handleKeydown(e) {
             </p>
             <button
                 v-if="textarea.trim()"
+                type="button"
                 @click="handleReset"
                 class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
             >
                 Clear
             </button>
         </div>
+        <p v-if="discardedCount" role="alert" class="mt-2 text-xs font-medium text-amber-800 dark:text-amber-300">
+            {{ discardedCount }} of {{ enteredDomains.length }} domains will not be checked — the limit is {{ LIMIT }} per run.
+        </p>
         <button
+            type="button"
             @click="handleCheck"
             :disabled="isChecking || !parsedDomains.length"
             class="ui-btn ui-btn-primary mt-3 w-full px-6 py-3.5 rounded-2xl"

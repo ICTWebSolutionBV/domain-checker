@@ -2,6 +2,7 @@
 import { ref, computed, watch, onScopeDispose } from 'vue'
 import { Head } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import { useClipboard } from '@/composables/useClipboard'
 import { Search, Loader2, Copy, Check, X, AlertTriangle, Globe2, Eye, EyeOff } from 'lucide-vue-next'
 
 const DNS_TYPES = ['MX', 'NS', 'TXT', 'A', 'AAAA', 'CNAME']
@@ -11,7 +12,7 @@ const selectedType = ref('MX')
 const loading   = ref(false)
 const error     = ref('')
 const results   = ref([])
-const copied    = ref(false)
+const { copy, copied, error: copyError } = useClipboard()
 const showGeo   = ref(true)
 // The type the rendered rows actually came from. Switching MX -> NS while the
 // MX request was in flight used to drop the NS call, land the MX response in
@@ -115,9 +116,7 @@ async function copyTable() {
         ).join(', ') || '—'
         return [row.domain, row.ip ?? '—', ...geo, recs].join('\t')
     })
-    await navigator.clipboard.writeText([header, ...rows].join('\n'))
-    copied.value = true
-    setTimeout(() => { copied.value = false }, 2000)
+    await copy([header, ...rows].join('\n'))
 }
 </script>
 
@@ -275,6 +274,9 @@ async function copyTable() {
                             </button>
                         </div>
                     </div>
+                    <p v-if="copyError" role="alert" class="mb-3 text-xs font-medium text-red-700 dark:text-red-400 text-right">
+                        {{ copyError }}
+                    </p>
 
                     <!-- Table -->
                     <div class="ui-card overflow-hidden">

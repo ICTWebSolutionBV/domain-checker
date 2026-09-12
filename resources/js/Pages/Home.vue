@@ -4,6 +4,7 @@ import { Head } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { useDomainCheck } from '@/composables/useDomainCheck'
 import { useBulkDomainCheck } from '@/composables/useBulkDomainCheck'
+import { useClipboard } from '@/composables/useClipboard'
 import BulkCheckInput from '@/Components/BulkCheckInput.vue'
 import Dialog from '@/Components/Dialog.vue'
 import FormField from '@/Components/FormField.vue'
@@ -42,9 +43,11 @@ const searchedDomain = ref('')
 const pinnedTld = ref('') // TLD the user explicitly typed (e.g. "nl" from "example.nl")
 const allTldsData = ref([])
 const loadingAllTlds = ref(false)
+const tldsError = ref('')
 const selectedGroup = ref('popular')
 const selected = ref(new Set())
-const copied = ref(false)
+const { copy, copied, error: copyError } = useClipboard()
+const clipboardText = ref('')
 const filterMode = ref('all') // 'all' | 'available' | 'taken'
 
 // Registration modal
@@ -102,10 +105,18 @@ watch(domainInput, (val) => {
     const trimmed = val.trim().toLowerCase()
         .replace(/^https?:\/\//i, '')
         .replace(/^www\./i, '')
-    // Only auto-trigger if input looks like name.tld (dot with ≥2 chars on each side)
-    if (/^[a-z0-9-]+\.[a-z]{2,}$/.test(trimmed)) {
-        autoCheckTimer = setTimeout(() => handleCheck(), 400)
-    }
+    // Only auto-trigger if the input looks like name.tld, the TLD is one we
+    // actually check, and no check is already streaming. At 400ms, typing
+    // "example.com" fired a full 46-TLD check for the ".co" it passes
+    // through, then a second one for ".com" — self-inflicted rate limiting on
+    // throttle:domain-check.
+    if (!/^[a-z0-9-]+\.[a-z.]{2,}$/.test(trimmed)) return
+    autoCheckTimer = setTimeout(() => {
+        if (isChecking.value) return
+        const { tld } = splitDomain(trimmed)
+        if (!tld || !knownTlds.value.has(tld)) return
+        handleCheck()
+    }, 700)
 })
 onUnmounted(() => {
     clearTimeout(autoCheckTimer)
@@ -259,14 +270,47 @@ async function loadAllTlds() {
         return
     }
     loadingAllTlds.value = true
+    tldsError.value = ''
     try {
         const res = await fetch(route('tlds.index'))
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const data = await res.json()
+        if (!Array.isArray(data.all) || data.all.length === 0) throw new Error('empty list')
         allTldsData.value = data.all
         selectedGroup.value = 'all'
+    } catch {
+        // Used to fail completely silently: the button kept its countless
+        // label and re-fetched on every click, with no feedback at all.
+        tldsError.value = 'Could not load the full extension list. Staying on the popular ones.'
+        selectedGroup.value = 'popular'
     } finally {
         loadingAllTlds.value = false
     }
+}
+
+// Every TLD we know about, for suffix matching. "example.co.uk" used to be
+// split on the last dot only, pinning ".uk" and searching for "example.co" —
+// so the grid answered a question about example.co.nl and example.co.com
+// while the domain the user actually asked about was never checked. Same for
+// .com.au, .co.nz and .org.uk.
+const knownTlds = computed(() => new Set([
+    ...(props.popularTlds ?? []),
+    ...allTldsData.value,
+]))
+
+function splitDomain(input) {
+    const labels = input.split('.').filter(Boolean)
+    // Longest suffix first, so a registry that really does sell a multi-label
+    // suffix wins over its last label.
+    for (let i = 1; i < labels.length; i++) {
+        const suffix = labels.slice(i).join('.')
+        if (knownTlds.value.has(suffix)) {
+            return { name: labels.slice(0, i).join('.'), tld: suffix }
+        }
+    }
+    return labels.length > 1
+        ? { name: labels.slice(0, -1).join('.'), tld: labels[labels.length - 1] }
+        : { name: labels[0] ?? '', tld: '' }
 }
 
 function handleCheck() {
@@ -274,11 +318,10 @@ function handleCheck() {
     if (!domain) return
     // Strip protocol/www prefix (e.g. https://www.example.com → example.com)
     domain = domain.replace(/^https?:\/\//i, '').replace(/^www\./i, '')
-    // If the user typed a full domain like "example.nl", extract & pin the TLD then strip it
     if (domain.includes('.')) {
-        const parts = domain.split('.')
-        pinnedTld.value = parts[parts.length - 1]
-        domain = parts.slice(0, -1).join('.')
+        const split = splitDomain(domain)
+        pinnedTld.value = split.tld
+        domain = split.name
     } else {
         pinnedTld.value = ''
     }
@@ -380,7 +423,8 @@ function openModal() {
 
 function closeModal() {
     showModal.value = false
-    copied.value = false
+    copied.value = null
+    copyError.value = ''
 }
 
 async function copyToClipboard() {
@@ -406,9 +450,8 @@ async function copyToClipboard() {
         if (r.vatId)        lines.push(`VAT ID:      ${r.vatId}`)
     }
 
-    await navigator.clipboard.writeText(lines.join('\n'))
-    copied.value = true
-    setTimeout(() => { copied.value = false }, 2000)
+    clipboardText.value = lines.join('\n')
+    await copy(clipboardText.value)
 }
 
 // One frozen object per status instead of a fresh literal per call: the
@@ -564,6 +607,10 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                         Check
                     </button>
                 </div>
+
+                <p v-if="tldsError" role="alert" class="max-w-2xl mx-auto mt-3 text-xs font-medium text-amber-800 dark:text-amber-300">
+                    {{ tldsError }}
+                </p>
 
                 <!-- TLD group selector -->
                 <div class="flex items-center justify-center gap-3 mt-4">
@@ -1058,6 +1105,21 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Clipboard fallback: on a non-secure origin
+                         navigator.clipboard does not exist, so the only way to
+                         recover 12 fields of typing is to read them here. -->
+                    <div v-if="copyError" class="px-4 sm:px-8 py-4 border-t border-hairline shrink-0">
+                        <p role="alert" class="text-xs font-medium text-red-700 dark:text-red-400 mb-2">{{ copyError }}</p>
+                        <label for="clipboard-fallback" class="sr-only">Text to copy</label>
+                        <textarea
+                            id="clipboard-fallback"
+                            :value="clipboardText"
+                            readonly
+                            rows="4"
+                            class="ui-input font-mono text-xs resize-y"
+                        ></textarea>
                     </div>
 
                     <!-- Footer -->
