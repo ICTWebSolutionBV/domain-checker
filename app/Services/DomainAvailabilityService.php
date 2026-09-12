@@ -26,15 +26,18 @@ class DomainAvailabilityService
      */
     public function streamCheck(string $domain, array $tlds, callable $onResult): void
     {
-        $domain   = strtolower(trim($domain));
-        $ttl      = config('domain-checker.cache.result_ttl', 900);
+        $domain = strtolower(trim($domain));
+        $writes = new VerdictCache($domain);
         $uncached = [];
 
-        // Emit cached results immediately
+        // Emit cached results immediately. One Cache::many() instead of one
+        // Cache::get() per TLD: against the database store the full IANA list
+        // was 1287 SELECTs (0.36 s) where a batched read is a single query.
+        $cached = $writes->many($tlds);
+
         foreach ($tlds as $tld) {
-            $cached = Cache::get("domain_check_{$domain}_{$tld}");
-            if ($cached !== null) {
-                $onResult($tld, $cached);
+            if (isset($cached[$tld])) {
+                $onResult($tld, $cached[$tld]);
             } else {
                 $uncached[] = $tld;
             }
@@ -44,40 +47,26 @@ class DomainAvailabilityService
             return;
         }
 
-        if ($this->rtr->isConfigured()) {
-            // Pipeline ALL IS commands at once — server processes in parallel
-            $fallback = $this->rtr->pipelineStream(
-                $domain,
-                $uncached,
-                function (string $tld, string $status) use ($domain, $ttl, $onResult): void {
-                    $this->cacheResult($domain, $tld, $status, $ttl);
-                    $onResult($tld, $status);
+        try {
+            $emit = function (string $tld, string $status) use ($writes, $onResult): void {
+                $writes->put($tld, $status);
+                $onResult($tld, $status);
+            };
+
+            if ($this->rtr->isConfigured()) {
+                // Pipeline ALL IS commands at once — server processes in parallel
+                $fallback = $this->rtr->pipelineStream($domain, $uncached, $emit);
+
+                // RDAP → WHOIS for TLDs the IsProxy couldn't resolve
+                if (! empty($fallback)) {
+                    $this->streamWithRdap($domain, $fallback, $emit);
                 }
-            );
-
-            // RDAP → WHOIS for TLDs the IsProxy couldn't resolve
-            if (! empty($fallback)) {
-                $this->streamWithRdap($domain, $fallback, $onResult, $ttl);
+            } else {
+                $this->streamWithRdap($domain, $uncached, $emit);
             }
-        } else {
-            $this->streamWithRdap($domain, $uncached, $onResult, $ttl);
+        } finally {
+            $writes->flush();
         }
-    }
-
-    /**
-     * Check a batch of TLDs for a given domain name (blocking, used for cache fill).
-     * Returns ['com' => 'available'|'taken'|'unknown', ...]
-     *
-     * @param  array<string>  $tlds
-     * @return array<string, string>
-     */
-    public function checkBatch(string $domain, array $tlds): array
-    {
-        $results = [];
-        $this->streamCheck($domain, $tlds, function (string $tld, string $status) use (&$results): void {
-            $results[$tld] = $status;
-        });
-        return $results;
     }
 
     // -------------------------------------------------------------------------
@@ -86,39 +75,31 @@ class DomainAvailabilityService
 
     /**
      * RDAP → WHOIS chain, emitting results via $onResult as each TLD resolves.
-     * Processes in batches of 10 for RDAP concurrency, then WHOIS for nulls.
+     *
+     * Both legs are now concurrent. RDAP runs as one connection-reusing batch
+     * instead of 129 sequential pools of ten, and the TLDs it cannot answer go
+     * into a concurrent WHOIS wave instead of being walked one socket pair at a
+     * time — which was the dominant cost of a full-list run and emitted nothing
+     * to the stream while it ran.
      *
      * @param  array<string>                   $tlds
      * @param  callable(string, string): void  $onResult
      */
-    private function streamWithRdap(string $domain, array $tlds, callable $onResult, int $ttl): void
+    private function streamWithRdap(string $domain, array $tlds, callable $onResult): void
     {
-        foreach (array_chunk($tlds, 10) as $batch) {
-            $rdapResults = $this->rdap->checkBatch($domain, $batch);
+        $chunkSize = max(1, (int) config('domain-checker.batch_size', 250));
+        $needsWhois = [];
 
-            foreach ($batch as $tld) {
-                $rdapResult = $rdapResults[$tld] ?? null;
-                $status     = $rdapResult ?? $this->whois->check($domain, $tld) ?? 'unknown';
-                $this->cacheResult($domain, $tld, $status, $ttl);
-                $onResult($tld, $status);
+        foreach (array_chunk($tlds, $chunkSize) as $batch) {
+            foreach ($this->rdap->streamCheck($domain, $batch, $onResult) as $tld) {
+                $needsWhois[] = $tld;
             }
         }
-    }
 
-    /**
-     * Cache a verdict -- but treat 'unknown' as a failure, not an answer.
-     *
-     * 'unknown' means a registry refused us, timed out or answered in a shape
-     * we could not read. Storing that for the full 15 minutes made every retry
-     * return the same non-answer instantly, so a blip during a client call
-     * lasted the whole call. A short TTL still damps hammering.
-     */
-    private function cacheResult(string $domain, string $tld, string $status, int $ttl): void
-    {
-        if ($status === 'unknown') {
-            $ttl = (int) config('domain-checker.cache.unknown_ttl', 60);
+        if ($needsWhois === []) {
+            return;
         }
 
-        Cache::put("domain_check_{$domain}_{$tld}", $status, $ttl);
+        $this->whois->streamCheck($domain, $needsWhois, $onResult);
     }
 }
