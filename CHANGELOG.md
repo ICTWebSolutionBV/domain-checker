@@ -17,7 +17,36 @@ Every push that ships production-visible changes should bump the appropriate seg
 
 ## [Unreleased]
 
-_Nothing yet._
+Everything below is on `main` and deployed, but not yet released under a
+version number. Two of these are security fixes and two are major dependency
+bumps, so the omission mattered.
+
+### Security
+- **Public-network guard on every outbound probe.** `App\Services\PublicNetworkGuard` resolves and validates each target host before `Http3CheckService`, `RedirectCheckService`, `WhoisService` and `RdapService` connect, rejecting loopback, link-local and RFC1918 destinations.
+- **TLS peer verification re-enabled** in both clients that had it off: the Realtime Register socket no longer retries with `verify_peer => false`, and `RedirectCheckService` sets `CURLOPT_SSL_VERIFYPEER => true` / `CURLOPT_SSL_VERIFYHOST => 2`. Verification had been disabled since 1.1.0 and 1.7.0 respectively.
+- **Reserved ranges that PHP's IP filter calls public are now rejected.** `FILTER_FLAG_NO_PRIV_RANGE|NO_RES_RANGE` passes shared address space, multicast, protocol assignments, benchmarking and documentation ranges, and curl really did connect to them. `PublicNetworkGuard` now carries an explicit CIDR blocklist for both families, with prefix matching on packed addresses. `100.64.0.0/10` is the one with operational teeth: carrier-grade NAT and Tailscale live there, so a visitor could have pointed the redirect, DNS or HTTP/3 tools at hosts on our own tailnet.
+- **Admin and two-factor authorization hardened**, with regression tests in `tests/Feature/AdminUserSecurityTest.php` and `tests/Feature/TwoFactorSettingsTest.php`.
+- **`league/commonmark` 2.9.0 → 2.10.0**, patching four advisories.
+- **`nanoid` → 3.3.18**, patching the infinite-loop advisory.
+
+### Added
+- **The typed extension is always checked and answered first**, shown as a headline result card above the grid even when that TLD is not in the selected list.
+- **Internationalised domain names are accepted.** Both check endpoints run input through `DomainName::toAscii()`, a no-op for ASCII and punycode otherwise, so `münchen` reaches the registry as `xn--mnchen-3ya`. The registries that sell these names (.de, .fr and .nl among them) were previously answered with a generic validation error. `ext-intl` is now declared in `composer.json`, since the code has always assumed it.
+- **First tests for the check stream**, covering the invariant the front end depends on: however a check ends, it ends with a `done` event.
+
+### Fixed
+- **WHOIS availability parsing for European ccTLDs.** Three defects on the fallback path, all reproduced against live registries: the "looks registered" heuristic ran first and matched the bare `domain:` line every registry echoes back, so .be, .de, .eu and .it reported genuinely free domains as taken; the not-found patterns were negation-blind, so "not available for registration" matched "available for registration"; and the WHOIS-server lookup let `\s+` cross a newline, so a TLD with an empty `whois:` field in its IANA record (.uk since Nominet moved to RDAP) was queried at the hostname `status:`. The IANA TLD → WHOIS server map is now cached for 24 h as well — it used to be re-queried per TLD per check, which IANA throttles; a repeat .be check drops from ~2.5 s to 0.05 s.
+- **`CURLOPT_RESOLVE` pinning for hosts with AAAA records.** One entry per resolved IP was sent, but libcurl keeps only the last entry per host:port, so every check was pinned to whatever address came last — an unbracketed, therefore malformed, IPv6 entry for any dual-stack host. The redirect checker failed outright and the HTTP/3 checker reported false negatives for essentially every modern host. All vetted addresses now go in a single comma-separated entry with IPv6 bracketed.
+- **The check stream always terminates.** A 300-character TLD travelled into the cache key and was rejected by a `varchar(255)` column, and the resulting `QueryException` surfaced inside the SSE body after the headers were sent: one result, no terminal event, a spinner that never stopped. TLD labels over 63 characters are dropped, the `tlds` parameter is capped at 20 KB, the list is deduped before the 1,500 cap so a repeated TLD cannot inflate `total`, and the stream body is wrapped so a `done` event is emitted whatever happens, after logging the exception and sending an `error` event.
+- **Bulk domains split on a known TLD.** `explode('.', $line, 2)` read `blog.google.com` as the name `blog` under the TLD `google.com` — a TLD no registry knows, which came back available. `TldRepository::splitDomain()` now matches the longest known suffix from the IANA list, falling back to the last label when that list is unreachable.
+- **`ob_flush()` is guarded in all SSE controllers.** The CLI SAPI hard-codes `output_buffering=0`, so a bare `ob_flush()` raised a warning that Laravel turned into an `ErrorException`, killing the stream after the first result under `php artisan serve`.
+- **An `unknown` verdict is no longer cached as if it were an answer.** It means a registry refused us, timed out or replied in a shape we could not read; cached for the full 15 minutes, a momentary blip lasted the rest of the client call. It now gets `domain-checker.cache.unknown_ttl` (60 s), which still damps hammering.
+- **Order and transfer forms reflow on small screens.**
+
+### Changed
+- **Shared SSE plumbing.** Both check endpoints repeated the same stream mechanics and only one had learned what the HTTP/3 endpoint already knew. They now share a `StreamsServerSentEvents` trait that opens the pipe with a ping, guarantees a terminal `done`, logs failures and sends an `error` event first. It also sets `ignore_user_abort(false)`, so an abandoned check stops burning a worker instead of running to completion for nobody.
+- **Dependency refresh** — `guzzlehttp/guzzle` 7.15.2 → **8.1.0** (major), `@simplewebauthn/browser` 13.x → **14.0.0** (major, the passkey library), `laravel/framework` → 13.30.1, `inertiajs/inertia-laravel` → 3.3.1, `phpunit/phpunit` → 13.3.2, `vite` → 8.2.2, `vue` → 3.5.42. Note that 1.10.2 below records Guzzle as staying on the 7.x line; that is no longer true.
+- **Engineering infrastructure**, with no effect on the running app: GitHub Actions CI (PHPUnit on PHP 8.4 and 8.5, Pint, the frontend build, weekly `composer audit` and `npm audit`), a tracked `deploy.sh` replacing the README's inline block, a repo-wide Pint pass, an `.env.example` that matches this application, and the `LICENSE` file the README has always linked to.
 
 ---
 
@@ -147,7 +176,7 @@ security fixes and test-tooling upgrades.
 ## [1.7.0] — 2026-06-02
 
 ### Added
-- **Redirect Checker tool.** New `/redirects` page traces the full redirect chain of any URL — shows each hop with its status code, location header, and timing. Powered by a dedicated `RedirectCheckService` with configurable max-hops and timeout. Linked from the main navigation.
+- **Redirect Checker tool.** New `/redirect` page traces the full redirect chain of any URL — shows each hop with its status code, `Location` header, and timing. Powered by a dedicated `RedirectCheckService`, hard-capped at 20 hops and a 15 s timeout (`private const`, not configurable), with selectable user agents. Linked from the main navigation.
 
 ---
 
@@ -285,7 +314,7 @@ Drops the `ip_lookups` table added in 1.4.0.
 - **IP Lookup** — new `/ip` page that geolocates any public IPv4/IPv6 address or hostname using [ip-api.com](https://ip-api.com). Shows country, region, city, postal code, coordinates, timezone, currency, ISP, organization, ASN, AS name, and reverse DNS.
 - **Signals** — flags the IP as mobile, proxy/VPN/Tor, or hosting/datacenter.
 - **Embedded map** — OpenStreetMap preview for the IP's coordinates.
-- **Lookup history** — the five most recent distinct IPs looked up globally are shown below the search, clickable to re-run the lookup.
+- **Lookup history** — the five most recent distinct IPs looked up globally are shown below the search, clickable to re-run the lookup. _(Removed in 1.4.1: history moved to browser-local storage.)_
 - **IP Lookup nav link** — "IP Lookup" entry in the top navigation bar, visible to all visitors.
 - **Rate limiter `ip-lookup`** — 45 requests/minute for authenticated users, 60 requests/hour for guests.
 
