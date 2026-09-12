@@ -439,7 +439,7 @@ onMounted(() => {
                                 <span v-else>—</span>
                             </div>
                         </div>
-                        <div class="hidden sm:block text-xs text-gray-400 dark:text-gray-500 shrink-0">
+                        <div class="hidden sm:block text-xs text-gray-500 dark:text-gray-400 shrink-0">
                             {{ formatRelative(entry.looked_up_at) }}
                         </div>
                         <ArrowRight class="w-4 h-4 text-gray-400 shrink-0" />

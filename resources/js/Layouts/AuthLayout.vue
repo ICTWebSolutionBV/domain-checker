@@ -33,7 +33,7 @@ defineProps({
         </div>
 
         <footer class="py-4">
-            <p class="text-center text-xs text-gray-600">
+            <p class="text-center text-xs text-gray-400">
                 &copy; {{ new Date().getFullYear() }} ICTWebSolution B.V.
             </p>
         </footer>

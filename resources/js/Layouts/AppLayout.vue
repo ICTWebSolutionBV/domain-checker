@@ -78,7 +78,7 @@ onUnmounted(() => {
                         <Globe2 class="w-4 h-4" />
                         <span>DNS</span>
                     </Link>
-                    <Link :href="route('transfer')" class="relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 shadow-sm shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all" title="Transfer your domains to us">
+                    <Link :href="route('transfer')" class="relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-700 hover:bg-emerald-800 shadow-sm shadow-emerald-700/30 hover:shadow-emerald-700/50 transition-all" title="Transfer your domains to us">
                         <ArrowRightLeft class="w-4 h-4" />
                         <span>Transfer</span>
                         <span class="absolute -top-1 -right-1 w-2 h-2 bg-amber-400 rounded-full ring-2 ring-white dark:ring-gray-950 animate-pulse" aria-hidden="true"></span>
@@ -174,7 +174,7 @@ onUnmounted(() => {
                     </Link>
 
                     <!-- Transfer CTA -->
-                    <Link :href="route('transfer')" class="relative flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-600 shadow-sm shadow-emerald-500/30 active:scale-[0.98] transition-transform mt-1">
+                    <Link :href="route('transfer')" class="relative flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-sm font-semibold text-white bg-emerald-700 shadow-sm shadow-emerald-700/30 active:scale-[0.98] transition-transform mt-1">
                         <ArrowRightLeft class="w-5 h-5 shrink-0" />
                         Transfer Domains
                         <span class="absolute top-2.5 right-3 w-2 h-2 bg-amber-400 rounded-full animate-pulse" aria-hidden="true"></span>
@@ -232,7 +232,7 @@ onUnmounted(() => {
         <!-- Footer -->
         <footer class="border-t border-hairline mt-16">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                <p class="text-center text-xs text-gray-500 dark:text-gray-600">
+                <p class="text-center text-xs text-gray-500 dark:text-gray-400">
                     &copy; {{ new Date().getFullYear() }} <a href="https://ictwebsolution.nl" target="_blank" rel="noopener noreferrer" class="font-medium hover:text-gray-900 dark:hover:text-gray-400 transition-colors">ICTWebSolution B.V.</a> — All Rights Reserved
                 </p>
             </div>

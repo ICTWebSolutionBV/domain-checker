@@ -258,7 +258,7 @@ const pendingKeys = computed(() => {
             <div v-if="checks.length || verdict" class="space-y-4">
 
                 <!-- Checked URL -->
-                <p v-if="displayUrl" role="status" class="text-xs text-gray-500 dark:text-gray-500 text-center">
+                <p v-if="displayUrl" role="status" class="text-xs text-gray-500 dark:text-gray-400 text-center">
                     {{ isChecking ? 'Checking' : 'Checked' }} <span class="font-mono text-gray-600 dark:text-gray-400">{{ displayUrl }}</span>
                 </p>
 
@@ -329,13 +329,13 @@ const pendingKeys = computed(() => {
                     <div class="rounded-2xl border border-sky-200 dark:border-sky-900 bg-gradient-to-br from-sky-50 to-white dark:from-sky-950/40 dark:to-gray-900 p-4">
                         <p class="text-[11px] font-bold uppercase tracking-[0.15em] text-sky-600 dark:text-sky-400">Packet RX</p>
                         <p class="mt-2 font-mono text-sm text-gray-900 dark:text-white">
-                            {{ serverInfo.info.quic.packet_rx_ms ?? '—' }}<span class="text-gray-400 dark:text-gray-500 text-xs ml-1">ms</span>
+                            {{ serverInfo.info.quic.packet_rx_ms ?? '—' }}<span class="text-gray-500 dark:text-gray-400 text-xs ml-1">ms</span>
                         </p>
                     </div>
                     <div class="rounded-2xl border border-sky-200 dark:border-sky-900 bg-gradient-to-br from-sky-50 to-white dark:from-sky-950/40 dark:to-gray-900 p-4">
                         <p class="text-[11px] font-bold uppercase tracking-[0.15em] text-sky-600 dark:text-sky-400">Handshake Done</p>
                         <p class="mt-2 font-mono text-sm text-gray-900 dark:text-white">
-                            {{ serverInfo.info.quic.handshake_done_ms ?? '—' }}<span class="text-gray-400 dark:text-gray-500 text-xs ml-1">ms</span>
+                            {{ serverInfo.info.quic.handshake_done_ms ?? '—' }}<span class="text-gray-500 dark:text-gray-400 text-xs ml-1">ms</span>
                         </p>
                     </div>
                 </div>
@@ -347,7 +347,7 @@ const pendingKeys = computed(() => {
                             <p class="ui-section-title">
                                 {{ serverInfo.transport === 'HTTP/3' ? 'HTTP/3 Server Information' : 'Server Information' }}
                             </p>
-                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                                 Observed over {{ serverInfo.info.http_version_label }}
                             </p>
                         </div>
@@ -443,7 +443,7 @@ const pendingKeys = computed(() => {
             </div>
 
             <!-- Empty state -->
-            <div v-else-if="!isChecking" class="text-center py-12 text-gray-400 dark:text-gray-600">
+            <div v-else-if="!isChecking" class="text-center py-12 text-gray-500 dark:text-gray-400">
                 <svg class="w-12 h-12 mx-auto mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                 </svg>

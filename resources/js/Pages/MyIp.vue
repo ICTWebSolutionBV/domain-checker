@@ -203,7 +203,7 @@ onMounted(() => {
                                 </div>
                             </div>
                         </div>
-                        <p class="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1.5">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                             <span class="w-1.5 h-1.5 rounded-full" :class="isIPv6 ? 'bg-purple-500' : 'bg-emerald-500'" />
                             Connected via {{ ipVersion }} — geolocation is for this connection
                         </p>

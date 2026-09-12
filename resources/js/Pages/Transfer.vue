@@ -273,7 +273,7 @@ const showPreview = ref(false)
                 <div class="ui-card-header flex items-center gap-2 px-5 py-3.5">
                     <UserCircle class="w-4 h-4 text-indigo-500 shrink-0" />
                     <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Your details</h2>
-                    <span class="text-xs text-gray-500 dark:text-gray-500 truncate">(optional — included at the top of the copied request)</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 truncate">(optional — included at the top of the copied request)</span>
                 </div>
                 <div class="p-5">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -320,7 +320,7 @@ const showPreview = ref(false)
                                 />
                             </label>
 
-                            <span class="text-xs font-medium text-gray-500 dark:text-gray-500 shrink-0 hidden sm:inline ml-1 mr-2">
+                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0 hidden sm:inline ml-1 mr-2">
                                 {{ block.domains.length }} domain{{ block.domains.length === 1 ? '' : 's' }}
                             </span>
                         </div>

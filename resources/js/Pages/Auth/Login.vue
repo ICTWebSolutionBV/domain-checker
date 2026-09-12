@@ -74,7 +74,7 @@ onMounted(() => {
                     <div class="w-full border-t border-gray-200 dark:border-gray-700" />
                 </div>
                 <div class="relative flex justify-center text-xs">
-                    <span class="bg-white dark:bg-gray-900 px-3 text-gray-400">or continue with password</span>
+                    <span class="bg-white dark:bg-gray-900 px-3 text-gray-500 dark:text-gray-400">or continue with password</span>
                 </div>
             </div>
         </div>

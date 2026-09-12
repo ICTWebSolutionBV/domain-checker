@@ -50,7 +50,7 @@ function handleKeydown(e) {
             class="ui-input px-4 py-3.5 rounded-2xl font-mono shadow-card resize-none dark:bg-gray-900"
         />
         <div class="flex items-center justify-between mt-2">
-            <p class="text-xs text-gray-400 dark:text-gray-500">
+            <p class="text-xs text-gray-500 dark:text-gray-400">
                 One domain per line · up to 50 · Ctrl+Enter to check
                 <span v-if="parsedDomains.length" class="text-gray-600 dark:text-gray-400 font-medium">
                     · {{ parsedDomains.length }} {{ parsedDomains.length === 1 ? 'domain' : 'domains' }} entered

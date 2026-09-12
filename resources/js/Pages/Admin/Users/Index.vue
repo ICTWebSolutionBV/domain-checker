@@ -146,10 +146,10 @@ const twoFactorSummary = (user) => {
                             </td>
                             <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">{{ twoFactorSummary(user) }}</td>
                             <td class="px-4 py-3 text-right whitespace-nowrap">
-                                <Link :href="route('admin.users.edit', user.id)" class="text-indigo-600 hover:text-indigo-700 text-xs font-medium mr-3">Edit</Link>
+                                <Link :href="route('admin.users.edit', user.id)" class="text-indigo-700 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 text-xs font-medium">Edit</Link>
                                 <button @click="sendPasswordReset(user)" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white text-xs font-medium mr-3">Send password reset</button>
-                                <button @click="resetTwoFactor(user)" class="text-amber-600 hover:text-amber-700 text-xs font-medium mr-3">Reset 2FA</button>
-                                <button @click="deleteUser(user.id)" class="text-red-500 hover:text-red-700 text-xs font-medium">Delete</button>
+                                <button @click="resetTwoFactor(user)" class="text-amber-700 hover:text-amber-800 dark:text-amber-500 dark:hover:text-amber-400 text-xs font-medium">Reset 2FA</button>
+                                <button @click="deleteUser(user.id)" class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-xs font-medium">Delete</button>
                             </td>
                         </tr>
                     </tbody>
@@ -166,18 +166,18 @@ const twoFactorSummary = (user) => {
                         <tr v-for="invite in invites" :key="invite.id">
                             <td class="px-4 py-3 text-gray-900 dark:text-white">{{ invite.email }}</td>
                             <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ roleLabel(invite.role) }}</td>
-                            <td class="px-4 py-3 text-xs text-gray-400 dark:text-gray-500">
+                            <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
                                 Invited by {{ invite.inviter ?? 'system' }}
                             </td>
                             <td class="px-4 py-3">
-                                <span v-if="invite.used_at" class="text-xs text-green-600">Used</span>
-                                <span v-else-if="!invite.is_valid" class="text-xs text-red-500">Expired</span>
-                                <span v-else class="text-xs text-yellow-600">Pending</span>
+                                <span v-if="invite.used_at" class="text-xs text-emerald-700 dark:text-emerald-400">Used</span>
+                                <span v-else-if="!invite.is_valid" class="text-xs text-red-600 dark:text-red-400">Expired</span>
+                                <span v-else class="text-xs text-amber-700 dark:text-amber-400">Pending</span>
                             </td>
                             <td class="px-4 py-3 text-right">
                                 <div class="flex items-center justify-end gap-3">
                                     <button v-if="!invite.used_at && !invite.is_valid" @click="resendInvite(invite)" class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 text-xs font-medium">Resend</button>
-                                    <button v-if="invite.is_valid" @click="revokeInvite(invite.id)" class="text-red-500 hover:text-red-700 text-xs font-medium">Revoke</button>
+                                    <button v-if="invite.is_valid" @click="revokeInvite(invite.id)" class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-xs font-medium">Revoke</button>
                                 </div>
                             </td>
                         </tr>
