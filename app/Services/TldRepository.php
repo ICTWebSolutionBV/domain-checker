@@ -37,6 +37,46 @@ class TldRepository
         });
     }
 
+    /**
+     * Split "blog.google.com" into name "blog.google" + TLD "com".
+     *
+     * explode('.', $d, 2) used to be enough for "example.nl", but for any
+     * deeper name it produced TLD "google.com", which no registry knows and
+     * which therefore came back as available.
+     *
+     * @return array{name: string, tld: string}|null
+     */
+    public function splitDomain(string $fullDomain): ?array
+    {
+        $labels = explode('.', strtolower(trim($fullDomain, '. ')));
+
+        if (count($labels) < 2) {
+            return null;
+        }
+
+        $known = array_flip($this->getAllTlds() ?: $this->getPopularTlds());
+
+        // Longest suffix first: "google.com" before "com", so a registry that
+        // really does sell a multi-label suffix would win.
+        for ($i = 1; $i < count($labels); $i++) {
+            $candidate = implode('.', array_slice($labels, $i));
+
+            if (isset($known[$candidate])) {
+                return [
+                    'name' => implode('.', array_slice($labels, 0, $i)),
+                    'tld' => $candidate,
+                ];
+            }
+        }
+
+        // Unknown suffix (or the IANA list is unreachable): fall back to the
+        // last label, which is at least a plausible TLD.
+        return [
+            'name' => implode('.', array_slice($labels, 0, -1)),
+            'tld' => (string) end($labels),
+        ];
+    }
+
     public function getRdapBootstrap(): array
     {
         return Cache::remember('rdap_bootstrap', config('domain-checker.cache.bootstrap_ttl'), function () {
