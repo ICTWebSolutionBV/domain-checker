@@ -43,6 +43,19 @@ class TwoFactorChallengeTest extends TestCase
         $this->assertSame(['code-two'], $remaining);
     }
 
+    public function test_a_recovery_code_is_accepted_in_the_case_the_user_typed(): void
+    {
+        $user = $this->userWithTwoFactor((new Google2FA)->generateSecretKey(), ['AAAAA11111-BBBBB22222']);
+
+        // The codes are shown uppercase; nobody should be locked out for
+        // pasting them back in lowercase.
+        $this->withSession(['login.id' => $user->id])
+            ->post(route('two-factor.verify'), ['code' => 'aaaaa11111-bbbbb22222'])
+            ->assertRedirect();
+
+        $this->assertAuthenticatedAs($user);
+    }
+
     public function test_a_spent_recovery_code_is_refused(): void
     {
         $user = $this->userWithTwoFactor((new Google2FA)->generateSecretKey(), ['code-two']);
