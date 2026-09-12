@@ -16,6 +16,9 @@ class SecurityHardeningTest extends TestCase
     {
         $response = $this->get('/');
 
+        // Assert the status as well: headers are present on a 500 too, so this
+        // test used to pass against a page that did not render at all.
+        $response->assertOk();
         $response->assertHeader('X-Frame-Options', 'DENY');
         $response->assertHeader('X-Content-Type-Options', 'nosniff');
         // Without this, a full URL -- including a reset token -- travels in the
