@@ -14,21 +14,21 @@ return [
 
     'cache' => [
         'bootstrap_ttl' => 86400,   // 24 hours
-        'tld_list_ttl'  => 86400,   // 24 hours
-        'result_ttl'    => 900,     // 15 minutes
+        'tld_list_ttl' => 86400,   // 24 hours
+        'result_ttl' => 900,     // 15 minutes
         'whois_server_ttl' => 86400, // 24 hours — IANA's TLD -> WHOIS server map
-        'unknown_ttl'   => 60,      // a non-answer is worth retrying soon
+        'unknown_ttl' => 60,      // a non-answer is worth retrying soon
     ],
 
     'realtime_register' => [
         'api_key' => env('REALTIME_REGISTER_API_KEY', ''),
-        'host'    => env('REALTIME_REGISTER_HOST', 'is.yoursrs.com'),
-        'port'    => env('REALTIME_REGISTER_PORT', 2001),
+        'host' => env('REALTIME_REGISTER_HOST', 'is.yoursrs.com'),
+        'port' => env('REALTIME_REGISTER_PORT', 2001),
     ],
 
     'timeouts' => [
-        'rdap'              => 5,
-        'whois'             => 8,
+        'rdap' => 5,
+        'whois' => 8,
         'realtime_register' => 10,  // includes TLS handshake + batch
     ],
 
@@ -51,8 +51,11 @@ return [
      * port-43 socket per TLD, so it takes a lower one.
      */
     'concurrency' => [
-        'rdap'  => (int) env('DOMAIN_CHECKER_RDAP_CONCURRENCY', 64),
+        'rdap' => (int) env('DOMAIN_CHECKER_RDAP_CONCURRENCY', 64),
         'whois' => (int) env('DOMAIN_CHECKER_WHOIS_CONCURRENCY', 24),
+        // Per RDAP host, not just in total: one endpoint answers for whole
+        // TLD families, and a burst aimed at a single host comes back 429.
+        'rdap_per_host' => (int) env('DOMAIN_CHECKER_RDAP_HOST_CONCURRENCY', 8),
     ],
 
     /*

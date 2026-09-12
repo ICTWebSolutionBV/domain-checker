@@ -89,10 +89,49 @@ class WhoisServiceTest extends TestCase
         $this->assertSame('unknown', $this->parseAvailability(''));
     }
 
-    private function parseAvailability(string $response): string
+    /**
+     * Observed in production traffic: a free .es domain came back as *taken*.
+     * whois.nic.es answers an unauthorised query with ~2 KB of conditions of
+     * use instead of domain data, and prose that long trips a "looks
+     * registered" pattern. A registry answering about a domain always echoes
+     * the name it was asked about, so no echo means no verdict.
+     *
+     * The fixture below is synthetic -- the registry blocked further queries
+     * before the exact offending line was captured -- but it encodes the rule:
+     * registration-shaped text about something other than our domain is not
+     * evidence about our domain.
+     */
+    public function test_a_terms_of_use_notice_is_not_read_as_a_registration(): void
+    {
+        $notice = <<<'TXT'
+            Conditions of use for the whois service via port 43 for .es domains
+
+            Access will only be enabled for IP addresses authorised by Red.es.
+            Registrar access is subject to the conditions published by Red.es.
+            The service will be limited to the data established by Red.es.
+            TXT;
+
+        $this->assertSame('unknown', $this->parseAvailability($notice, 'kzq-1789223358.es'));
+    }
+
+    public function test_a_registration_that_echoes_the_domain_is_still_taken(): void
+    {
+        $body = "Domain: google.be\nStatus: NOT AVAILABLE\nRegistered: Tue Dec 12 2000\n";
+
+        $this->assertSame('taken', $this->parseAvailability($body, 'google.be'));
+    }
+
+    public function test_an_answer_about_a_different_domain_is_not_our_verdict(): void
+    {
+        $body = "Domain: someone-else.be\nRegistrant: Someone Else\n";
+
+        $this->assertSame('unknown', $this->parseAvailability($body, 'ours.be'));
+    }
+
+    private function parseAvailability(string $response, string $queriedDomain = ''): string
     {
         $method = new ReflectionMethod(WhoisService::class, 'parseAvailability');
 
-        return $method->invoke(new WhoisService, $response);
+        return $method->invoke(new WhoisService, $response, $queriedDomain);
     }
 }
