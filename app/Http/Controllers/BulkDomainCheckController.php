@@ -55,17 +55,35 @@ class BulkDomainCheckController extends Controller
                     continue;
                 }
 
+                // A pasted line can be a subdomain (blog.google.com, or a URL
+                // the stripping above did not fully reduce). Nobody can
+                // register a subdomain, and a registry has no record of one
+                // either, so asking about it literally returns "available" --
+                // the worst possible answer. Ask about the registrable domain
+                // and say which one we asked about.
+                $nameLabels = explode('.', $split['name']);
+                $registrable = end($nameLabels).'.'.$split['tld'];
+
                 $this->availability->streamCheck(
-                    $split['name'],
+                    (string) end($nameLabels),
                     [$split['tld']],
-                    function (string $resolvedTld, string $status) use ($fullDomain, &$checked, $total): void {
+                    function (string $resolvedTld, string $status) use ($fullDomain, $registrable, &$checked, $total): void {
                         $checked++;
-                        $this->push('data: '.json_encode([
+
+                        $payload = [
+                            // Keyed on the line the client sent: the front end
+                            // maps results back by that exact string.
                             'domain' => $fullDomain,
                             'status' => $status,
                             'checked' => $checked,
                             'total' => $total,
-                        ]));
+                        ];
+
+                        if ($registrable !== $fullDomain) {
+                            $payload['checked_domain'] = $registrable;
+                        }
+
+                        $this->push('data: '.json_encode($payload));
                     }
                 );
             }
