@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onScopeDispose } from 'vue'
 import { Head } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
@@ -17,6 +17,9 @@ const loading       = ref(false)
 const error         = ref('')
 const expandedHops  = ref(new Set())
 
+let abortController = null
+onScopeDispose(() => abortController?.abort())
+
 // ── Grouped user-agent options ───────────────────────────────────────────
 
 const groupedAgents = computed(() => {
@@ -32,7 +35,11 @@ const groupedAgents = computed(() => {
 
 async function runCheck() {
     const url = urlInput.value.trim()
-    if (!url || loading.value) return
+    if (!url) return
+
+    abortController?.abort()
+    abortController = new AbortController()
+    const signal = abortController.signal
 
     loading.value  = true
     error.value    = ''
@@ -49,6 +56,7 @@ async function runCheck() {
         const token = document.querySelector('meta[name="csrf-token"]')?.content
         const res = await fetch('/redirect/check', {
             method: 'POST',
+            signal,
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
@@ -76,9 +84,10 @@ async function runCheck() {
 
         hops.value = body.hops ?? []
     } catch (e) {
-        error.value = e.message || 'Network error.'
+        if (e.name === 'AbortError') return
+        error.value = 'Could not reach the redirect checker. Please try again.'
     } finally {
-        loading.value = false
+        if (!signal.aborted) loading.value = false
     }
 }
 
@@ -269,7 +278,7 @@ onMounted(() => {
                             </button>
 
                             <!-- Expanded headers -->
-                            <div v-if="expandedHops.has(index) && hop.headers.length" class="border-t border-gray-100 dark:border-gray-800">
+                            <div v-if="expandedHops.has(index) && hop.headers?.length" class="border-t border-gray-100 dark:border-gray-800">
                                 <!-- Terminal-style header dump -->
                                 <div class="bg-gray-950 px-4 py-3 font-mono text-xs leading-relaxed overflow-x-auto">
                                     <p class="text-emerald-400 mb-2">>>> {{ hop.url }}</p>

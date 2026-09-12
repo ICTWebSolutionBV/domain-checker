@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onScopeDispose } from 'vue'
 import { Head } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
@@ -18,6 +18,10 @@ const isChecking = ref(false)
 const error      = ref('')
 
 let abortController = null
+
+// Leaving the page mid-check used to keep the stream, and one server worker,
+// alive until the browser gave up on it.
+onScopeDispose(() => abortController?.abort())
 
 // ── Check keys in display order ──────────────────────────────────────────
 
