@@ -9,8 +9,18 @@ import BulkCheckInput from '@/Components/BulkCheckInput.vue'
 import Dialog from '@/Components/Dialog.vue'
 import FormField from '@/Components/FormField.vue'
 import {
-    Search, Globe, CheckCircle, XCircle, HelpCircle, Loader2,
-    Copy, Check, ClipboardList, X, UserCircle, Building2
+    Search,
+    Globe,
+    CheckCircle,
+    XCircle,
+    HelpCircle,
+    Loader2,
+    Copy,
+    Check,
+    ClipboardList,
+    X,
+    UserCircle,
+    Building2,
 } from '@lucide/vue'
 
 const props = defineProps({
@@ -34,7 +44,8 @@ const mode = ref('single') // 'single' | 'bulk'
 
 const ERROR_MESSAGES = {
     rate_limited: 'Too many requests — please wait a moment before checking again.',
-    incomplete: 'The connection dropped before every extension was checked — the unfinished ones are marked unknown. Please try again.',
+    incomplete:
+        'The connection dropped before every extension was checked — the unfinished ones are marked unknown. Please try again.',
     error: 'Something went wrong. Please try again.',
 }
 
@@ -68,9 +79,7 @@ const reg = ref({
     vatId: '',
 })
 
-const currentTlds = computed(() =>
-    selectedGroup.value === 'popular' ? props.popularTlds : allTldsData.value
-)
+const currentTlds = computed(() => (selectedGroup.value === 'popular' ? props.popularTlds : allTldsData.value))
 
 // The TLD the user explicitly typed must always be checked, even when it is not
 // part of the selected group — otherwise the one domain they actually asked
@@ -79,30 +88,37 @@ const currentTlds = computed(() =>
 const tldsToCheck = computed(() =>
     pinnedTld.value && !currentTlds.value.includes(pinnedTld.value)
         ? [pinnedTld.value, ...currentTlds.value]
-        : currentTlds.value
+        : currentTlds.value,
 )
 
 // Auto-select the pinned TLD as soon as it comes back "available".
 // This used to be a deep watcher over the whole results map: with 1287 keys
 // Vue re-traversed all of them on every one of the 1287 stream events, around
 // 1.65M property reads, to answer a question about a single key.
-watch(() => pinnedTld.value && results[pinnedTld.value], (status) => {
-    if (status !== 'available') return
-    const domain = `${searchedDomain.value}.${pinnedTld.value}`
-    if (selected.value.has(domain)) return
-    const next = new Set(selected.value)
-    next.add(domain)
-    selected.value = next
-})
+watch(
+    () => pinnedTld.value && results[pinnedTld.value],
+    (status) => {
+        if (status !== 'available') return
+        const domain = `${searchedDomain.value}.${pinnedTld.value}`
+        if (selected.value.has(domain)) return
+        const next = new Set(selected.value)
+        next.add(domain)
+        selected.value = next
+    },
+)
 
 // Clear error when user starts typing again
-watch(domainInput, () => { if (error.value) error.value = null })
+watch(domainInput, () => {
+    if (error.value) error.value = null
+})
 
 // Auto-check when user types a full domain like "example.nl"
 let autoCheckTimer = null
 watch(domainInput, (val) => {
     clearTimeout(autoCheckTimer)
-    const trimmed = val.trim().toLowerCase()
+    const trimmed = val
+        .trim()
+        .toLowerCase()
         .replace(/^https?:\/\//i, '')
         .replace(/^www\./i, '')
     // Only auto-trigger if the input looks like name.tld, the TLD is one we
@@ -130,24 +146,24 @@ const resultEntries = computed(() =>
         tld,
         status,
         domain: `${searchedDomain.value}.${tld}`,
-    }))
+    })),
 )
 
 // Sort so the pinned TLD (explicitly typed) always appears first
 const sortedEntries = computed(() => {
     if (!pinnedTld.value) return resultEntries.value
-    const pinned = resultEntries.value.find(e => e.tld === pinnedTld.value)
-    const rest = resultEntries.value.filter(e => e.tld !== pinnedTld.value)
+    const pinned = resultEntries.value.find((e) => e.tld === pinnedTld.value)
+    const rest = resultEntries.value.filter((e) => e.tld !== pinnedTld.value)
     return pinned ? [pinned, ...rest] : resultEntries.value
 })
 
 const filteredEntries = computed(() => {
-    if (filterMode.value === 'available') return sortedEntries.value.filter(e => e.status === 'available')
-    if (filterMode.value === 'taken') return sortedEntries.value.filter(e => e.status === 'taken')
+    if (filterMode.value === 'available') return sortedEntries.value.filter((e) => e.status === 'available')
+    if (filterMode.value === 'taken') return sortedEntries.value.filter((e) => e.status === 'taken')
     return sortedEntries.value
 })
 
-const availableEntries = computed(() => resultEntries.value.filter(e => e.status === 'available'))
+const availableEntries = computed(() => resultEntries.value.filter((e) => e.status === 'available'))
 
 // The exact domain the user typed, surfaced as a headline above the grid so the
 // answer to "is bergop.nu taken?" never has to be hunted for among 46 cards.
@@ -201,7 +217,9 @@ const pinnedSummary = computed(() => {
 
 function countStatuses(map) {
     const counts = { available: 0, taken: 0, unknown: 0, checking: 0 }
-    Object.values(map).forEach(s => { counts[s] = (counts[s] || 0) + 1 })
+    Object.values(map).forEach((s) => {
+        counts[s] = (counts[s] || 0) + 1
+    })
     return counts
 }
 
@@ -234,23 +252,20 @@ function announceProgress() {
     liveMessage.value = `Finished checking ${subject}. ${counts.available} available, ${counts.taken} taken, ${counts.unknown} unknown.`
 }
 
-watch(
-    [checkedCount, isChecking, bulkCheckedCount, bulkIsChecking, mode],
-    () => {
-        const checking = mode.value === 'single' ? isChecking.value : bulkIsChecking.value
-        if (!checking) {
-            clearTimeout(liveThrottle)
-            liveThrottle = null
-            announceProgress()
-            return
-        }
-        if (liveThrottle) return
-        liveThrottle = setTimeout(() => {
-            liveThrottle = null
-            announceProgress()
-        }, 2500)
+watch([checkedCount, isChecking, bulkCheckedCount, bulkIsChecking, mode], () => {
+    const checking = mode.value === 'single' ? isChecking.value : bulkIsChecking.value
+    if (!checking) {
+        clearTimeout(liveThrottle)
+        liveThrottle = null
+        announceProgress()
+        return
     }
-)
+    if (liveThrottle) return
+    liveThrottle = setTimeout(() => {
+        liveThrottle = null
+        announceProgress()
+    }, 2500)
+})
 
 const progressPercent = computed(() => {
     if (totalCount.value === 0) return 0
@@ -259,9 +274,8 @@ const progressPercent = computed(() => {
 
 const selectedList = computed(() => Array.from(selected.value))
 
-const allAvailableSelected = computed(() =>
-    availableEntries.value.length > 0 &&
-    availableEntries.value.every(e => selected.value.has(e.domain))
+const allAvailableSelected = computed(
+    () => availableEntries.value.length > 0 && availableEntries.value.every((e) => selected.value.has(e.domain)),
 )
 
 async function loadAllTlds() {
@@ -293,10 +307,7 @@ async function loadAllTlds() {
 // so the grid answered a question about example.co.nl and example.co.com
 // while the domain the user actually asked about was never checked. Same for
 // .com.au, .co.nz and .org.uk.
-const knownTlds = computed(() => new Set([
-    ...(props.popularTlds ?? []),
-    ...allTldsData.value,
-]))
+const knownTlds = computed(() => new Set([...(props.popularTlds ?? []), ...allTldsData.value]))
 
 function splitDomain(input) {
     const labels = input.split('.').filter(Boolean)
@@ -367,29 +378,29 @@ const bulkResultEntries = computed(() =>
         // domain (blog.google.com → google.com); without it the row just says
         // "taken" about a name the registry has never heard of.
         checkedDomain: bulkCheckedDomains[domain] ?? null,
-    }))
+    })),
 )
 
-const bulkAvailableEntries = computed(() => bulkResultEntries.value.filter(e => e.status === 'available'))
+const bulkAvailableEntries = computed(() => bulkResultEntries.value.filter((e) => e.status === 'available'))
 
 const bulkProgressPercent = computed(() => {
     if (bulkTotalCount.value === 0) return 0
     return Math.round((bulkCheckedCount.value / bulkTotalCount.value) * 100)
 })
 
-const allBulkAvailableSelected = computed(() =>
-    bulkAvailableEntries.value.length > 0 &&
-    bulkAvailableEntries.value.every(e => selected.value.has(e.domain))
+const allBulkAvailableSelected = computed(
+    () =>
+        bulkAvailableEntries.value.length > 0 && bulkAvailableEntries.value.every((e) => selected.value.has(e.domain)),
 )
 
 function toggleSelectAllBulkAvailable() {
     if (allBulkAvailableSelected.value) {
         const next = new Set(selected.value)
-        bulkAvailableEntries.value.forEach(e => next.delete(e.domain))
+        bulkAvailableEntries.value.forEach((e) => next.delete(e.domain))
         selected.value = next
     } else {
         const next = new Set(selected.value)
-        bulkAvailableEntries.value.forEach(e => next.add(e.domain))
+        bulkAvailableEntries.value.forEach((e) => next.add(e.domain))
         selected.value = next
     }
 }
@@ -404,11 +415,11 @@ function toggleSelect(domain) {
 function toggleSelectAllAvailable() {
     if (allAvailableSelected.value) {
         const next = new Set(selected.value)
-        availableEntries.value.forEach(e => next.delete(e.domain))
+        availableEntries.value.forEach((e) => next.delete(e.domain))
         selected.value = next
     } else {
         const next = new Set(selected.value)
-        availableEntries.value.forEach(e => next.add(e.domain))
+        availableEntries.value.forEach((e) => next.add(e.domain))
         selected.value = next
     }
 }
@@ -432,22 +443,22 @@ async function copyToClipboard() {
     const lines = []
 
     lines.push('── Selected domains ──')
-    selectedList.value.forEach(d => lines.push(d))
+    selectedList.value.forEach((d) => lines.push(d))
 
-    const hasDetails = Object.values(r).some(v => v.trim())
+    const hasDetails = Object.values(r).some((v) => v.trim())
     if (hasDetails) {
         lines.push('')
         lines.push('── Registration details ──')
         if (r.existingAccount) lines.push(`Account:     ${r.existingAccount}`)
-        if (r.companyName)  lines.push(`Company:     ${r.companyName}`)
+        if (r.companyName) lines.push(`Company:     ${r.companyName}`)
         if (r.firstName || r.lastName) lines.push(`Name:        ${[r.firstName, r.lastName].filter(Boolean).join(' ')}`)
         if (r.street || r.houseNumber) lines.push(`Address:     ${[r.street, r.houseNumber].filter(Boolean).join(' ')}`)
-        if (r.postalCode)   lines.push(`Postal code: ${r.postalCode}`)
-        if (r.city)         lines.push(`City:        ${r.city}`)
-        if (r.phone)        lines.push(`Phone:       ${r.phone}`)
-        if (r.email)        lines.push(`Email:       ${r.email}`)
-        if (r.kvk)          lines.push(`KVK:         ${r.kvk}`)
-        if (r.vatId)        lines.push(`VAT ID:      ${r.vatId}`)
+        if (r.postalCode) lines.push(`Postal code: ${r.postalCode}`)
+        if (r.city) lines.push(`City:        ${r.city}`)
+        if (r.phone) lines.push(`Phone:       ${r.phone}`)
+        if (r.email) lines.push(`Email:       ${r.email}`)
+        if (r.kvk) lines.push(`KVK:         ${r.kvk}`)
+        if (r.vatId) lines.push(`VAT ID:      ${r.vatId}`)
     }
 
     clipboardText.value = lines.join('\n')
@@ -460,25 +471,29 @@ async function copyToClipboard() {
 const STATUS = Object.freeze({
     available: Object.freeze({
         icon: CheckCircle,
-        badgeClass: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800',
+        badgeClass:
+            'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800',
         rowClass: 'hover:bg-emerald-50 dark:hover:bg-emerald-950/20',
         label: 'Available',
     }),
     taken: Object.freeze({
         icon: XCircle,
-        badgeClass: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800',
+        badgeClass:
+            'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800',
         rowClass: 'hover:bg-red-50/50 dark:hover:bg-red-950/10',
         label: 'Taken',
     }),
     checking: Object.freeze({
         icon: Loader2,
-        badgeClass: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700',
+        badgeClass:
+            'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700',
         rowClass: '',
         label: 'Checking…',
     }),
     unknown: Object.freeze({
         icon: HelpCircle,
-        badgeClass: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700',
+        badgeClass:
+            'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700',
         rowClass: '',
         label: 'Unknown',
     }),
@@ -497,7 +512,7 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
         <!-- Hero -->
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10 text-center">
             <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-4 tracking-tight">
-                Find your perfect<br>
+                Find your perfect<br />
                 <span class="text-indigo-600 dark:text-indigo-400">domain name</span>
             </h1>
             <p class="text-gray-600 dark:text-gray-400 text-lg mb-6">
@@ -510,9 +525,11 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                     @click="switchMode('single')"
                     :aria-pressed="mode === 'single'"
                     class="px-4 py-2 rounded-xl text-sm font-medium transition-colors"
-                    :class="mode === 'single'
-                        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'"
+                    :class="
+                        mode === 'single'
+                            ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
+                    "
                 >
                     Single domain
                 </button>
@@ -520,9 +537,11 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                     @click="switchMode('bulk')"
                     :aria-pressed="mode === 'bulk'"
                     class="px-4 py-2 rounded-xl text-sm font-medium transition-colors"
-                    :class="mode === 'bulk'
-                        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'"
+                    :class="
+                        mode === 'bulk'
+                            ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
+                    "
                 >
                     Bulk check
                 </button>
@@ -541,11 +560,17 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                     <div
                         role="alert"
                         class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium border"
-                        :class="error === 'error'
-                            ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
-                            : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300'"
+                        :class="
+                            error === 'error'
+                                ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
+                                : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300'
+                        "
                     >
-                        <component :is="error === 'error' ? XCircle : HelpCircle" class="w-4 h-4 shrink-0" aria-hidden="true" />
+                        <component
+                            :is="error === 'error' ? XCircle : HelpCircle"
+                            class="w-4 h-4 shrink-0"
+                            aria-hidden="true"
+                        />
                         <span>{{ ERROR_MESSAGES[error] ?? ERROR_MESSAGES.error }}</span>
                     </div>
                 </div>
@@ -564,11 +589,17 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                     <div
                         role="alert"
                         class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium border"
-                        :class="bulkError === 'error'
-                            ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
-                            : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300'"
+                        :class="
+                            bulkError === 'error'
+                                ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
+                                : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300'
+                        "
                     >
-                        <component :is="bulkError === 'error' ? XCircle : HelpCircle" class="w-4 h-4 shrink-0" aria-hidden="true" />
+                        <component
+                            :is="bulkError === 'error' ? XCircle : HelpCircle"
+                            class="w-4 h-4 shrink-0"
+                            aria-hidden="true"
+                        />
                         <span>{{ ERROR_MESSAGES[bulkError] ?? ERROR_MESSAGES.error }}</span>
                     </div>
                 </div>
@@ -579,7 +610,10 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                 <div class="flex gap-2 max-w-2xl mx-auto">
                     <div class="flex-1 relative">
                         <label for="domain-search" class="sr-only">Domain name to check</label>
-                        <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" aria-hidden="true" />
+                        <Search
+                            class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                            aria-hidden="true"
+                        />
                         <input
                             id="domain-search"
                             v-model="domainInput"
@@ -591,11 +625,7 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                             class="ui-input pl-10 pr-4 py-3.5 rounded-2xl text-base shadow-card dark:bg-gray-900"
                         />
                     </div>
-                    <button
-                        v-if="isChecking"
-                        @click="stop"
-                        class="ui-btn ui-btn-secondary px-6 py-3.5 rounded-2xl"
-                    >
+                    <button v-if="isChecking" @click="stop" class="ui-btn ui-btn-secondary px-6 py-3.5 rounded-2xl">
                         <X class="w-4 h-4" aria-hidden="true" />
                         Stop
                     </button>
@@ -610,7 +640,11 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                     </button>
                 </div>
 
-                <p v-if="tldsError" role="alert" class="max-w-2xl mx-auto mt-3 text-xs font-medium text-amber-800 dark:text-amber-300">
+                <p
+                    v-if="tldsError"
+                    role="alert"
+                    class="max-w-2xl mx-auto mt-3 text-xs font-medium text-amber-800 dark:text-amber-300"
+                >
                     {{ tldsError }}
                 </p>
 
@@ -620,9 +654,11 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                         @click="selectedGroup = 'popular'"
                         :aria-pressed="selectedGroup === 'popular'"
                         class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                        :class="selectedGroup === 'popular'
-                            ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
-                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'"
+                        :class="
+                            selectedGroup === 'popular'
+                                ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
+                        "
                     >
                         Popular ({{ popularTlds.length }})
                     </button>
@@ -631,9 +667,11 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                         :disabled="loadingAllTlds"
                         :aria-pressed="selectedGroup === 'all'"
                         class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5"
-                        :class="selectedGroup === 'all'
-                            ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
-                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'"
+                        :class="
+                            selectedGroup === 'all'
+                                ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
+                        "
                     >
                         <Loader2 v-if="loadingAllTlds" class="w-3 h-3 animate-spin" />
                         All extensions {{ allTldsData.length > 0 ? `(${allTldsData.length})` : '' }}
@@ -649,25 +687,25 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
             </template>
 
             <!-- Bulk mode: textarea input -->
-            <BulkCheckInput
-                v-else
-                :is-checking="bulkIsChecking"
-                @check="handleBulkCheck"
-                @reset="handleBulkReset"
-            />
+            <BulkCheckInput v-else :is-checking="bulkIsChecking" @check="handleBulkCheck" @reset="handleBulkReset" />
         </div>
 
         <!-- Single-domain results -->
         <div v-if="hasResults && mode === 'single'" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32">
-
             <!-- Progress bar -->
             <div v-if="isChecking" class="mb-5">
                 <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1.5">
-                    <span>Checking <span class="font-medium text-gray-700 dark:text-gray-300">{{ searchedDomain }}</span>…</span>
+                    <span
+                        >Checking <span class="font-medium text-gray-700 dark:text-gray-300">{{ searchedDomain }}</span
+                        >…</span
+                    >
                     <span>{{ checkedCount }} / {{ totalCount }}</span>
                 </div>
                 <div class="h-1 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
-                    <div class="h-full bg-indigo-500 rounded-full transition-all duration-300" :style="{ width: progressPercent + '%' }" />
+                    <div
+                        class="h-full bg-indigo-500 rounded-full transition-all duration-300"
+                        :style="{ width: progressPercent + '%' }"
+                    />
                 </div>
             </div>
 
@@ -701,9 +739,11 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                         v-if="pinnedEntry.status === 'available'"
                         @click="toggleSelect(pinnedEntry.domain)"
                         class="px-3 py-1.5 rounded-xl text-sm font-medium transition-colors whitespace-nowrap"
-                        :class="selected.has(pinnedEntry.domain)
-                            ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                            : 'border border-emerald-500 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40'"
+                        :class="
+                            selected.has(pinnedEntry.domain)
+                                ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                                : 'border border-emerald-500 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40'
+                        "
                     >
                         {{ selected.has(pinnedEntry.domain) ? 'Selected' : 'Select' }}
                     </button>
@@ -718,7 +758,11 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                         @click="filterMode = 'all'"
                         :aria-pressed="filterMode === 'all'"
                         class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors font-medium"
-                        :class="filterMode === 'all' ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
+                        :class="
+                            filterMode === 'all'
+                                ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                                : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        "
                     >
                         All ({{ Object.keys(results).length }})
                     </button>
@@ -727,7 +771,11 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                         @click="filterMode = 'available'"
                         :aria-pressed="filterMode === 'available'"
                         class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors font-medium"
-                        :class="filterMode === 'available' ? 'bg-emerald-600 text-white' : 'text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'"
+                        :class="
+                            filterMode === 'available'
+                                ? 'bg-emerald-600 text-white'
+                                : 'text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
+                        "
                     >
                         <CheckCircle class="w-3.5 h-3.5" />
                         {{ statusCounts.available }} available
@@ -737,12 +785,19 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                         @click="filterMode = 'taken'"
                         :aria-pressed="filterMode === 'taken'"
                         class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors font-medium"
-                        :class="filterMode === 'taken' ? 'bg-red-600 text-white' : 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30'"
+                        :class="
+                            filterMode === 'taken'
+                                ? 'bg-red-600 text-white'
+                                : 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30'
+                        "
                     >
                         <XCircle class="w-3.5 h-3.5" />
                         {{ statusCounts.taken }} taken
                     </button>
-                    <span v-if="statusCounts.unknown" class="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 px-2.5 py-1">
+                    <span
+                        v-if="statusCounts.unknown"
+                        class="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 px-2.5 py-1"
+                    >
                         <HelpCircle class="w-3.5 h-3.5" />
                         {{ statusCounts.unknown }} unknown
                     </span>
@@ -759,7 +814,9 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
             </div>
 
             <!-- 3-column list grid -->
-            <div class="ui-surface-light rounded-2xl p-2 sm:p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-0">
+            <div
+                class="ui-surface-light rounded-2xl p-2 sm:p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-0"
+            >
                 <component
                     :is="entry.status === 'available' ? 'label' : 'div'"
                     v-for="entry in filteredEntries"
@@ -769,7 +826,9 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                         statusConfig(entry.status).rowClass,
                         selected.has(entry.domain) ? 'bg-indigo-50 dark:bg-indigo-950/30 border-transparent' : '',
                         entry.status === 'available' ? 'cursor-pointer' : 'cursor-default',
-                        entry.tld === pinnedTld && pinnedTld ? 'ring-1 ring-inset ring-indigo-300 dark:ring-indigo-700 bg-indigo-50/60 dark:bg-indigo-950/20' : '',
+                        entry.tld === pinnedTld && pinnedTld
+                            ? 'ring-1 ring-inset ring-indigo-300 dark:ring-indigo-700 bg-indigo-50/60 dark:bg-indigo-950/20'
+                            : '',
                     ]"
                 >
                     <!-- Checkbox (only for available) — a real one, so the row is
@@ -784,15 +843,23 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                     <span v-else class="shrink-0 w-5 h-5" aria-hidden="true" />
 
                     <!-- Domain name -->
-                    <span class="flex-1 min-w-0 text-sm font-medium text-gray-900 dark:text-gray-100 truncate" :title="entry.domain">
-                        {{ searchedDomain }}<span class="text-indigo-600 dark:text-indigo-400 font-semibold">.{{ entry.tld }}</span>
+                    <span
+                        class="flex-1 min-w-0 text-sm font-medium text-gray-900 dark:text-gray-100 truncate"
+                        :title="entry.domain"
+                    >
+                        {{ searchedDomain
+                        }}<span class="text-indigo-600 dark:text-indigo-400 font-semibold">.{{ entry.tld }}</span>
                     </span>
 
                     <!-- Status badge — always occupies its final box, so rows no
                          longer shift as results land -->
                     <span
                         class="shrink-0 inline-flex items-center justify-center gap-1 w-[5.5rem] h-5 rounded-full text-xs font-medium"
-                        :class="entry.status === 'checking' ? 'bg-gray-100 dark:bg-gray-800' : statusConfig(entry.status).badgeClass"
+                        :class="
+                            entry.status === 'checking'
+                                ? 'bg-gray-100 dark:bg-gray-800'
+                                : statusConfig(entry.status).badgeClass
+                        "
                     >
                         <Loader2 v-if="entry.status === 'checking'" class="w-3 h-3 animate-spin text-gray-400" />
                         <template v-else>
@@ -805,8 +872,10 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
         </div>
 
         <!-- Bulk results -->
-        <div v-if="mode === 'bulk' && bulkResultEntries.length > 0" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32">
-
+        <div
+            v-if="mode === 'bulk' && bulkResultEntries.length > 0"
+            class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32"
+        >
             <!-- Progress bar -->
             <div v-if="bulkIsChecking" class="mb-5">
                 <div class="flex items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400 mb-1.5">
@@ -820,7 +889,10 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                     </span>
                 </div>
                 <div class="h-1 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
-                    <div class="h-full bg-indigo-500 rounded-full transition-all duration-300" :style="{ width: bulkProgressPercent + '%' }" />
+                    <div
+                        class="h-full bg-indigo-500 rounded-full transition-all duration-300"
+                        :style="{ width: bulkProgressPercent + '%' }"
+                    />
                 </div>
             </div>
 
@@ -842,7 +914,9 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
             </div>
 
             <!-- 3-column list grid -->
-            <div class="ui-surface-light rounded-2xl p-2 sm:p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-0">
+            <div
+                class="ui-surface-light rounded-2xl p-2 sm:p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-0"
+            >
                 <component
                     :is="entry.status === 'available' ? 'label' : 'div'"
                     v-for="entry in bulkResultEntries"
@@ -865,14 +939,23 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
 
                     <span
                         class="flex-1 min-w-0 text-sm font-medium text-gray-900 dark:text-gray-100 truncate"
-                        :title="entry.checkedDomain ? `${entry.domain} — checked as ${entry.checkedDomain}` : entry.domain"
+                        :title="
+                            entry.checkedDomain ? `${entry.domain} — checked as ${entry.checkedDomain}` : entry.domain
+                        "
                     >
-                        {{ entry.domain }}<span v-if="entry.checkedDomain" class="font-normal text-gray-600 dark:text-gray-400"> · checked {{ entry.checkedDomain }}</span>
+                        {{ entry.domain
+                        }}<span v-if="entry.checkedDomain" class="font-normal text-gray-600 dark:text-gray-400">
+                            · checked {{ entry.checkedDomain }}</span
+                        >
                     </span>
 
                     <span
                         class="shrink-0 inline-flex items-center justify-center gap-1 w-[5.5rem] h-5 rounded-full text-xs font-medium"
-                        :class="entry.status === 'checking' ? 'bg-gray-100 dark:bg-gray-800' : statusConfig(entry.status).badgeClass"
+                        :class="
+                            entry.status === 'checking'
+                                ? 'bg-gray-100 dark:bg-gray-800'
+                                : statusConfig(entry.status).badgeClass
+                        "
                     >
                         <Loader2 v-if="entry.status === 'checking'" class="w-3 h-3 animate-spin text-gray-400" />
                         <template v-else>
@@ -887,7 +970,11 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
         <!-- Empty state -->
         <div v-if="mode === 'single' && !hasResults" class="max-w-4xl mx-auto px-4 pb-16 text-center">
             <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 opacity-30 select-none pointer-events-none mb-6">
-                <div v-for="tld in popularTlds.slice(0, 12)" :key="tld" class="border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center">
+                <div
+                    v-for="tld in popularTlds.slice(0, 12)"
+                    :key="tld"
+                    class="border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center"
+                >
                     <Globe class="w-4 h-4 mx-auto mb-1.5 text-gray-400" />
                     <div class="font-mono text-xs text-gray-500">.{{ tld }}</div>
                 </div>
@@ -904,23 +991,33 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
             leave-from-class="translate-y-0 opacity-100"
             leave-to-class="translate-y-full opacity-0"
         >
-            <div v-if="selectedList.length > 0" class="fixed bottom-0 inset-x-0 z-50 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:p-4">
+            <div
+                v-if="selectedList.length > 0"
+                class="fixed bottom-0 inset-x-0 z-50 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:p-4"
+            >
                 <!-- Hint line -->
                 <p class="text-center text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 hidden sm:block">
                     Fill in your registration details so we can process your order
                 </p>
-                <div class="max-w-2xl mx-auto bg-gray-900 dark:bg-gray-800 border border-gray-700 dark:border-gray-600 rounded-2xl shadow-overlay px-3 py-3 sm:px-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                <div
+                    class="max-w-2xl mx-auto bg-gray-900 dark:bg-gray-800 border border-gray-700 dark:border-gray-600 rounded-2xl shadow-overlay px-3 py-3 sm:px-4 flex flex-col sm:flex-row sm:items-center gap-3"
+                >
                     <div class="flex items-center gap-2 flex-1 min-w-0">
                         <ClipboardList class="w-4 h-4 text-indigo-400 shrink-0" />
                         <span class="text-sm font-medium text-white">
                             {{ selectedList.length }} {{ selectedList.length === 1 ? 'domain' : 'domains' }} selected
                         </span>
                         <span class="text-xs text-gray-400 truncate hidden sm:block">
-                            — {{ selectedList.slice(0, 3).join(', ') }}{{ selectedList.length > 3 ? ` +${selectedList.length - 3} more` : '' }}
+                            — {{ selectedList.slice(0, 3).join(', ')
+                            }}{{ selectedList.length > 3 ? ` +${selectedList.length - 3} more` : '' }}
                         </span>
                     </div>
                     <div class="flex items-center gap-2 w-full sm:w-auto">
-                        <button @click="clearSelection" class="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors shrink-0" title="Clear selection">
+                        <button
+                            @click="clearSelection"
+                            class="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors shrink-0"
+                            title="Clear selection"
+                        >
                             <X class="w-4 h-4" />
                         </button>
                         <button
@@ -945,7 +1042,11 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
             leave-from-class="opacity-100"
             leave-to-class="opacity-0"
         >
-            <div v-if="showModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" @click.self="closeModal">
+            <div
+                v-if="showModal"
+                class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+                @click.self="closeModal"
+            >
                 <!-- Backdrop -->
                 <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeModal" aria-hidden="true" />
 
@@ -955,16 +1056,26 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                     class="relative w-full max-w-2xl bg-surface rounded-t-2xl sm:rounded-2xl shadow-overlay border border-hairline dark:border-gray-700 overflow-hidden max-h-[calc(100dvh-0.75rem)] sm:max-h-[90vh] flex flex-col"
                     @close="closeModal"
                 >
-
                     <!-- Header -->
-                    <div class="flex items-center justify-between gap-3 px-4 sm:px-8 py-3.5 sm:py-4 border-b border-hairline shrink-0">
+                    <div
+                        class="flex items-center justify-between gap-3 px-4 sm:px-8 py-3.5 sm:py-4 border-b border-hairline shrink-0"
+                    >
                         <div class="flex items-center gap-2.5 min-w-0">
-                            <div class="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg flex items-center justify-center">
+                            <div
+                                class="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg flex items-center justify-center"
+                            >
                                 <ClipboardList class="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                             </div>
                             <div class="min-w-0">
-                                <h2 id="registration-modal-title" class="text-sm font-semibold text-gray-900 dark:text-white">Fill in details and request</h2>
-                                <p class="ui-help hidden min-[380px]:block">Add your details so we can process your order</p>
+                                <h2
+                                    id="registration-modal-title"
+                                    class="text-sm font-semibold text-gray-900 dark:text-white"
+                                >
+                                    Fill in details and request
+                                </h2>
+                                <p class="ui-help hidden min-[380px]:block">
+                                    Add your details so we can process your order
+                                </p>
                             </div>
                         </div>
                         <div class="flex items-center gap-1">
@@ -977,7 +1088,11 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                                 <HelpCircle class="w-4 h-4 shrink-0" />
                                 <span class="hidden sm:inline">How does this work?</span>
                                 <span class="sm:hidden">Help</span>
-                                <span v-if="!showModalHelp" class="ui-attention-dot ring-surface" aria-hidden="true"></span>
+                                <span
+                                    v-if="!showModalHelp"
+                                    class="ui-attention-dot ring-surface"
+                                    aria-hidden="true"
+                                ></span>
                             </button>
                             <button @click="closeModal" class="ui-icon-btn" aria-label="Close">
                                 <X class="w-4 h-4" />
@@ -994,28 +1109,70 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                         leave-from-class="max-h-96 opacity-100"
                         leave-to-class="max-h-0 opacity-0"
                     >
-                        <div v-if="showModalHelp" class="px-4 sm:px-8 py-4 bg-indigo-50 dark:bg-indigo-950/30 border-b border-indigo-100 dark:border-indigo-900">
-                            <p class="ui-section-title text-indigo-700 dark:text-indigo-400 mb-3">How to order domains</p>
+                        <div
+                            v-if="showModalHelp"
+                            class="px-4 sm:px-8 py-4 bg-indigo-50 dark:bg-indigo-950/30 border-b border-indigo-100 dark:border-indigo-900"
+                        >
+                            <p class="ui-section-title text-indigo-700 dark:text-indigo-400 mb-3">
+                                How to order domains
+                            </p>
                             <ol class="space-y-2">
-                                <li class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
-                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">1</span>
+                                <li
+                                    class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed"
+                                >
+                                    <span
+                                        class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5"
+                                        >1</span
+                                    >
                                     <span>Search for a domain name and check availability across extensions.</span>
                                 </li>
-                                <li class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
-                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">2</span>
-                                    <span>Tick the domains you want to order — they'll appear in the bar at the bottom.</span>
+                                <li
+                                    class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed"
+                                >
+                                    <span
+                                        class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5"
+                                        >2</span
+                                    >
+                                    <span
+                                        >Tick the domains you want to order — they'll appear in the bar at the
+                                        bottom.</span
+                                    >
                                 </li>
-                                <li class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
-                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">3</span>
-                                    <span>Click <strong class="font-semibold">Fill in details and request</strong> to open this panel and fill in your registration details.</span>
+                                <li
+                                    class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed"
+                                >
+                                    <span
+                                        class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5"
+                                        >3</span
+                                    >
+                                    <span
+                                        >Click <strong class="font-semibold">Fill in details and request</strong> to
+                                        open this panel and fill in your registration details.</span
+                                    >
                                 </li>
-                                <li class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
-                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">4</span>
-                                    <span>Click <strong class="font-semibold">Copy to clipboard</strong> at the bottom — your domain list and details are now on your clipboard.</span>
+                                <li
+                                    class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed"
+                                >
+                                    <span
+                                        class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5"
+                                        >4</span
+                                    >
+                                    <span
+                                        >Click <strong class="font-semibold">Copy to clipboard</strong> at the bottom —
+                                        your domain list and details are now on your clipboard.</span
+                                    >
                                 </li>
-                                <li class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
-                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5">5</span>
-                                    <span>Paste it into an email, WhatsApp, or chat message and send it to your provider to place the order.</span>
+                                <li
+                                    class="flex items-start gap-2.5 text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed"
+                                >
+                                    <span
+                                        class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300 font-semibold shrink-0 mt-0.5"
+                                        >5</span
+                                    >
+                                    <span
+                                        >Paste it into an email, WhatsApp, or chat message and send it to your provider
+                                        to place the order.</span
+                                    >
                                 </li>
                             </ol>
                         </div>
@@ -1039,15 +1196,35 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
 
                         <!-- Registration details form -->
                         <div class="px-4 sm:px-8 py-5 sm:py-6 space-y-5 sm:space-y-6">
-                            <p class="ui-section-title">Registration details <span class="normal-case font-normal">(required — added to clipboard)</span></p>
+                            <p class="ui-section-title">
+                                Registration details
+                                <span class="normal-case font-normal">(required — added to clipboard)</span>
+                            </p>
 
                             <!-- Existing account -->
                             <div class="ui-accent-panel p-3.5 sm:p-4">
-                                <label for="reg-existing-account" class="block ui-accent-title mb-0.5">Existing account <span class="font-normal text-indigo-600/70 dark:text-indigo-500">(optional)</span></label>
-                                <p id="reg-existing-account-help" class="ui-accent-help mb-3">Already a customer? Enter your name or company so we link this to the right account.</p>
+                                <label for="reg-existing-account" class="block ui-accent-title mb-0.5"
+                                    >Existing account
+                                    <span class="font-normal text-indigo-600/70 dark:text-indigo-500"
+                                        >(optional)</span
+                                    ></label
+                                >
+                                <p id="reg-existing-account-help" class="ui-accent-help mb-3">
+                                    Already a customer? Enter your name or company so we link this to the right account.
+                                </p>
                                 <div class="relative">
-                                    <UserCircle class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-500 dark:text-indigo-400 pointer-events-none" aria-hidden="true" />
-                                    <input id="reg-existing-account" aria-describedby="reg-existing-account-help" v-model="reg.existingAccount" type="text" placeholder="e.g. John Doe or Example Company" class="ui-input ui-input-accent pl-9" />
+                                    <UserCircle
+                                        class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-500 dark:text-indigo-400 pointer-events-none"
+                                        aria-hidden="true"
+                                    />
+                                    <input
+                                        id="reg-existing-account"
+                                        aria-describedby="reg-existing-account-help"
+                                        v-model="reg.existingAccount"
+                                        type="text"
+                                        placeholder="e.g. John Doe or Example Company"
+                                        class="ui-input ui-input-accent pl-9"
+                                    />
                                 </div>
                             </div>
 
@@ -1056,24 +1233,57 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                                 <p class="ui-section-title">Contact details</p>
                                 <FormField label="Company name" hint="(optional)" label-class="text-sm" v-slot="field">
                                     <div class="relative">
-                                        <Building2 class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" aria-hidden="true" />
-                                        <input v-bind="field" v-model="reg.companyName" type="text" placeholder="Example Company" class="ui-input pl-9" />
+                                        <Building2
+                                            class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                                            aria-hidden="true"
+                                        />
+                                        <input
+                                            v-bind="field"
+                                            v-model="reg.companyName"
+                                            type="text"
+                                            placeholder="Example Company"
+                                            class="ui-input pl-9"
+                                        />
                                     </div>
                                 </FormField>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <FormField label="First name" label-class="text-sm" v-slot="field">
-                                        <input v-bind="field" v-model="reg.firstName" type="text" placeholder="John" class="ui-input" />
+                                        <input
+                                            v-bind="field"
+                                            v-model="reg.firstName"
+                                            type="text"
+                                            placeholder="John"
+                                            class="ui-input"
+                                        />
                                     </FormField>
                                     <FormField label="Last name" label-class="text-sm" v-slot="field">
-                                        <input v-bind="field" v-model="reg.lastName" type="text" placeholder="Doe" class="ui-input" />
+                                        <input
+                                            v-bind="field"
+                                            v-model="reg.lastName"
+                                            type="text"
+                                            placeholder="Doe"
+                                            class="ui-input"
+                                        />
                                     </FormField>
                                 </div>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <FormField label="Phone number" label-class="text-sm" v-slot="field">
-                                        <input v-bind="field" v-model="reg.phone" type="tel" placeholder="+31 6 12345678" class="ui-input" />
+                                        <input
+                                            v-bind="field"
+                                            v-model="reg.phone"
+                                            type="tel"
+                                            placeholder="+31 6 12345678"
+                                            class="ui-input"
+                                        />
                                     </FormField>
                                     <FormField label="Email" label-class="text-sm" v-slot="field">
-                                        <input v-bind="field" v-model="reg.email" type="email" placeholder="john@example.com" class="ui-input" />
+                                        <input
+                                            v-bind="field"
+                                            v-model="reg.email"
+                                            type="email"
+                                            placeholder="john@example.com"
+                                            class="ui-input"
+                                        />
                                     </FormField>
                                 </div>
                             </div>
@@ -1082,32 +1292,75 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                             <div class="space-y-3">
                                 <p class="ui-section-title">Address</p>
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    <FormField label="Street" label-class="text-sm" class="sm:col-span-2" v-slot="field">
-                                        <input v-bind="field" v-model="reg.street" type="text" placeholder="Kerkstraat" class="ui-input" />
+                                    <FormField
+                                        label="Street"
+                                        label-class="text-sm"
+                                        class="sm:col-span-2"
+                                        v-slot="field"
+                                    >
+                                        <input
+                                            v-bind="field"
+                                            v-model="reg.street"
+                                            type="text"
+                                            placeholder="Kerkstraat"
+                                            class="ui-input"
+                                        />
                                     </FormField>
                                     <FormField label="House no." label-class="text-sm" v-slot="field">
-                                        <input v-bind="field" v-model="reg.houseNumber" type="text" placeholder="42A" class="ui-input" />
+                                        <input
+                                            v-bind="field"
+                                            v-model="reg.houseNumber"
+                                            type="text"
+                                            placeholder="42A"
+                                            class="ui-input"
+                                        />
                                     </FormField>
                                 </div>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <FormField label="Postal code" label-class="text-sm" v-slot="field">
-                                        <input v-bind="field" v-model="reg.postalCode" type="text" placeholder="1234 AB" class="ui-input" />
+                                        <input
+                                            v-bind="field"
+                                            v-model="reg.postalCode"
+                                            type="text"
+                                            placeholder="1234 AB"
+                                            class="ui-input"
+                                        />
                                     </FormField>
                                     <FormField label="City" label-class="text-sm" v-slot="field">
-                                        <input v-bind="field" v-model="reg.city" type="text" placeholder="Amsterdam" class="ui-input" />
+                                        <input
+                                            v-bind="field"
+                                            v-model="reg.city"
+                                            type="text"
+                                            placeholder="Amsterdam"
+                                            class="ui-input"
+                                        />
                                     </FormField>
                                 </div>
                             </div>
 
                             <!-- Business IDs -->
                             <div class="space-y-3">
-                                <p class="ui-section-title">Business <span class="normal-case font-normal">(optional)</span></p>
+                                <p class="ui-section-title">
+                                    Business <span class="normal-case font-normal">(optional)</span>
+                                </p>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <FormField label="KVK" label-class="text-sm" v-slot="field">
-                                        <input v-bind="field" v-model="reg.kvk" type="text" placeholder="12345678" class="ui-input" />
+                                        <input
+                                            v-bind="field"
+                                            v-model="reg.kvk"
+                                            type="text"
+                                            placeholder="12345678"
+                                            class="ui-input"
+                                        />
                                     </FormField>
                                     <FormField label="VAT ID" label-class="text-sm" v-slot="field">
-                                        <input v-bind="field" v-model="reg.vatId" type="text" placeholder="NL123456789B01" class="ui-input" />
+                                        <input
+                                            v-bind="field"
+                                            v-model="reg.vatId"
+                                            type="text"
+                                            placeholder="NL123456789B01"
+                                            class="ui-input"
+                                        />
                                     </FormField>
                                 </div>
                             </div>
@@ -1118,7 +1371,9 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                          navigator.clipboard does not exist, so the only way to
                          recover 12 fields of typing is to read them here. -->
                     <div v-if="copyError" class="px-4 sm:px-8 py-4 border-t border-hairline shrink-0">
-                        <p role="alert" class="text-xs font-medium text-red-700 dark:text-red-400 mb-2">{{ copyError }}</p>
+                        <p role="alert" class="text-xs font-medium text-red-700 dark:text-red-400 mb-2">
+                            {{ copyError }}
+                        </p>
                         <label for="clipboard-fallback" class="sr-only">Text to copy</label>
                         <textarea
                             id="clipboard-fallback"
@@ -1130,8 +1385,12 @@ const statusConfig = (status) => STATUS[status] ?? STATUS.unknown
                     </div>
 
                     <!-- Footer -->
-                    <div class="px-4 sm:px-8 pt-3 sm:pt-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-4 border-t border-hairline bg-gray-50/80 dark:bg-gray-900 shrink-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <p class="ui-help text-center sm:text-left">Fields left empty are omitted from the clipboard.</p>
+                    <div
+                        class="px-4 sm:px-8 pt-3 sm:pt-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-4 border-t border-hairline bg-gray-50/80 dark:bg-gray-900 shrink-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                    >
+                        <p class="ui-help text-center sm:text-left">
+                            Fields left empty are omitted from the clipboard.
+                        </p>
                         <button
                             @click="copyToClipboard"
                             class="ui-btn w-full sm:w-auto shrink-0"

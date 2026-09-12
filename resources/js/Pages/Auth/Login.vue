@@ -69,14 +69,18 @@ const loginWithPasskey = async () => {
                 <Fingerprint v-else class="w-4 h-4" />
                 {{ passkeyLoading ? 'Authenticating…' : 'Sign in with Passkey' }}
             </button>
-            <p v-if="passkeyError" role="alert" class="text-red-600 dark:text-red-400 text-xs mt-2 text-center">{{ passkeyError }}</p>
+            <p v-if="passkeyError" role="alert" class="text-red-600 dark:text-red-400 text-xs mt-2 text-center">
+                {{ passkeyError }}
+            </p>
 
             <div class="relative mt-5 mb-5">
                 <div class="absolute inset-0 flex items-center">
                     <div class="w-full border-t border-gray-200 dark:border-gray-700" />
                 </div>
                 <div class="relative flex justify-center text-xs">
-                    <span class="bg-white dark:bg-gray-900 px-3 text-gray-500 dark:text-gray-400">or continue with password</span>
+                    <span class="bg-white dark:bg-gray-900 px-3 text-gray-500 dark:text-gray-400"
+                        >or continue with password</span
+                    >
                 </div>
             </div>
         </div>
@@ -118,10 +122,17 @@ const loginWithPasskey = async () => {
 
             <div class="flex items-center justify-between">
                 <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
-                    <input v-model="form.remember" type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                    <input
+                        v-model="form.remember"
+                        type="checkbox"
+                        class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
                     Remember me
                 </label>
-                <Link :href="route('password.request')" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
+                <Link
+                    :href="route('password.request')"
+                    class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                >
                     Forgot password?
                 </Link>
             </div>

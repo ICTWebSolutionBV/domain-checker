@@ -9,12 +9,16 @@ defineProps({
 </script>
 
 <template>
-    <div class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-gray-900 to-indigo-950 px-4">
+    <div
+        class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-gray-900 to-indigo-950 px-4"
+    >
         <div class="w-full max-w-sm flex-1 flex flex-col justify-center">
             <!-- Logo -->
             <div class="mb-8 text-center">
                 <Link :href="route('home')" class="inline-flex items-center gap-3 group">
-                    <div class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-600/30 group-hover:bg-indigo-500 transition-colors">
+                    <div
+                        class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-600/30 group-hover:bg-indigo-500 transition-colors"
+                    >
                         <Globe class="w-6 h-6 text-white" />
                     </div>
                     <div class="text-left">
@@ -33,9 +37,7 @@ defineProps({
         </div>
 
         <footer class="py-4">
-            <p class="text-center text-xs text-gray-400">
-                &copy; {{ new Date().getFullYear() }} ICTWebSolution B.V.
-            </p>
+            <p class="text-center text-xs text-gray-400">&copy; {{ new Date().getFullYear() }} ICTWebSolution B.V.</p>
         </footer>
     </div>
 </template>

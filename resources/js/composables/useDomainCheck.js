@@ -21,10 +21,18 @@ export function useDomainCheck() {
 
     function flush() {
         raf = null
-        pending.forEach((status, key) => { results[key] = status })
+        pending.forEach((status, key) => {
+            results[key] = status
+        })
         pending.clear()
-        if (pendingChecked !== null) { checkedCount.value = pendingChecked; pendingChecked = null }
-        if (pendingTotal !== null) { totalCount.value = pendingTotal; pendingTotal = null }
+        if (pendingChecked !== null) {
+            checkedCount.value = pendingChecked
+            pendingChecked = null
+        }
+        if (pendingTotal !== null) {
+            totalCount.value = pendingTotal
+            pendingTotal = null
+        }
     }
 
     function queue(key, status) {
@@ -52,7 +60,7 @@ export function useDomainCheck() {
     })
 
     function downgradePending() {
-        Object.keys(results).forEach(tld => {
+        Object.keys(results).forEach((tld) => {
             if (results[tld] === 'checking') results[tld] = 'unknown'
         })
     }
@@ -66,8 +74,8 @@ export function useDomainCheck() {
         const myRun = ++runId
 
         cancelFlush()
-        Object.keys(results).forEach(key => delete results[key])
-        tlds.forEach(tld => (results[tld] = 'checking'))
+        Object.keys(results).forEach((key) => delete results[key])
+        tlds.forEach((tld) => (results[tld] = 'checking'))
         isDone.value = false
         isChecking.value = true
         error.value = null
@@ -83,7 +91,7 @@ export function useDomainCheck() {
                 method: 'POST',
                 signal: abortController.signal,
                 headers: {
-                    'Accept': 'text/event-stream',
+                    Accept: 'text/event-stream',
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
                 body,
@@ -91,7 +99,7 @@ export function useDomainCheck() {
 
             if (response.status === 429) {
                 error.value = 'rate_limited'
-                tlds.forEach(tld => delete results[tld])
+                tlds.forEach((tld) => delete results[tld])
                 return
             }
 
@@ -99,7 +107,7 @@ export function useDomainCheck() {
                 // Only the banner — a full grid of "Unknown" rows on top of it
                 // is noise, not information.
                 error.value = 'error'
-                tlds.forEach(tld => delete results[tld])
+                tlds.forEach((tld) => delete results[tld])
                 return
             }
 
@@ -133,7 +141,7 @@ export function useDomainCheck() {
                 for (const part of parts) {
                     // Comment frames (the stream opens with ": ping") carry no
                     // data line and are skipped here.
-                    const dataLine = part.split('\n').find(l => l.startsWith('data: '))
+                    const dataLine = part.split('\n').find((l) => l.startsWith('data: '))
                     if (!dataLine) continue
                     try {
                         const parsed = JSON.parse(dataLine.slice(6))
@@ -145,7 +153,7 @@ export function useDomainCheck() {
                         if (parsed.tld && parsed.status) {
                             queue(parsed.tld, parsed.status)
                             if (parsed.checked) pendingChecked = parsed.checked
-                            if (parsed.total)   pendingTotal  = parsed.total
+                            if (parsed.total) pendingTotal = parsed.total
                         }
                     } catch {
                         // ignore malformed events
@@ -181,7 +189,7 @@ export function useDomainCheck() {
         abortController = null
         cancelFlush()
         runId++
-        Object.keys(results).forEach(key => delete results[key])
+        Object.keys(results).forEach((key) => delete results[key])
         isDone.value = false
         isChecking.value = false
         error.value = null

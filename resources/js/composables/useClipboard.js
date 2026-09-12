@@ -25,7 +25,9 @@ export function useClipboard({ resetAfter = 2000 } = {}) {
             if (!navigator.clipboard?.writeText) throw new Error('unavailable')
             await navigator.clipboard.writeText(text)
             copied.value = key
-            timer = setTimeout(() => { copied.value = null }, resetAfter)
+            timer = setTimeout(() => {
+                copied.value = null
+            }, resetAfter)
             return true
         } catch {
             copied.value = null

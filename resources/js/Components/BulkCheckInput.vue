@@ -15,11 +15,14 @@ const LIMIT = 50
 const enteredDomains = computed(() => {
     const lines = textarea.value
         .split('\n')
-        .map(l => l.trim().toLowerCase()
-            .replace(/^https?:\/\//i, '')
-            .replace(/^www\./i, '')
+        .map((l) =>
+            l
+                .trim()
+                .toLowerCase()
+                .replace(/^https?:\/\//i, '')
+                .replace(/^www\./i, ''),
         )
-        .filter(l => l.length > 0 && l.includes('.'))
+        .filter((l) => l.length > 0 && l.includes('.'))
     return [...new Set(lines)]
 })
 
@@ -74,7 +77,8 @@ function handleKeydown(e) {
             </button>
         </div>
         <p v-if="discardedCount" role="alert" class="mt-2 text-xs font-medium text-amber-800 dark:text-amber-300">
-            {{ discardedCount }} of {{ enteredDomains.length }} domains will not be checked — the limit is {{ LIMIT }} per run.
+            {{ discardedCount }} of {{ enteredDomains.length }} domains will not be checked — the limit is
+            {{ LIMIT }} per run.
         </p>
         <button
             type="button"

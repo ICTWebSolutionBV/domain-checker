@@ -11,9 +11,7 @@ const codeInput = ref(null)
 // the TOTP field, which keeps the common path a numeric keypad.
 const usingRecoveryCode = ref(false)
 
-const canSubmit = computed(() =>
-    usingRecoveryCode.value ? form.code.trim().length >= 8 : form.code.length === 6,
-)
+const canSubmit = computed(() => (usingRecoveryCode.value ? form.code.trim().length >= 8 : form.code.length === 6))
 
 const useRecoveryCode = () => {
     usingRecoveryCode.value = !usingRecoveryCode.value
@@ -35,7 +33,11 @@ const verify = () => {
 <template>
     <AuthLayout
         title="Two-factor authentication"
-        :subtitle="usingRecoveryCode ? 'Enter one of the recovery codes you saved' : 'Enter the code from your authenticator app'"
+        :subtitle="
+            usingRecoveryCode
+                ? 'Enter one of the recovery codes you saved'
+                : 'Enter the code from your authenticator app'
+        "
     >
         <Head title="Two-factor challenge" />
 
@@ -68,20 +70,22 @@ const verify = () => {
                         form.errors.code ? 'border-red-400' : '',
                     ]"
                 />
-                <p v-if="form.errors.code" role="alert" class="text-red-600 dark:text-red-400 text-xs mt-1 text-center">{{ form.errors.code }}</p>
+                <p v-if="form.errors.code" role="alert" class="text-red-600 dark:text-red-400 text-xs mt-1 text-center">
+                    {{ form.errors.code }}
+                </p>
             </div>
 
-            <button
-                type="submit"
-                :disabled="form.processing || ! canSubmit"
-                class="ui-btn ui-btn-primary w-full"
-            >
+            <button type="submit" :disabled="form.processing || !canSubmit" class="ui-btn ui-btn-primary w-full">
                 <Loader2 v-if="form.processing" class="w-4 h-4 animate-spin inline mr-2" />
                 {{ form.processing ? 'Verifying…' : 'Verify' }}
             </button>
 
             <div class="text-center">
-                <button type="button" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline" @click="useRecoveryCode">
+                <button
+                    type="button"
+                    class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                    @click="useRecoveryCode"
+                >
                     {{ usingRecoveryCode ? 'Use your authenticator app instead' : 'Use a recovery code instead' }}
                 </button>
             </div>

@@ -1,36 +1,36 @@
-import '../css/app.css';
+import '../css/app.css'
 
-import { createApp, h } from 'vue';
-import { createInertiaApp } from '@inertiajs/vue3';
-import { ZiggyVue } from 'ziggy-js';
-import { applyTheme } from './composables/useTheme';
+import { createApp, h } from 'vue'
+import { createInertiaApp } from '@inertiajs/vue3'
+import { ZiggyVue } from 'ziggy-js'
+import { applyTheme } from './composables/useTheme'
 
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    const theme = localStorage.getItem('theme') || 'auto';
+    const theme = localStorage.getItem('theme') || 'auto'
     if (theme === 'auto') {
-        applyTheme('auto');
+        applyTheme('auto')
     }
-});
+})
 
 createInertiaApp({
-    title: (title) => title ? `${title} - Domain Checker` : 'Domain Checker',
+    title: (title) => (title ? `${title} - Domain Checker` : 'Domain Checker'),
     // Without `eager: true` Vite emits one chunk per page, so a first-time
     // visitor to / no longer downloads and parses Settings, Admin, Transfer,
     // MyIp, IpLookup, BulkDns and all nine auth pages.
     resolve: (name) => {
-        const pages = import.meta.glob('./Pages/**/*.vue');
-        return pages[`./Pages/${name}.vue`]();
+        const pages = import.meta.glob('./Pages/**/*.vue')
+        return pages[`./Pages/${name}.vue`]()
     },
     setup({ el, App, props, plugin }) {
-        const theme = localStorage.getItem('theme') || 'auto';
-        applyTheme(theme);
+        const theme = localStorage.getItem('theme') || 'auto'
+        applyTheme(theme)
 
         createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue)
-            .mount(el);
+            .mount(el)
     },
     progress: {
         color: '#6366f1',
     },
-});
+})

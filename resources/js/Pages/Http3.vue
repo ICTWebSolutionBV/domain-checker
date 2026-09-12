@@ -9,13 +9,13 @@ const props = defineProps({
 
 // ── State ────────────────────────────────────────────────────────────────
 
-const hostInput  = ref(props.initialHost || '')
+const hostInput = ref(props.initialHost || '')
 const displayUrl = ref('')
-const checks     = ref([])   // { key, status, label, detail }
-const verdict    = ref(null) // { result, h3, summary }
+const checks = ref([]) // { key, status, label, detail }
+const verdict = ref(null) // { result, h3, summary }
 const serverInfo = ref(null) // { transport, info: { http_version_label, status_code, server_ip, server_port, timing_ms, headers, effective_url } }
 const isChecking = ref(false)
-const error      = ref('')
+const error = ref('')
 
 let abortController = null
 
@@ -27,11 +27,7 @@ onScopeDispose(() => abortController?.abort())
 
 const CHECK_ORDER = ['dns', 'ipv6', 'https', 'tls13', 'http2', 'altsvc', 'http3']
 
-const orderedChecks = computed(() =>
-    CHECK_ORDER
-        .map(key => checks.value.find(c => c.key === key))
-        .filter(Boolean)
-)
+const orderedChecks = computed(() => CHECK_ORDER.map((key) => checks.value.find((c) => c.key === key)).filter(Boolean))
 
 // ── Run check ────────────────────────────────────────────────────────────
 
@@ -42,11 +38,11 @@ async function runCheck() {
     if (abortController) abortController.abort()
     abortController = new AbortController()
 
-    checks.value  = []
+    checks.value = []
     verdict.value = null
     serverInfo.value = null
     displayUrl.value = ''
-    error.value   = ''
+    error.value = ''
     isChecking.value = true
 
     // Reflect the checked host in the URL so it's shareable / bookmarkable.
@@ -54,16 +50,15 @@ async function runCheck() {
         const url = new URL(window.location.href)
         url.searchParams.set('host', host)
         window.history.replaceState({}, '', url)
-    } catch { /* ignore */ }
+    } catch {
+        /* ignore */
+    }
 
     try {
-        const response = await fetch(
-            route('http3.check') + '?host=' + encodeURIComponent(host),
-            {
-                signal: abortController.signal,
-                headers: { Accept: 'text/event-stream' },
-            }
-        )
+        const response = await fetch(route('http3.check') + '?host=' + encodeURIComponent(host), {
+            signal: abortController.signal,
+            headers: { Accept: 'text/event-stream' },
+        })
 
         if (response.status === 429) {
             error.value = 'Too many requests — please wait a moment before checking again.'
@@ -76,9 +71,9 @@ async function runCheck() {
             return
         }
 
-        const reader  = response.body.getReader()
+        const reader = response.body.getReader()
         const decoder = new TextDecoder()
-        let   buffer  = ''
+        let buffer = ''
 
         while (true) {
             const { done, value } = await reader.read()
@@ -89,7 +84,7 @@ async function runCheck() {
             buffer = parts.pop()
 
             for (const part of parts) {
-                const dataLine = part.split('\n').find(l => l.startsWith('data: '))
+                const dataLine = part.split('\n').find((l) => l.startsWith('data: '))
                 if (!dataLine) continue
                 try {
                     const ev = JSON.parse(dataLine.slice(6))
@@ -113,7 +108,7 @@ function handleEvent(ev) {
         return
     }
     if (ev.type === 'check') {
-        const idx = checks.value.findIndex(c => c.key === ev.key)
+        const idx = checks.value.findIndex((c) => c.key === ev.key)
         if (idx >= 0) {
             checks.value[idx] = ev
         } else {
@@ -129,12 +124,12 @@ function handleEvent(ev) {
         return
     }
     if (ev.type === 'done') {
-        verdict.value    = ev
+        verdict.value = ev
         isChecking.value = false
         return
     }
     if (ev.error) {
-        error.value      = ev.error
+        error.value = ev.error
         isChecking.value = false
     }
 }
@@ -153,52 +148,58 @@ onMounted(() => {
 const verdictConfig = computed(() => {
     if (!verdict.value) return null
     const r = verdict.value.result
-    if (r === 'supported') return {
-        bg:      'bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-800',
-        icon:    '✓',
-        iconBg:  'bg-green-500',
-        title:   'HTTP/3 Supported',
-        titleCl: 'text-green-700 dark:text-green-300',
-    }
-    if (r === 'not_supported') return {
-        bg:      'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800',
-        icon:    '✗',
-        iconBg:  'bg-red-500',
-        title:   'HTTP/3 Not Supported',
-        titleCl: 'text-red-700 dark:text-red-300',
-    }
+    if (r === 'supported')
+        return {
+            bg: 'bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-800',
+            icon: '✓',
+            iconBg: 'bg-green-500',
+            title: 'HTTP/3 Supported',
+            titleCl: 'text-green-700 dark:text-green-300',
+        }
+    if (r === 'not_supported')
+        return {
+            bg: 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800',
+            icon: '✗',
+            iconBg: 'bg-red-500',
+            title: 'HTTP/3 Not Supported',
+            titleCl: 'text-red-700 dark:text-red-300',
+        }
     return {
-        bg:      'bg-gray-50 dark:bg-gray-900/60 border-gray-200 dark:border-gray-700',
-        icon:    '!',
-        iconBg:  'bg-gray-400',
-        title:   'Check Failed',
+        bg: 'bg-gray-50 dark:bg-gray-900/60 border-gray-200 dark:border-gray-700',
+        icon: '!',
+        iconBg: 'bg-gray-400',
+        title: 'Check Failed',
         titleCl: 'text-gray-700 dark:text-gray-300',
     }
 })
 
 function statusIcon(status) {
-    return {
-        pass: '✓',
-        fail: '✗',
-        warn: '⚠',
-        info: 'ℹ',
-    }[status] ?? '·'
+    return (
+        {
+            pass: '✓',
+            fail: '✗',
+            warn: '⚠',
+            info: 'ℹ',
+        }[status] ?? '·'
+    )
 }
 
 function statusClass(status) {
-    return {
-        pass: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
-        fail: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
-        warn: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
-        info: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
-    }[status] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+    return (
+        {
+            pass: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+            fail: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+            warn: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+            info: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
+        }[status] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+    )
 }
 
 // Pending check placeholders shown while checking is in progress
 const pendingKeys = computed(() => {
     if (!isChecking.value) return []
-    const done = new Set(checks.value.map(c => c.key))
-    return CHECK_ORDER.filter(k => !done.has(k))
+    const done = new Set(checks.value.map((c) => c.key))
+    return CHECK_ORDER.filter((k) => !done.has(k))
 })
 </script>
 
@@ -206,12 +207,9 @@ const pendingKeys = computed(() => {
     <Head title="HTTP/3 Checker" />
     <AppLayout>
         <div class="max-w-2xl mx-auto px-4 sm:px-6 py-12">
-
             <!-- Hero heading -->
             <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
-                    HTTP/3 Checker
-                </h1>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">HTTP/3 Checker</h1>
                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     Check whether a website supports HTTP/3 (QUIC) — the next generation of the web protocol.
                 </p>
@@ -221,7 +219,11 @@ const pendingKeys = computed(() => {
             <form @submit.prevent="submitForm" class="flex gap-2 mb-8">
                 <div class="flex-1 relative">
                     <label for="http3-host" class="sr-only">Host to check, without https://</label>
-                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 text-sm select-none pointer-events-none" aria-hidden="true">https://</span>
+                    <span
+                        class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 text-sm select-none pointer-events-none"
+                        aria-hidden="true"
+                        >https://</span
+                    >
                     <input
                         id="http3-host"
                         v-model="hostInput"
@@ -239,27 +241,36 @@ const pendingKeys = computed(() => {
                     class="ui-btn ui-btn-primary px-5 py-3"
                 >
                     <svg v-if="isChecking" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                     </svg>
                     <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
                     </svg>
                     {{ isChecking ? 'Checking…' : 'Check' }}
                 </button>
             </form>
 
             <!-- Error -->
-            <div v-if="error" role="alert" class="mb-6 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 text-sm">
+            <div
+                v-if="error"
+                role="alert"
+                class="mb-6 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 text-sm"
+            >
                 {{ error }}
             </div>
 
             <!-- Results -->
             <div v-if="checks.length || verdict" class="space-y-4">
-
                 <!-- Checked URL -->
                 <p v-if="displayUrl" role="status" class="text-xs text-gray-500 dark:text-gray-400 text-center">
-                    {{ isChecking ? 'Checking' : 'Checked' }} <span class="font-mono text-gray-600 dark:text-gray-400">{{ displayUrl }}</span>
+                    {{ isChecking ? 'Checking' : 'Checked' }}
+                    <span class="font-mono text-gray-600 dark:text-gray-400">{{ displayUrl }}</span>
                 </p>
 
                 <!-- Verdict card -->
@@ -269,7 +280,12 @@ const pendingKeys = computed(() => {
                     enter-to-class="opacity-100 translate-y-0"
                 >
                     <div v-if="verdict" :class="['border rounded-2xl p-5 flex items-center gap-4', verdictConfig.bg]">
-                        <div :class="['w-12 h-12 rounded-full flex items-center justify-center text-white text-xl font-bold shrink-0 shadow', verdictConfig.iconBg]">
+                        <div
+                            :class="[
+                                'w-12 h-12 rounded-full flex items-center justify-center text-white text-xl font-bold shrink-0 shadow',
+                                verdictConfig.iconBg,
+                            ]"
+                        >
                             {{ verdictConfig.icon }}
                         </div>
                         <div>
@@ -282,70 +298,116 @@ const pendingKeys = computed(() => {
                 <!-- Checks list -->
                 <div class="ui-card overflow-hidden">
                     <div class="divide-y divide-gray-100 dark:divide-gray-800">
-
                         <!-- Completed checks -->
                         <transition-group
                             enter-active-class="transition-all duration-300 ease-out"
                             enter-from-class="opacity-0 translate-x-2"
                             enter-to-class="opacity-100 translate-x-0"
                         >
-                            <div v-for="check in orderedChecks" :key="check.key"
-                                class="flex items-start gap-3 px-4 py-3.5">
-                                <span :class="['w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5', statusClass(check.status)]">
+                            <div
+                                v-for="check in orderedChecks"
+                                :key="check.key"
+                                class="flex items-start gap-3 px-4 py-3.5"
+                            >
+                                <span
+                                    :class="[
+                                        'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5',
+                                        statusClass(check.status),
+                                    ]"
+                                >
                                     {{ statusIcon(check.status) }}
                                 </span>
                                 <div class="min-w-0 flex-1">
                                     <p class="text-sm font-medium text-gray-900 dark:text-white">{{ check.label }}</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 break-all">{{ check.detail }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 break-all">
+                                        {{ check.detail }}
+                                    </p>
                                 </div>
                             </div>
                         </transition-group>
 
                         <!-- Pending placeholders -->
-                        <div v-for="key in pendingKeys" :key="'pending-' + key"
-                            class="flex items-center gap-3 px-4 py-3.5 opacity-40">
-                            <span class="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0">
+                        <div
+                            v-for="key in pendingKeys"
+                            :key="'pending-' + key"
+                            class="flex items-center gap-3 px-4 py-3.5 opacity-40"
+                        >
+                            <span
+                                class="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0"
+                            >
                                 <svg class="w-3 h-3 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                                    <circle
+                                        class="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        stroke-width="4"
+                                    />
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                                 </svg>
                             </span>
                             <div class="h-3 bg-gray-100 dark:bg-gray-800 rounded w-32 animate-pulse" />
                         </div>
-
                     </div>
                 </div>
 
                 <!-- QUIC session strip (only shown when we have a real HTTP/3 response) -->
-                <div v-if="serverInfo?.transport === 'HTTP/3' && serverInfo.info.quic" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div class="rounded-2xl border border-sky-200 dark:border-sky-900 bg-gradient-to-br from-sky-50 to-white dark:from-sky-950/40 dark:to-gray-900 p-4">
-                        <p class="text-[11px] font-bold uppercase tracking-[0.15em] text-sky-600 dark:text-sky-400">Connection ID</p>
+                <div
+                    v-if="serverInfo?.transport === 'HTTP/3' && serverInfo.info.quic"
+                    class="grid grid-cols-1 sm:grid-cols-3 gap-3"
+                >
+                    <div
+                        class="rounded-2xl border border-sky-200 dark:border-sky-900 bg-gradient-to-br from-sky-50 to-white dark:from-sky-950/40 dark:to-gray-900 p-4"
+                    >
+                        <p class="text-[11px] font-bold uppercase tracking-[0.15em] text-sky-600 dark:text-sky-400">
+                            Connection ID
+                        </p>
                         <p class="mt-2 font-mono text-sm text-gray-900 dark:text-white truncate">
-                            {{ serverInfo.info.quic.connection_id
-                                ? serverInfo.info.quic.connection_id.slice(0, 12) + (serverInfo.info.quic.connection_id.length > 12 ? '…' : '')
-                                : '—' }}
+                            {{
+                                serverInfo.info.quic.connection_id
+                                    ? serverInfo.info.quic.connection_id.slice(0, 12) +
+                                      (serverInfo.info.quic.connection_id.length > 12 ? '…' : '')
+                                    : '—'
+                            }}
                         </p>
                     </div>
-                    <div class="rounded-2xl border border-sky-200 dark:border-sky-900 bg-gradient-to-br from-sky-50 to-white dark:from-sky-950/40 dark:to-gray-900 p-4">
-                        <p class="text-[11px] font-bold uppercase tracking-[0.15em] text-sky-600 dark:text-sky-400">Packet RX</p>
+                    <div
+                        class="rounded-2xl border border-sky-200 dark:border-sky-900 bg-gradient-to-br from-sky-50 to-white dark:from-sky-950/40 dark:to-gray-900 p-4"
+                    >
+                        <p class="text-[11px] font-bold uppercase tracking-[0.15em] text-sky-600 dark:text-sky-400">
+                            Packet RX
+                        </p>
                         <p class="mt-2 font-mono text-sm text-gray-900 dark:text-white">
-                            {{ serverInfo.info.quic.packet_rx_ms ?? '—' }}<span class="text-gray-500 dark:text-gray-400 text-xs ml-1">ms</span>
+                            {{ serverInfo.info.quic.packet_rx_ms ?? '—'
+                            }}<span class="text-gray-500 dark:text-gray-400 text-xs ml-1">ms</span>
                         </p>
                     </div>
-                    <div class="rounded-2xl border border-sky-200 dark:border-sky-900 bg-gradient-to-br from-sky-50 to-white dark:from-sky-950/40 dark:to-gray-900 p-4">
-                        <p class="text-[11px] font-bold uppercase tracking-[0.15em] text-sky-600 dark:text-sky-400">Handshake Done</p>
+                    <div
+                        class="rounded-2xl border border-sky-200 dark:border-sky-900 bg-gradient-to-br from-sky-50 to-white dark:from-sky-950/40 dark:to-gray-900 p-4"
+                    >
+                        <p class="text-[11px] font-bold uppercase tracking-[0.15em] text-sky-600 dark:text-sky-400">
+                            Handshake Done
+                        </p>
                         <p class="mt-2 font-mono text-sm text-gray-900 dark:text-white">
-                            {{ serverInfo.info.quic.handshake_done_ms ?? '—' }}<span class="text-gray-500 dark:text-gray-400 text-xs ml-1">ms</span>
+                            {{ serverInfo.info.quic.handshake_done_ms ?? '—'
+                            }}<span class="text-gray-500 dark:text-gray-400 text-xs ml-1">ms</span>
                         </p>
                     </div>
                 </div>
 
                 <!-- Server information (HTTP version, status, timings, headers) -->
                 <div v-if="serverInfo" class="ui-card overflow-hidden">
-                    <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between gap-3">
+                    <div
+                        class="px-5 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between gap-3"
+                    >
                         <div>
                             <p class="ui-section-title">
-                                {{ serverInfo.transport === 'HTTP/3' ? 'HTTP/3 Server Information' : 'Server Information' }}
+                                {{
+                                    serverInfo.transport === 'HTTP/3'
+                                        ? 'HTTP/3 Server Information'
+                                        : 'Server Information'
+                                }}
                             </p>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                                 Observed over {{ serverInfo.info.http_version_label }}
@@ -353,9 +415,11 @@ const pendingKeys = computed(() => {
                         </div>
                         <span
                             class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"
-                            :class="serverInfo.transport === 'HTTP/3'
-                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200'
-                                : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200'"
+                            :class="
+                                serverInfo.transport === 'HTTP/3'
+                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200'
+                                    : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200'
+                            "
                         >
                             {{ serverInfo.info.http_version_label }}
                         </span>
@@ -364,66 +428,129 @@ const pendingKeys = computed(() => {
                     <!-- Primary stats: HTTP Version / Status / Response Time -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-5 bg-gray-50 dark:bg-gray-900/60">
                         <div class="ui-card rounded-xl p-4">
-                            <p class="text-[11px] uppercase tracking-wider text-sky-600 dark:text-sky-400 font-bold">HTTP Version</p>
-                            <p class="mt-2 font-mono text-base text-gray-900 dark:text-white">{{ serverInfo.info.http_version_label }}</p>
+                            <p class="text-[11px] uppercase tracking-wider text-sky-600 dark:text-sky-400 font-bold">
+                                HTTP Version
+                            </p>
+                            <p class="mt-2 font-mono text-base text-gray-900 dark:text-white">
+                                {{ serverInfo.info.http_version_label }}
+                            </p>
                         </div>
                         <div v-if="serverInfo.info.status_code" class="ui-card rounded-xl p-4">
-                            <p class="text-[11px] uppercase tracking-wider text-sky-600 dark:text-sky-400 font-bold">Status Code</p>
-                            <p class="mt-2 font-mono text-base text-gray-900 dark:text-white">{{ serverInfo.info.status_code }}</p>
+                            <p class="text-[11px] uppercase tracking-wider text-sky-600 dark:text-sky-400 font-bold">
+                                Status Code
+                            </p>
+                            <p class="mt-2 font-mono text-base text-gray-900 dark:text-white">
+                                {{ serverInfo.info.status_code }}
+                            </p>
                         </div>
                         <div v-if="serverInfo.info.timing_ms?.total !== undefined" class="ui-card rounded-xl p-4">
-                            <p class="text-[11px] uppercase tracking-wider text-sky-600 dark:text-sky-400 font-bold">Response Time</p>
-                            <p class="mt-2 font-mono text-base text-gray-900 dark:text-white">{{ serverInfo.info.timing_ms.total }} ms</p>
+                            <p class="text-[11px] uppercase tracking-wider text-sky-600 dark:text-sky-400 font-bold">
+                                Response Time
+                            </p>
+                            <p class="mt-2 font-mono text-base text-gray-900 dark:text-white">
+                                {{ serverInfo.info.timing_ms.total }} ms
+                            </p>
                         </div>
                     </div>
 
                     <!-- Secondary timings -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-px bg-gray-200 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-800">
-                        <div v-if="serverInfo.info.timing_ms?.dns !== undefined" class="bg-white dark:bg-gray-900 p-3.5">
-                            <p class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">DNS</p>
-                            <p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">{{ serverInfo.info.timing_ms.dns }} ms</p>
+                    <div
+                        class="grid grid-cols-2 sm:grid-cols-4 gap-px bg-gray-200 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-800"
+                    >
+                        <div
+                            v-if="serverInfo.info.timing_ms?.dns !== undefined"
+                            class="bg-white dark:bg-gray-900 p-3.5"
+                        >
+                            <p
+                                class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold"
+                            >
+                                DNS
+                            </p>
+                            <p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">
+                                {{ serverInfo.info.timing_ms.dns }} ms
+                            </p>
                         </div>
-                        <div v-if="serverInfo.info.timing_ms?.connect !== undefined" class="bg-white dark:bg-gray-900 p-3.5">
-                            <p class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">Connect</p>
-                            <p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">{{ serverInfo.info.timing_ms.connect }} ms</p>
+                        <div
+                            v-if="serverInfo.info.timing_ms?.connect !== undefined"
+                            class="bg-white dark:bg-gray-900 p-3.5"
+                        >
+                            <p
+                                class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold"
+                            >
+                                Connect
+                            </p>
+                            <p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">
+                                {{ serverInfo.info.timing_ms.connect }} ms
+                            </p>
                         </div>
-                        <div v-if="serverInfo.info.timing_ms?.handshake || serverInfo.info.timing_ms?.tls" class="bg-white dark:bg-gray-900 p-3.5">
-                            <p class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">
+                        <div
+                            v-if="serverInfo.info.timing_ms?.handshake || serverInfo.info.timing_ms?.tls"
+                            class="bg-white dark:bg-gray-900 p-3.5"
+                        >
+                            <p
+                                class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold"
+                            >
                                 {{ serverInfo.transport === 'HTTP/3' ? 'Handshake' : 'TLS' }}
                             </p>
                             <p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">
-                                {{ (serverInfo.info.timing_ms.handshake || serverInfo.info.timing_ms.tls) }} ms
+                                {{ serverInfo.info.timing_ms.handshake || serverInfo.info.timing_ms.tls }} ms
                             </p>
                         </div>
-                        <div v-if="serverInfo.info.timing_ms?.ttfb !== undefined" class="bg-white dark:bg-gray-900 p-3.5">
-                            <p class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">TTFB</p>
-                            <p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">{{ serverInfo.info.timing_ms.ttfb }} ms</p>
+                        <div
+                            v-if="serverInfo.info.timing_ms?.ttfb !== undefined"
+                            class="bg-white dark:bg-gray-900 p-3.5"
+                        >
+                            <p
+                                class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold"
+                            >
+                                TTFB
+                            </p>
+                            <p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">
+                                {{ serverInfo.info.timing_ms.ttfb }} ms
+                            </p>
                         </div>
                     </div>
 
                     <!-- Server / URL -->
-                    <div v-if="serverInfo.info.server_ip || serverInfo.info.effective_url" class="px-5 py-3 border-t border-gray-200 dark:border-gray-800 text-xs space-y-1">
+                    <div
+                        v-if="serverInfo.info.server_ip || serverInfo.info.effective_url"
+                        class="px-5 py-3 border-t border-gray-200 dark:border-gray-800 text-xs space-y-1"
+                    >
                         <div v-if="serverInfo.info.server_ip" class="flex gap-2">
                             <span class="text-gray-500 dark:text-gray-400 w-20 shrink-0">Server IP</span>
                             <span class="font-mono text-gray-900 dark:text-white break-all">
-                                {{ serverInfo.info.server_ip }}<template v-if="serverInfo.info.server_port">:{{ serverInfo.info.server_port }}</template>
+                                {{ serverInfo.info.server_ip
+                                }}<template v-if="serverInfo.info.server_port"
+                                    >:{{ serverInfo.info.server_port }}</template
+                                >
                             </span>
                         </div>
                         <div v-if="serverInfo.info.effective_url" class="flex gap-2">
                             <span class="text-gray-500 dark:text-gray-400 w-20 shrink-0">URL</span>
-                            <span class="font-mono text-gray-900 dark:text-white break-all">{{ serverInfo.info.effective_url }}</span>
+                            <span class="font-mono text-gray-900 dark:text-white break-all">{{
+                                serverInfo.info.effective_url
+                            }}</span>
                         </div>
                     </div>
 
                     <!-- Response headers -->
                     <div v-if="serverInfo.info.headers?.length" class="border-t border-gray-200 dark:border-gray-800">
-                        <div class="px-5 py-3 bg-gray-50 dark:bg-gray-900/60 border-b border-gray-200 dark:border-gray-800 grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-4">
-                            <p class="text-[11px] uppercase tracking-[0.15em] text-sky-600 dark:text-sky-400 font-bold">Header</p>
-                            <p class="text-[11px] uppercase tracking-[0.15em] text-sky-600 dark:text-sky-400 font-bold">Value</p>
+                        <div
+                            class="px-5 py-3 bg-gray-50 dark:bg-gray-900/60 border-b border-gray-200 dark:border-gray-800 grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-4"
+                        >
+                            <p class="text-[11px] uppercase tracking-[0.15em] text-sky-600 dark:text-sky-400 font-bold">
+                                Header
+                            </p>
+                            <p class="text-[11px] uppercase tracking-[0.15em] text-sky-600 dark:text-sky-400 font-bold">
+                                Value
+                            </p>
                         </div>
                         <div class="divide-y divide-gray-100 dark:divide-gray-800">
-                            <div v-for="h in serverInfo.info.headers" :key="h.name + h.value"
-                                class="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-4 px-5 py-3 text-xs">
+                            <div
+                                v-for="h in serverInfo.info.headers"
+                                :key="h.name + h.value"
+                                class="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-4 px-5 py-3 text-xs"
+                            >
                                 <span class="font-mono text-gray-600 dark:text-gray-300 break-all">{{ h.name }}</span>
                                 <span class="font-mono text-gray-900 dark:text-white break-all">{{ h.value }}</span>
                             </div>
@@ -432,24 +559,43 @@ const pendingKeys = computed(() => {
                 </div>
 
                 <!-- What is HTTP/3 info box -->
-                <div v-if="verdict" class="ui-panel-muted dark:bg-gray-900/60 px-4 py-3.5 text-xs text-gray-600 dark:text-gray-400 space-y-1.5">
+                <div
+                    v-if="verdict"
+                    class="ui-panel-muted dark:bg-gray-900/60 px-4 py-3.5 text-xs text-gray-600 dark:text-gray-400 space-y-1.5"
+                >
                     <p class="font-semibold text-gray-700 dark:text-gray-300">How this checker works</p>
-                    <p><span class="font-medium text-gray-600 dark:text-gray-400">DNS</span> — Resolves A (IPv4) and AAAA (IPv6) records.</p>
-                    <p><span class="font-medium text-gray-600 dark:text-gray-400">TLS 1.3</span> — HTTP/3 requires TLS 1.3; older TLS versions block it.</p>
-                    <p><span class="font-medium text-gray-600 dark:text-gray-400">Alt-Svc header</span> — The standard way servers advertise HTTP/3 support (e.g. <code class="font-mono bg-gray-100 dark:bg-gray-800 px-1 rounded">h3=":443"</code>).</p>
-                    <p><span class="font-medium text-gray-600 dark:text-gray-400">HTTP/3 Direct</span> — Attempts an actual QUIC connection using curl (requires curl compiled with QUIC/HTTP3 support).</p>
+                    <p>
+                        <span class="font-medium text-gray-600 dark:text-gray-400">DNS</span> — Resolves A (IPv4) and
+                        AAAA (IPv6) records.
+                    </p>
+                    <p>
+                        <span class="font-medium text-gray-600 dark:text-gray-400">TLS 1.3</span> — HTTP/3 requires TLS
+                        1.3; older TLS versions block it.
+                    </p>
+                    <p>
+                        <span class="font-medium text-gray-600 dark:text-gray-400">Alt-Svc header</span> — The standard
+                        way servers advertise HTTP/3 support (e.g.
+                        <code class="font-mono bg-gray-100 dark:bg-gray-800 px-1 rounded">h3=":443"</code>).
+                    </p>
+                    <p>
+                        <span class="font-medium text-gray-600 dark:text-gray-400">HTTP/3 Direct</span> — Attempts an
+                        actual QUIC connection using curl (requires curl compiled with QUIC/HTTP3 support).
+                    </p>
                 </div>
-
             </div>
 
             <!-- Empty state -->
             <div v-else-if="!isChecking" class="text-center py-12 text-gray-500 dark:text-gray-400">
                 <svg class="w-12 h-12 mx-auto mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="1.5"
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
                 </svg>
                 <p class="text-sm">Enter a hostname to check HTTP/3 support</p>
             </div>
-
         </div>
     </AppLayout>
 </template>

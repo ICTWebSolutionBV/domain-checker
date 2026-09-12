@@ -32,8 +32,7 @@ const errorId = `${id}-error`
 const control = computed(() => ({
     id,
     'aria-invalid': props.error ? 'true' : undefined,
-    'aria-describedby': [props.help && helpId, props.error && errorId]
-        .filter(Boolean).join(' ') || undefined,
+    'aria-describedby': [props.help && helpId, props.error && errorId].filter(Boolean).join(' ') || undefined,
 }))
 </script>
 
