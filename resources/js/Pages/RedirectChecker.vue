@@ -148,7 +148,9 @@ onMounted(() => {
             <!-- Form -->
             <form @submit.prevent="runCheck" class="space-y-3 mb-8">
                 <div class="flex gap-2">
+                    <label for="redirect-url" class="sr-only">URL to trace</label>
                     <input
+                        id="redirect-url"
                         v-model="urlInput"
                         type="text"
                         placeholder="https://example.com"
@@ -175,8 +177,9 @@ onMounted(() => {
 
                 <!-- User-agent selector -->
                 <div class="flex items-center gap-2">
-                    <label class="text-xs text-gray-500 dark:text-gray-400 shrink-0 font-medium">User-Agent:</label>
+                    <label for="redirect-user-agent" class="text-xs text-gray-600 dark:text-gray-400 shrink-0 font-medium">User-Agent:</label>
                     <select
+                        id="redirect-user-agent"
                         v-model="selectedAgent"
                         :disabled="loading"
                         class="ui-input flex-1 min-w-0 px-3 py-2 rounded-lg text-xs shadow-card truncate dark:bg-gray-900"

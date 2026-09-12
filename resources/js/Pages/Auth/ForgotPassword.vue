@@ -1,5 +1,6 @@
 <script setup>
 import { Head, useForm, Link } from '@inertiajs/vue3'
+import FormField from '@/Components/FormField.vue'
 
 defineProps({
     status: String,
@@ -22,15 +23,13 @@ const submit = () => {
             </div>
 
             <div class="ui-card shadow-overlay p-6">
-                <p v-if="status" class="text-green-600 dark:text-green-400 text-sm mb-4">{{ status }}</p>
+                <p v-if="status" role="status" class="text-emerald-700 dark:text-emerald-400 text-sm mb-4">{{ status }}</p>
 
                 <form @submit.prevent="submit" class="space-y-4">
-                    <div>
-                        <label class="ui-label text-sm mb-1">Email</label>
-                        <input v-model="form.email" type="email" required autofocus
-                            class="ui-input" />
-                        <p v-if="form.errors.email" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ form.errors.email }}</p>
-                    </div>
+                    <FormField label="Email" label-class="text-sm mb-1" :error="form.errors.email" v-slot="field">
+                        <input v-bind="field" v-model="form.email" type="email" name="email" required autofocus
+                            autocomplete="username" class="ui-input" />
+                    </FormField>
                     <button type="submit" :disabled="form.processing"
                         class="ui-btn ui-btn-primary w-full">
                         {{ form.processing ? 'Sending…' : 'Send reset link' }}

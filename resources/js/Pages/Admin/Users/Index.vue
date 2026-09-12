@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { Head, Link, useForm, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import FormField from '@/Components/FormField.vue'
 
 defineProps({
     users: Array,
@@ -95,34 +96,27 @@ const twoFactorSummary = (user) => {
             <div v-if="showInviteForm" class="ui-card rounded-xl p-6 mb-6">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Send Invite</h2>
                 <form @submit.prevent="createInvite" class="flex flex-wrap gap-3 items-end">
-                    <div class="flex-1 min-w-[140px]">
-                        <label class="ui-label text-sm mb-1">First Name <span class="ui-label-hint">(optional)</span></label>
-                        <input v-model="inviteForm.first_name" type="text" placeholder="Jane"
-                            class="ui-input" />
-                    </div>
-                    <div class="flex-1 min-w-[140px]">
-                        <label class="ui-label text-sm mb-1">Last Name <span class="ui-label-hint">(optional)</span></label>
-                        <input v-model="inviteForm.last_name" type="text" placeholder="Doe"
-                            class="ui-input" />
-                    </div>
-                    <div class="flex-1 min-w-[180px]">
-                        <label class="ui-label text-sm mb-1">Email</label>
-                        <input v-model="inviteForm.email" type="email" required placeholder="jane@example.com"
-                            class="ui-input" />
-                        <p v-if="inviteForm.errors.email" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ inviteForm.errors.email }}</p>
-                    </div>
-                    <div class="w-28">
-                        <label class="ui-label text-sm mb-1">Role</label>
-                        <select v-model="inviteForm.role"
-                            class="ui-input">
+                    <FormField label="First Name" hint="(optional)" label-class="text-sm mb-1" class="flex-1 min-w-[140px]" :error="inviteForm.errors.first_name" v-slot="field">
+                        <input v-bind="field" v-model="inviteForm.first_name" type="text" placeholder="Jane"
+                            autocomplete="off" class="ui-input" />
+                    </FormField>
+                    <FormField label="Last Name" hint="(optional)" label-class="text-sm mb-1" class="flex-1 min-w-[140px]" :error="inviteForm.errors.last_name" v-slot="field">
+                        <input v-bind="field" v-model="inviteForm.last_name" type="text" placeholder="Doe"
+                            autocomplete="off" class="ui-input" />
+                    </FormField>
+                    <FormField label="Email" label-class="text-sm mb-1" class="flex-1 min-w-[180px]" :error="inviteForm.errors.email" v-slot="field">
+                        <input v-bind="field" v-model="inviteForm.email" type="email" required placeholder="jane@example.com"
+                            autocomplete="off" class="ui-input" />
+                    </FormField>
+                    <FormField label="Role" label-class="text-sm mb-1" class="w-28" :error="inviteForm.errors.role" v-slot="field">
+                        <select v-bind="field" v-model="inviteForm.role" class="ui-input">
                             <option v-for="r in assignableRoles" :key="r" :value="r">{{ roleLabel(r) }}</option>
                         </select>
-                    </div>
-                    <div class="w-36">
-                        <label class="ui-label text-sm mb-1">Expires (hours)</label>
-                        <input v-model.number="inviteForm.expires_hours" type="number" min="1" max="720"
+                    </FormField>
+                    <FormField label="Expires (hours)" label-class="text-sm mb-1" class="w-36" :error="inviteForm.errors.expires_hours" v-slot="field">
+                        <input v-bind="field" v-model.number="inviteForm.expires_hours" type="number" min="1" max="720"
                             class="ui-input" />
-                    </div>
+                    </FormField>
                     <button type="submit" :disabled="inviteForm.processing"
                         class="ui-btn ui-btn-primary self-end">
                         {{ inviteForm.processing ? 'Sending…' : 'Send Invite' }}

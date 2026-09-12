@@ -1,5 +1,6 @@
 <script setup>
 import { Head, useForm } from '@inertiajs/vue3'
+import FormField from '@/Components/FormField.vue'
 
 const props = defineProps({
     email: String,
@@ -29,24 +30,22 @@ const submit = () => {
             </div>
 
             <div class="ui-card shadow-overlay p-6">
+                <p v-if="form.errors.token" role="alert" class="text-red-600 dark:text-red-400 text-sm mb-4">
+                    {{ form.errors.token }}
+                </p>
                 <form @submit.prevent="submit" class="space-y-4">
-                    <div>
-                        <label class="ui-label text-sm mb-1">Email</label>
-                        <input v-model="form.email" type="email" required
+                    <FormField label="Email" label-class="text-sm mb-1" :error="form.errors.email" v-slot="field">
+                        <input v-bind="field" :value="form.email" type="email" name="email" readonly
+                            autocomplete="username" class="ui-input" />
+                    </FormField>
+                    <FormField label="New password" label-class="text-sm mb-1" :error="form.errors.password" v-slot="field">
+                        <input v-bind="field" v-model="form.password" type="password" name="password" required autocomplete="new-password"
                             class="ui-input" />
-                        <p v-if="form.errors.email" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ form.errors.email }}</p>
-                    </div>
-                    <div>
-                        <label class="ui-label text-sm mb-1">New password</label>
-                        <input v-model="form.password" type="password" required autocomplete="new-password"
+                    </FormField>
+                    <FormField label="Confirm new password" label-class="text-sm mb-1" :error="form.errors.password_confirmation" v-slot="field">
+                        <input v-bind="field" v-model="form.password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password"
                             class="ui-input" />
-                        <p v-if="form.errors.password" class="text-red-600 dark:text-red-400 text-xs mt-1">{{ form.errors.password }}</p>
-                    </div>
-                    <div>
-                        <label class="ui-label text-sm mb-1">Confirm new password</label>
-                        <input v-model="form.password_confirmation" type="password" required autocomplete="new-password"
-                            class="ui-input" />
-                    </div>
+                    </FormField>
                     <button type="submit" :disabled="form.processing"
                         class="ui-btn ui-btn-primary w-full">
                         {{ form.processing ? 'Updating…' : 'Reset password' }}

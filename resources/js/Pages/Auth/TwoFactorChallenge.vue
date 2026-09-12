@@ -29,10 +29,12 @@ const verify = () => {
 
         <form @submit.prevent="verify" class="space-y-4">
             <div>
-                <label class="ui-label text-sm">Authentication code</label>
+                <label for="two-factor-code" class="ui-label text-sm">Authentication code</label>
                 <input
+                    id="two-factor-code"
                     ref="codeInput"
                     v-model="form.code"
+                    name="code"
                     type="text"
                     inputmode="numeric"
                     autocomplete="one-time-code"
@@ -42,7 +44,7 @@ const verify = () => {
                     class="ui-input py-3 text-center tracking-[0.5em] font-mono"
                     :class="form.errors.code ? 'border-red-400' : ''"
                 />
-                <p v-if="form.errors.code" class="text-red-500 text-xs mt-1 text-center">{{ form.errors.code }}</p>
+                <p v-if="form.errors.code" role="alert" class="text-red-600 dark:text-red-400 text-xs mt-1 text-center">{{ form.errors.code }}</p>
             </div>
 
             <button
