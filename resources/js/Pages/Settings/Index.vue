@@ -8,7 +8,7 @@ import { browserSupportsWebAuthn, startRegistration } from '@simplewebauthn/brow
 import {
     User, Lock, ShieldCheck, ShieldOff, Fingerprint, Plus, Trash2,
     Loader2, QrCode, Copy, CheckCheck, Key, RefreshCw, Plug, Eye, EyeOff, X
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const props = defineProps({
     twoFactorEnabled: Boolean,

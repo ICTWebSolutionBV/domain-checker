@@ -5,7 +5,7 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import {
     MapPin, Search, Loader2, Globe, Building2, Network, Wifi,
     Clock, Cloud, Shield, AlertTriangle, Server, History, ArrowRight,
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const props = defineProps({
     initialInput: { type: String, default: '' },

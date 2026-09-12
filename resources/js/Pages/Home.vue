@@ -11,7 +11,7 @@ import FormField from '@/Components/FormField.vue'
 import {
     Search, Globe, CheckCircle, XCircle, HelpCircle, Loader2,
     Copy, Check, ClipboardList, X, UserCircle, Building2
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const props = defineProps({
     popularTlds: Array,

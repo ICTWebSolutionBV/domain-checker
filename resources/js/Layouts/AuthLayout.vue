@@ -1,5 +1,5 @@
 <script setup>
-import { Globe } from 'lucide-vue-next'
+import { Globe } from '@lucide/vue'
 import { Link } from '@inertiajs/vue3'
 
 defineProps({

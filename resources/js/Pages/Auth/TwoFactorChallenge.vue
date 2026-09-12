@@ -2,7 +2,7 @@
 import { computed, nextTick, ref } from 'vue'
 import { Head, useForm, Link } from '@inertiajs/vue3'
 import AuthLayout from '@/Layouts/AuthLayout.vue'
-import { ShieldCheck, Loader2 } from 'lucide-vue-next'
+import { ShieldCheck, Loader2 } from '@lucide/vue'
 
 const form = useForm({ code: '' })
 const codeInput = ref(null)

@@ -7,7 +7,7 @@ import {
     Wifi, MapPin, Network, Clock, Shield, Check, Copy,
     Monitor, Smartphone, Tablet, Globe, Building2, Server,
     AlertTriangle, Search,
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const props = defineProps({
     ip:     { type: String, default: null },

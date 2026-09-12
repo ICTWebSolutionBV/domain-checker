@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { Head, useForm, Link } from '@inertiajs/vue3'
 import AuthLayout from '@/Layouts/AuthLayout.vue'
 import FormField from '@/Components/FormField.vue'
-import { Fingerprint, Mail, Lock, Loader2 } from 'lucide-vue-next'
+import { Fingerprint, Mail, Lock, Loader2 } from '@lucide/vue'
 import { browserSupportsWebAuthn, startAuthentication } from '@simplewebauthn/browser'
 
 const form = useForm({
