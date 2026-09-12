@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { Head, Link } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import { useClipboard } from '@/composables/useClipboard'
 import {
     Wifi, MapPin, Network, Clock, Shield, Check, Copy,
     Monitor, Smartphone, Tablet, Globe, Building2, Server,
@@ -13,7 +14,7 @@ const props = defineProps({
     result: { type: Object, default: null },
 })
 
-const copied = ref(null)
+const { copy, copied, error: copyError } = useClipboard()
 const browserInfo = ref(null)
 const ipv4 = ref(null)
 const ipv6 = ref(null)
@@ -21,10 +22,8 @@ const ipDetecting = ref(true)
 
 function copyIp(ip) {
     if (!ip) return
-    navigator.clipboard.writeText(ip).then(() => {
-        copied.value = ip
-        setTimeout(() => { copied.value = null }, 2000)
-    }).catch(() => {})
+    // Used to swallow every failure, so the button simply looked dead.
+    copy(ip, ip)
 }
 
 async function fetchIp(url) {
@@ -181,7 +180,7 @@ onMounted(() => {
                             <!-- IPv4 row -->
                             <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50">
                                 <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 w-9 shrink-0 text-left">IPv4</span>
-                                <span class="font-mono text-sm font-bold text-gray-900 dark:text-white flex-1 text-left truncate">{{ ipv4 }}</span>
+                                <span class="font-mono text-sm font-bold text-gray-900 dark:text-white flex-1 text-left break-all">{{ ipv4 }}</span>
                                 <div class="flex items-center gap-1.5 shrink-0">
                                     <span v-if="!isIPv6" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Current connection" />
                                     <button @click="copyIp(ipv4)" type="button" class="flex items-center justify-center w-7 h-7 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-gray-900 hover:bg-emerald-50 dark:hover:bg-emerald-950 text-gray-500 dark:text-gray-400 transition-colors" title="Copy IPv4">
@@ -193,7 +192,7 @@ onMounted(() => {
                             <!-- IPv6 row -->
                             <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/50">
                                 <span class="text-xs font-semibold text-purple-600 dark:text-purple-400 w-9 shrink-0 text-left">IPv6</span>
-                                <span class="font-mono text-xs font-bold text-gray-900 dark:text-white flex-1 text-left truncate">{{ ipv6 }}</span>
+                                <span class="font-mono text-xs font-bold text-gray-900 dark:text-white flex-1 text-left break-all">{{ ipv6 }}</span>
                                 <div class="flex items-center gap-1.5 shrink-0">
                                     <span v-if="isIPv6" class="w-2 h-2 rounded-full bg-purple-500 animate-pulse" title="Current connection" />
                                     <button @click="copyIp(ipv6)" type="button" class="flex items-center justify-center w-7 h-7 rounded-lg border border-purple-200 dark:border-purple-800 bg-white dark:bg-gray-900 hover:bg-purple-50 dark:hover:bg-purple-950 text-gray-500 dark:text-gray-400 transition-colors" title="Copy IPv6">

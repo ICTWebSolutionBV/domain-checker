@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { Head, useForm, Link } from '@inertiajs/vue3'
 import AuthLayout from '@/Layouts/AuthLayout.vue'
 import FormField from '@/Components/FormField.vue'
@@ -45,11 +45,12 @@ const loginWithPasskey = async () => {
     }
 }
 
-onMounted(() => {
-    if (supportsPasskeys) {
-        loginWithPasskey()
-    }
-})
+// This used to run on mount. supportsPasskeys is true in every modern
+// browser whether or not the user has a passkey for this site, so simply
+// arriving at the login page popped a native OS credential dialog — and
+// dismissing it, the common case for a password user, wrote "Passkey
+// authentication was cancelled." into the error slot. The button is right
+// there for anyone who wants it.
 </script>
 
 <template>

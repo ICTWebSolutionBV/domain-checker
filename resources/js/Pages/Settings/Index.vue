@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { Head, useForm, usePage, Link } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import FormField from '@/Components/FormField.vue'
+import { useClipboard } from '@/composables/useClipboard'
 import {
     User, Lock, ShieldCheck, ShieldOff, Fingerprint, Plus, Trash2,
     Loader2, QrCode, Copy, CheckCheck, Key, RefreshCw, Plug, Eye, EyeOff, X
@@ -46,36 +47,40 @@ const passkeyLoading = ref(false)
 const passkeyError = ref('')
 const supportsPasskeys = typeof window !== 'undefined' && window.browserSupportsWebAuthn?.()
 
-const copiedCode = ref(null)
-
-function copyCode(code) {
-    navigator.clipboard.writeText(code)
-    copiedCode.value = code
-    setTimeout(() => copiedCode.value = null, 2000)
-}
+// The old version flipped to the success checkmark regardless of whether the
+// write resolved — a false positive on any non-secure origin.
+const { copy: copyCode, copied: copiedCode, error: copyError } = useClipboard()
 
 async function registerPasskey() {
-    if (!passkeyName.value.trim()) return
+    if (!passkeyName.value.trim() || passkeyLoading.value) return
     passkeyLoading.value = true
     passkeyError.value = ''
     try {
         const optionsRes = await fetch(route('passkeys.register-options'))
-        const optionsJson = await optionsRes.text()
-        const options = JSON.parse(optionsJson)
+        // No res.ok check and then JSON.parse on the body: a 419, 401 or 500
+        // returns HTML, which surfaced to the user as "Unexpected token '<'".
+        if (!optionsRes.ok) throw new Error('Could not start passkey registration. Please reload and try again.')
+        const options = await optionsRes.json()
         const regResponse = await window.startRegistration({ optionsJSON: options })
         const form = useForm({
             name: passkeyName.value.trim(),
             passkey_response: JSON.stringify(regResponse),
         })
+        // The spinner used to stop here, before this un-awaited post resolved.
         form.post(route('passkeys.store'), {
             onSuccess: () => { passkeyName.value = '' },
             onError: (errors) => { passkeyError.value = Object.values(errors)[0] || 'Failed to register passkey.' },
+            onFinish: () => { passkeyLoading.value = false },
         })
     } catch (e) {
         passkeyError.value = e.name === 'NotAllowedError' ? 'Registration cancelled.' : (e.message || 'Failed to register passkey.')
-    } finally {
         passkeyLoading.value = false
     }
+}
+
+function disableTwoFactor() {
+    if (!confirm('Turn off two-factor authentication? Your account will be protected by your password alone.')) return
+    disableForm.post(route('settings.two-factor.disable'))
 }
 
 function deletePasskey(id) {
@@ -222,18 +227,21 @@ function clearApiKey() {
                             <div class="grid grid-cols-2 gap-2">
                                 <div v-for="code in recoveryCodes" :key="code" class="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
                                     <code class="text-xs font-mono text-gray-700 dark:text-gray-300">{{ code }}</code>
-                                    <button @click="copyCode(code)" :aria-label="`Copy recovery code ${code}`" class="ml-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">
+                                    <button @click="copyCode(code, code)" :aria-label="`Copy recovery code ${code}`" class="ml-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">
                                         <CheckCheck v-if="copiedCode === code" class="w-3.5 h-3.5 text-emerald-500" />
                                         <Copy v-else class="w-3.5 h-3.5" />
                                     </button>
                                 </div>
                             </div>
+                            <p v-if="copyError" role="alert" class="text-xs font-medium text-red-700 dark:text-red-400">{{ copyError }}</p>
                         </div>
 
                         <!-- 2FA enabled state -->
                         <div v-else-if="twoFactorEnabled" class="space-y-4">
                             <p class="text-sm text-gray-600 dark:text-gray-400">Two-factor authentication is active. Your account is protected with TOTP authentication.</p>
-                            <form @submit.prevent="disableForm.post(route('settings.two-factor.disable'))">
+                            <!-- Removing a passkey and removing an API key both
+                                 confirmed; turning 2FA off entirely did not. -->
+                            <form @submit.prevent="disableTwoFactor">
                                 <div class="flex gap-3">
                                     <label for="disable-2fa-password" class="sr-only">Confirm with your password</label>
                                     <input id="disable-2fa-password" v-model="disableForm.password" type="password" name="password" autocomplete="current-password" placeholder="Confirm with your password" class="ui-input flex-1 focus:ring-2 focus:ring-red-500 focus:border-red-500" />
