@@ -29,11 +29,22 @@ bumps, so the omission mattered.
 - **`league/commonmark` 2.9.0 → 2.10.0**, patching four advisories.
 - **`nanoid` → 3.3.18**, patching the infinite-loop advisory.
 
+- **Password-reset links can no longer be pointed at another host.** `trustProxies(at: '*')` trusted `X-Forwarded-Host`, so a forged header produced a genuine reset mail carrying a valid token on a host the sender chose. The host is no longer taken from the request: `X-Forwarded-Host` is untrusted, `trustHosts()` is pinned to `APP_URL`, and every URL is generated from `APP_URL`.
+- **Registrar credentials are admin-only.** `PUT /settings/api` sat in the plain `auth` group, so any account could rewrite the global Realtime Register host and API key — and exfiltrate the key by pointing the host at its own server.
+- **Login can no longer be brute-forced by rotating `X-Forwarded-For`.** A per-account limit (20/min) now sits next to the per-email+IP one (5/min), and two-factor verification is limited per pending-login session. Both named limiters had lived in a `FortifyServiceProvider` that was never registered, so neither had ever existed.
+- **The two-factor grant is scoped to the user**, instead of a session-wide flag a second account in the same browser could inherit, and Fortify's nine parallel two-factor routes — writing the same columns with different semantics — are disabled.
+- **Role lockouts closed:** a super admin cannot change their own role, and the last super admin cannot be demoted.
+- **No account enumeration** on `/forgot-password`: it answers the same way whether or not the address exists.
+- **Security headers and a nonce-based Content-Security-Policy**, with neither `'unsafe-inline'` nor `'unsafe-eval'`. Asset origins are derived from `ASSET_URL`/`APP_URL`, because Vite emits absolute asset URLs and a flat `'self'` renders a blank page behind a CDN or proxy hostname.
+- **The webfont is self-hosted**, so no page load depends on or reports to `fonts.bunny.net`.
 ### Added
 - **The typed extension is always checked and answered first**, shown as a headline result card above the grid even when that TLD is not in the selected list.
 - **Internationalised domain names are accepted.** Both check endpoints run input through `DomainName::toAscii()`, a no-op for ASCII and punycode otherwise, so `münchen` reaches the registry as `xn--mnchen-3ya`. The registries that sell these names (.de, .fr and .nl among them) were previously answered with a generic validation error. `ext-intl` is now declared in `composer.json`, since the code has always assumed it.
 - **First tests for the check stream**, covering the invariant the front end depends on: however a check ends, it ends with a `done` event.
 
+- **Recovery codes work at the two-factor challenge.** Settings issued eight and nothing accepted one. They are matched case-insensitively and spent on use, and the challenge form has a recovery-code mode, since the six-digit field could not hold one.
+- **A running check can be stopped.**
+- **Pagination** on the admin user and invite lists, and `php artisan invites:prune`, which removes invites that were accepted or whose address already has an account — work the admin index used to do as a side effect of a GET.
 ### Fixed
 - **WHOIS availability parsing for European ccTLDs.** Three defects on the fallback path, all reproduced against live registries: the "looks registered" heuristic ran first and matched the bare `domain:` line every registry echoes back, so .be, .de, .eu and .it reported genuinely free domains as taken; the not-found patterns were negation-blind, so "not available for registration" matched "available for registration"; and the WHOIS-server lookup let `\s+` cross a newline, so a TLD with an empty `whois:` field in its IANA record (.uk since Nominet moved to RDAP) was queried at the hostname `status:`. The IANA TLD → WHOIS server map is now cached for 24 h as well — it used to be re-queried per TLD per check, which IANA throttles; a repeat .be check drops from ~2.5 s to 0.05 s.
 - **`CURLOPT_RESOLVE` pinning for hosts with AAAA records.** One entry per resolved IP was sent, but libcurl keeps only the last entry per host:port, so every check was pinned to whatever address came last — an unbracketed, therefore malformed, IPv6 entry for any dual-stack host. The redirect checker failed outright and the HTTP/3 checker reported false negatives for essentially every modern host. All vetted addresses now go in a single comma-separated entry with IPv6 bracketed.
@@ -43,10 +54,21 @@ bumps, so the omission mattered.
 - **An `unknown` verdict is no longer cached as if it were an answer.** It means a registry refused us, timed out or replied in a shape we could not read; cached for the full 15 minutes, a momentary blip lasted the rest of the client call. It now gets `domain-checker.cache.unknown_ttl` (60 s), which still damps hammering.
 - **Order and transfer forms reflow on small screens.**
 
+- **A pasted subdomain is checked as its registrable domain.** No registry holds a record of `blog.google.com`, so RDAP's 404 reported it available; it is now checked as `google.com`, with the reply keyed on the line as typed plus `checked_domain`.
+- **A registry's terms-of-use notice is no longer read as a registration.** `whois.nic.es` answers unauthorised queries with ~2 KB of conditions, which tripped the registered patterns and reported a free `.es` domain as taken. A verdict now requires the response to mention the queried domain.
+- **Whole TLD families no longer turn into `unknown` under load.** One Identity Digital RDAP endpoint answers for hundreds of TLDs and returns 429 to a burst; RDAP concurrency is now capped per host (`domain-checker.concurrency.rdap_per_host`).
+- **Accessibility:** result rows are real checkboxes and keyboard-selectable, streaming results and errors are announced, every form control is labelled, the modal and drawer are proper dialogs, the measured AA contrast failures are fixed, every control has a visible focus ring, dark mode no longer flashes white, the tool navigation marks the current page, and filter controls meet the 24px target minimum.
+- **Abandoned checks are aborted** instead of holding a server worker, and a stream that dies without finishing is reported instead of leaving rows spinning.
+- **"All extensions" no longer freezes the browser** on 1,287 rows.
+- **My IP reports a refused clipboard write** instead of a button that does nothing.
 ### Changed
 - **Shared SSE plumbing.** Both check endpoints repeated the same stream mechanics and only one had learned what the HTTP/3 endpoint already knew. They now share a `StreamsServerSentEvents` trait that opens the pipe with a ping, guarantees a terminal `done`, logs failures and sends an `error` event first. It also sets `ignore_user_abort(false)`, so an abandoned check stops burning a worker instead of running to completion for nobody.
 - **Dependency refresh** — `guzzlehttp/guzzle` 7.15.2 → **8.1.0** (major), `@simplewebauthn/browser` 13.x → **14.0.0** (major, the passkey library), `laravel/framework` → 13.30.1, `inertiajs/inertia-laravel` → 3.3.1, `phpunit/phpunit` → 13.3.2, `vite` → 8.2.2, `vue` → 3.5.42. Note that 1.10.2 below records Guzzle as staying on the 7.x line; that is no longer true.
 - **Engineering infrastructure**, with no effect on the running app: GitHub Actions CI (PHPUnit on PHP 8.4 and 8.5, Pint, the frontend build, weekly `composer audit` and `npm audit`), a tracked `deploy.sh` replacing the README's inline block, a repo-wide Pint pass, an `.env.example` that matches this application, and the `LICENSE` file the README has always linked to.
+- **Lookups run concurrently.** RDAP and WHOIS legs run in parallel with a bounded, per-host concurrency and batched cache access: 46 popular TLDs from about 14 s to about 2.5 s cold, and the full IANA list — which never finished — in about a minute.
+- **Invite and password-reset mail are queued.** Production needs a queue worker on connection `database`, queue `default`; see the README.
+- **Smaller front end:** pages are code-split, the home page drops from 135 KB to 91 KB gzip, `axios` and `@vueuse/core` are gone, and `lucide-vue-next` is replaced by `@lucide/vue`.
+- **More engineering infrastructure:** Larastan at level 5 with a documented baseline, ESLint and Prettier in CI, `CONTRIBUTING.md`, a pull-request template and Renovate configuration.
 
 ---
 

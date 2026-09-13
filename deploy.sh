@@ -91,8 +91,10 @@ echo "==> Caches"
 # PHP that any other account on the box could replace.
 php artisan optimize
 php artisan storage:link
-# No queue worker is needed today (mail is sent synchronously and there are no
-# jobs), but restarting is free and correct the moment one exists.
+# Invite and password-reset mail are queued, so production needs a worker on
+# connection `database`, queue `default` (a Ploi daemon runs it). A worker keeps
+# the code it booted with until told otherwise; this makes it exit after its
+# current job so the daemon restarts it on the code just deployed.
 php artisan queue:restart
 
 echo "==> Health check"

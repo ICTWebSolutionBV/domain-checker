@@ -8,6 +8,7 @@ use App\Models\UserInvite;
 use App\Notifications\QueuedResetPassword;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -96,5 +97,45 @@ class MailIsQueuedTest extends TestCase
         $this->post('/forgot-password', ['email' => $user->email]);
 
         Notification::assertSentTo($user, QueuedResetPassword::class);
+    }
+
+    /**
+     * Production runs exactly one worker: connection `database`, queue
+     * `default`. Asserting "it was queued" is not enough -- mail queued with
+     * onQueue('mail') would pass every other test here and never be delivered.
+     * So these run the real database driver and check where the job landed.
+     */
+    public function test_invite_mail_lands_on_the_queue_the_production_worker_reads(): void
+    {
+        config(['queue.default' => 'database']);
+
+        $admin = User::factory()->create(['role' => 'super_admin']);
+
+        $this->actingAs($admin)->post(route('admin.invites.store'), [
+            'email' => 'worker-check@example.com',
+            'role' => 'user',
+            'expires_hours' => 72,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('jobs', ['queue' => 'default']);
+        $this->assertStringContainsString(
+            'UserInviteMail',
+            (string) DB::table('jobs')->where('queue', 'default')->value('payload'),
+        );
+    }
+
+    public function test_password_reset_mail_lands_on_the_queue_the_production_worker_reads(): void
+    {
+        config(['queue.default' => 'database']);
+
+        $user = User::factory()->create();
+
+        $this->post('/forgot-password', ['email' => $user->email]);
+
+        $this->assertDatabaseHas('jobs', ['queue' => 'default']);
+        $this->assertStringContainsString(
+            'QueuedResetPassword',
+            (string) DB::table('jobs')->where('queue', 'default')->value('payload'),
+        );
     }
 }
