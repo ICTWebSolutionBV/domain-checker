@@ -46,9 +46,11 @@ count from 40 to 31.
 3. A defect fix names the wrong behaviour it replaces, so the next person can
    tell whether a future change reintroduces it.
 4. A user-visible change has a `CHANGELOG.md` entry under `[Unreleased]`.
-5. Anything that needs a server-side change to take effect — a queue worker, a
-   scheduler entry, an environment variable — says so in the pull request. The
-   deploy script does not start a worker.
+5. Anything that needs a server-side change to take effect — a new worker, a
+   scheduler entry, an environment variable — says so in the pull request.
+   Production runs one queue worker on connection `database`, queue `default`:
+   a job dispatched with `onQueue(...)` or to another connection is silently
+   never processed, so keep jobs there or ask for a worker first.
 
 ## Commit messages
 

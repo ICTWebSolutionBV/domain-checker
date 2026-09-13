@@ -212,10 +212,21 @@ with `php artisan optimize` (config, routes, views and events) and finishes
 with a `curl` health check against `/up` — so a deploy that leaves the site
 500-ing fails instead of printing "deployed".
 
-**No queue worker is required.** Mail is sent synchronously and the app has no
-jobs or scheduled tasks, so there is no daemon to configure. If mail is ever
-moved to `->queue()`, a worker becomes mandatory and invites will silently
-stop arriving without one.
+**A queue worker is required.** Invite mail and password-reset mail are queued,
+not sent inside the request, so without a worker they wait in the `jobs` table
+and are never delivered — including the reset link for someone who is locked
+out. In Ploi, add a daemon (or use the site's Queue tab) with:
+
+```bash
+php artisan queue:work database --queue=default --tries=3
+```
+
+Connection `database` and queue `default` are what the app dispatches to; a
+worker listening anywhere else silently processes nothing. `deploy.sh` runs
+`php artisan queue:restart` so the worker picks up each deploy's code. Failed
+jobs land in `failed_jobs` — check with `php artisan queue:failed`.
+
+The app has no scheduled tasks, so no scheduler entry is needed.
 
 ### 5. Environment variables
 
