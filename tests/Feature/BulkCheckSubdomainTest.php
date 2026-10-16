@@ -50,4 +50,29 @@ class BulkCheckSubdomainTest extends TestCase
         $this->assertStringContainsString('"domain":"example.nl"', $body);
         $this->assertStringNotContainsString('"checked_domain":"example.nl"', $body);
     }
+
+    /**
+     * A line pasted from a document can carry a zero-width space that
+     * normalising strips. The reply must still come back under the line as
+     * sent, or that row spins forever.
+     */
+    public function test_a_line_with_an_invisible_character_is_answered_under_the_line_as_sent(): void
+    {
+        $this->mock(
+            DomainAvailabilityService::class,
+            function ($mock): void {
+                $mock->shouldReceive('streamCheck')->once()->andReturnUsing(
+                    fn (string $domain, array $tlds, callable $onResult) => $onResult($tlds[0], 'available'),
+                );
+            },
+        );
+
+        $body = $this->post('/bulk-check', ['domains' => "example.nl,exam\u{200B}ple.nl"])
+            ->assertOk()
+            ->streamedContent();
+
+        $this->assertStringContainsString('"domain":"example.nl"', $body);
+        $this->assertStringContainsString('"domain":'.json_encode("exam\u{200B}ple.nl"), $body);
+        $this->assertStringContainsString('"total":2', $body);
+    }
 }

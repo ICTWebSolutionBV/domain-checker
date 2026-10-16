@@ -133,6 +133,9 @@ export function useBulkDomainCheck() {
                         const parsed = JSON.parse(dataLine.slice(6))
                         if (parsed.done) {
                             flush()
+                            // A line the server skipped (unknown TLD) gets
+                            // no event; don't leave it spinning forever.
+                            downgradePending()
                             isDone.value = true
                             return
                         }
