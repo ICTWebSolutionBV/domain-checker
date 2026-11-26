@@ -8,11 +8,13 @@ use App\Http\Middleware\SuperAdminMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
@@ -37,6 +39,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->encryptCookies(except: ['theme']);
 
+        // The framework's default CORS config answers api/* for any origin.
+        // The partner API is server-to-server only, and no other route here
+        // wants cross-origin access, so no response carries CORS headers.
+        $middleware->remove(HandleCors::class);
+
         // Public read-only SSE endpoints — no CSRF needed
         $middleware->validateCsrfTokens(except: ['check', 'bulk-check', 'http3/check', 'ip/lookup']);
 
@@ -52,5 +59,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Partner API clients send Accept: text/event-stream, which would get a
+        // 422 as a redirect and other errors as HTML. A server wants JSON.
+        $exceptions->shouldRenderJsonWhen(
+            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
+        );
     })->create();

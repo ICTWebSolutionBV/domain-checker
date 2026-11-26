@@ -77,4 +77,36 @@ return [
      */
     'realtime_register_read_timeout' => 5,
     'realtime_register_budget' => 60,
+
+    /*
+     * Partner API (/api/v1): server-to-server checks for our own sites.
+     *
+     * clients: comma-separated name:sha256hash pairs, generated with
+     * `php artisan partner-api:token <name>`. Only hashes live here; empty
+     * means the API refuses every request.
+     *
+     * Every endpoint has a limit per client token and one per visitor IP the
+     * client reports in X-Client-IP (ignored unless it is a valid IP; IPv6
+     * counts per /64). Failed authentication is capped per caller IP.
+     */
+    'partner_api' => [
+        'clients' => env('PARTNER_API_CLIENTS', ''),
+
+        // POST /check with a tlds list (at most 100 TLDs, run concurrently).
+        'per_client_per_minute' => (int) env('PARTNER_API_CLIENT_LIMIT', 300),
+        'per_visitor_per_minute' => (int) env('PARTNER_API_VISITOR_LIMIT', 20),
+
+        // POST /check with scope=all: the full IANA list, ~1,300 lookups and
+        // up to a minute of a worker on the RDAP/WHOIS path.
+        'all_per_client_per_hour' => (int) env('PARTNER_API_ALL_CLIENT_LIMIT', 60),
+        'all_per_visitor_per_10_minutes' => (int) env('PARTNER_API_ALL_VISITOR_LIMIT', 3),
+
+        // POST /bulk-check: one request counts once, whatever its size, and
+        // its domains are looked up one after another.
+        'bulk_max_domains' => (int) env('PARTNER_API_BULK_MAX', 50),
+        'bulk_per_client_per_minute' => (int) env('PARTNER_API_BULK_CLIENT_LIMIT', 60),
+        'bulk_per_visitor_per_minute' => (int) env('PARTNER_API_BULK_VISITOR_LIMIT', 5),
+
+        'failed_auth_per_minute' => 30,
+    ],
 ];

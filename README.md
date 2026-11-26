@@ -98,6 +98,7 @@ other reserved ranges, so these tools cannot be pointed at internal hosts.
 - **`PublicNetworkGuard`** vets every outbound target (HTTP/3, redirect, DNS and WHOIS/RDAP probes) against the reserved IPv4 and IPv6 ranges, so a visitor cannot use the tools to reach internal or tailnet hosts. TLS peer verification is on in every outbound client.
 - **CSRF is exempted on four public read-only endpoints** (`check`, `bulk-check`, `http3/check`, `ip/lookup`) in `bootstrap/app.php`; they take no authenticated action.
 - **`NoHtmlCache`** marks every Inertia HTML/JSON response `no-store`, so a deploy reaches users on their next request while hashed assets keep caching.
+- **Partner API** at `/api/v1` for our own sites: bearer tokens stored as SHA-256 hashes only, stateless, no CORS, rate-limited per token and per visitor. See [Partner API](#partner-api).
 - **`GET /up`** is the framework health endpoint, used by the deploy script and suitable for uptime monitoring.
 
 ### UI
@@ -348,6 +349,205 @@ The key requires **IsProxy** access. RDAP and WHOIS are used automatically for a
 
 ---
 
+## Partner API
+
+A server-to-server API so our own sites can run live checks through this
+app. All checking logic stays here; a client only sends names and extensions
+and relays the stream. It is stateless (the `api` middleware group: no
+session, no cookies, no CSRF), never renders Inertia, sends no CORS headers,
+and answers errors as JSON whatever the client accepts.
+
+| Endpoint | What it does |
+|---|---|
+| `POST /api/v1/check` | One name across a list of extensions, or across all of them (`scope: all`). |
+| `POST /api/v1/bulk-check` | A list of full domains, each with its own extension. |
+| `GET /api/v1/tlds` | The popular list and the full IANA list. |
+
+### Authentication
+
+Every request carries `Authorization: Bearer <token>`. Tokens are configured
+as comma-separated `name:sha256hash` pairs in `PARTNER_API_CLIENTS`; only the
+SHA-256 hash is stored, and the presented token is hashed and compared with
+`hash_equals`. Generate a token with:
+
+```bash
+php artisan partner-api:token website
+```
+
+It prints the token once (put it in the client's environment) and the
+`PARTNER_API_CLIENTS=` line to paste here, with any existing clients kept. The
+plain token is not stored anywhere. To rotate, add a second entry under the
+same name, switch the client over, then remove the old entry; entries with the
+same name share one rate-limit bucket. Run `php artisan config:cache` after a
+change on a server that caches its config.
+
+Every `POST` should also send `X-Client-IP: <the visitor's IP>`. It is only
+read after the token is accepted, and ignored (with a log notice) unless it is
+a valid IPv4 or IPv6 address; without it only the per-token limits apply.
+
+### `POST /api/v1/check`
+
+```http
+POST /api/v1/check
+Authorization: Bearer <token>
+Accept: text/event-stream
+Content-Type: application/json
+X-Client-IP: 203.0.113.7
+
+{"domain": "voorbeeld", "tlds": ["nl", "com", "eu"]}
+```
+
+| Field | Rules |
+|---|---|
+| `domain` | Required. The name without extension. Unicode is converted to punycode first, exactly like the public checker (`münchen` → `xn--mnchen-3ya`), then it must be one DNS label: letters, digits and inner hyphens, at most 63 characters. |
+| `tlds` | A JSON array of at most 100 extensions, each a label of letters, digits and hyphens (not starting with a hyphen), at most 63 characters. Lowercased and deduplicated before the check. |
+| `scope` | `"all"` instead of `tlds`: check the full IANA list (currently about 1,280 extensions), the same list and 1,500 cap the public "All extensions" mode uses. `total` is then the list size. |
+
+Send exactly one of `tlds` and `scope`; both or neither is a 422.
+
+The response is `200 text/event-stream` with exactly the lines the public
+`/check` stream sends, each followed by a blank line:
+
+```text
+: ping
+data: {"tld":"nl","status":"taken","checked":1,"total":3}
+data: {"tld":"eu","status":"available","checked":2,"total":3}
+data: {"tld":"com","status":"taken","checked":3,"total":3}
+data: {"done":true}
+```
+
+- `: ping` is an SSE comment that opens the pipe before the first lookup.
+- One `data:` line per TLD, in the order the verdicts arrive (cached ones
+  first), not the order requested. `checked` counts up to `total`, the number
+  of distinct TLDs.
+- `data: {"error":"The check stopped early. Please try again."}` is sent if a
+  lookup fails part-way; TLDs that had not answered by then get no line.
+- `data: {"done":true}` always ends the stream, also after an error.
+
+### `POST /api/v1/bulk-check`
+
+```http
+POST /api/v1/bulk-check
+Authorization: Bearer <token>
+Accept: text/event-stream
+Content-Type: application/json
+X-Client-IP: 203.0.113.7
+
+{"domains": ["voorbeeld.nl", "blog.voorbeeld.com", "geen domein"]}
+```
+
+`domains` is a JSON array of at most 50 strings (`PARTNER_API_BULK_MAX`), each
+a full domain with its extension. Each is parsed the way the public bulk check
+parses a line: unicode becomes punycode, a leading `http(s)://` and `www.` are
+dropped, the extension is the longest suffix in the IANA list, and a subdomain
+is checked as its registrable domain. A line that is no domain at all, or
+whose extension is not in the IANA list, gets one `invalid` line without a
+lookup (the public bulk check drops those instead).
+
+The stream carries the public bulk lines, keyed on the string exactly as sent:
+
+```text
+: ping
+data: {"domain":"geen domein","status":"invalid","checked":1,"total":3}
+data: {"domain":"voorbeeld.nl","status":"taken","checked":2,"total":3}
+data: {"domain":"blog.voorbeeld.com","status":"available","checked":3,"total":3,"checked_domain":"voorbeeld.com"}
+data: {"done":true}
+```
+
+- `invalid` lines come first, then one line per domain as it resolves.
+- `checked_domain` appears when a subdomain was sent: it names the
+  registrable domain that was checked instead. A stripped `www.` or
+  `http(s)://` does not add it.
+- Two entries that reduce to the same domain are looked up once and each get
+  their own line. `total` is the number of entries sent.
+- `error` and `done` work as for `/check`.
+
+### Status values
+
+| `status` | Meaning |
+|---|---|
+| `available` | The registry has no record of the domain (RDAP 404, an IsProxy "available", or a WHOIS not-found answer). |
+| `taken` | The registry holds the domain (RDAP 200, IsProxy "not available", or a WHOIS record for it). |
+| `unknown` | No verdict: the registry timed out, refused or rate-limited us, answered in a shape we cannot read, or offers neither RDAP nor WHOIS. Cached for 60 s only, so a retry soon after can get an answer. |
+| `invalid` | `bulk-check` only: the entry is not a domain, or its extension is not in the IANA list. Nothing was looked up. |
+
+### Errors
+
+Errors are JSON, never a stream:
+
+| Status | When | Body |
+|---|---|---|
+| `401` | Missing or unknown token (also sends `WWW-Authenticate: Bearer`) | `{"message":"Unauthenticated."}` |
+| `422` | Validation failed | `{"message":"…","errors":{"domain":["…"]}}` |
+| `429` | A rate limit was reached, or more than 30 failed authentications from one IP within a minute; `Retry-After` gives the seconds to wait | `{"message":"Too Many Attempts."}` |
+
+### `GET /api/v1/tlds`
+
+Same authentication, not rate-limited. Returns the configured popular list
+(`domain-checker.popular_tlds`) and the full IANA list from `TldRepository`,
+cached for 24 hours as it is for the public checker:
+
+```json
+{"popular": ["nl", "com", "be", "..."], "all": ["aaa", "aarp", "...", "zw"]}
+```
+
+If the IANA list cannot be fetched, `all` falls back to the popular list (for
+as long as that answer is cached), the same as on the public site.
+
+### Rate limits
+
+Each `POST` has a limit per client token and one per visitor (from
+`X-Client-IP`, per client), counted per request whatever its size. A request
+is refused when either is spent.
+
+| Request | Per token | Per visitor | Variables |
+|---|---|---|---|
+| `check` with `tlds` | 300/min | 20/min | `PARTNER_API_CLIENT_LIMIT`, `PARTNER_API_VISITOR_LIMIT` |
+| `check` with `scope: all` | 60/hour | 3 per 10 min | `PARTNER_API_ALL_CLIENT_LIMIT`, `PARTNER_API_ALL_VISITOR_LIMIT` |
+| `bulk-check` | 60/min | 5/min | `PARTNER_API_BULK_CLIENT_LIMIT`, `PARTNER_API_BULK_VISITOR_LIMIT` |
+
+The three have separate budgets: a full check does not use up a visitor's
+ordinary checks. Why these numbers:
+
+- **`scope: all`** is about 1,280 registry lookups per name. With IsProxy most
+  of them go out as one pipelined batch, but whatever IsProxy cannot answer,
+  and the whole list when IsProxy is not configured, goes through RDAP and
+  WHOIS: about a minute of a PHP worker, and bursts that make the shared RDAP
+  hosts answer 429, which turns verdicts into `unknown` for every visitor. The
+  limits are sized for that worst path. 60/hour per token keeps the average at
+  about one worker busy; 3 per 10 minutes is enough for a visitor trying a few
+  names. A repeat of the same name within 15 minutes comes from the cache.
+- **`bulk-check`** is at most 50 single-extension lookups, and they run one
+  domain after another, so a cold request can hold a worker for tens of
+  seconds. It counts once per request (no weighting by size), at a quarter of
+  the ordinary per-visitor rate.
+
+A visitor is counted per IPv4 address, or per IPv6 /64, since one IPv6
+subscriber holds a whole /64 and could otherwise rotate through it for a fresh
+budget; an IPv4-mapped address (`::ffff:203.0.113.7`) counts as the IPv4
+address it carries. Rejected requests (401) never count; a request that fails
+validation (422) does. The `X-RateLimit-Limit` and `X-RateLimit-Remaining`
+headers describe the per-visitor limit when `X-Client-IP` is valid, otherwise
+the per-token limit.
+
+Failed authentication is capped separately at 30 per minute per caller IP
+(`$request->ip()`, so behind the same proxy caveat as the guest limits under
+[Rate limiting](#rate-limiting)); past that cap a bad token gets a 429 instead
+of a 401, and no log line. A valid token is never held back by it.
+
+### Logging
+
+- A rejected token: a warning with the reason (`missing token` or
+  `unknown token`) and the path, until the failed-authentication cap is hit.
+- A reached rate limit: a notice with the client name, the endpoint (`check`,
+  `all` or `bulk`) and which limit (`client` or `visitor`).
+- A request without a usable `X-Client-IP`: a notice with the client name and
+  `missing` or `invalid`, since the per-visitor limit then silently drops out.
+
+Neither the token nor any IP address is logged.
+
+---
+
 ## Environment variables
 
 ### Application
@@ -397,6 +597,19 @@ The key requires **IsProxy** access. RDAP and WHOIS are used automatically for a
 | `REALTIME_REGISTER_HOST` | `is.yoursrs.com` | IsProxy hostname. |
 | `REALTIME_REGISTER_PORT` | `2001` | IsProxy port. |
 
+### Partner API
+
+| Variable | Default | What it does |
+|---|---|---|
+| `PARTNER_API_CLIENTS` | empty | Comma-separated `name:sha256hash` pairs, one per client token; generate with `php artisan partner-api:token <name>`. Empty means `/api/v1` refuses every request. |
+| `PARTNER_API_CLIENT_LIMIT` | `300` | Checks per minute per client token. |
+| `PARTNER_API_VISITOR_LIMIT` | `20` | Checks per minute per visitor IP reported in `X-Client-IP`. |
+| `PARTNER_API_ALL_CLIENT_LIMIT` | `60` | `scope: all` checks per hour per client token. |
+| `PARTNER_API_ALL_VISITOR_LIMIT` | `3` | `scope: all` checks per 10 minutes per visitor IP. |
+| `PARTNER_API_BULK_MAX` | `50` | Most domains in one `bulk-check` request. |
+| `PARTNER_API_BULK_CLIENT_LIMIT` | `60` | `bulk-check` requests per minute per client token. |
+| `PARTNER_API_BULK_VISITOR_LIMIT` | `5` | `bulk-check` requests per minute per visitor IP. |
+
 ### Rate limiting
 
 Named rate limiters live in `app/Providers/AppServiceProvider.php`:
@@ -408,6 +621,8 @@ Named rate limiters live in `app/Providers/AppServiceProvider.php`:
 | `ip-lookup` | `POST /ip/lookup` | 45/min | 60/hour |
 | `redirect-check` | `POST /redirect/check` | 30/min | 60/hour |
 | `dns-bulk` | `POST /dns/lookup` | 30/min | 5/min |
+| `partner-api` | `POST /api/v1/check` | 300/min per client token **and** 20/min per visitor IP; with `scope: all` 60/hour and 3 per 10 min. See [Partner API](#partner-api) | — |
+| `partner-api-bulk` | `POST /api/v1/bulk-check` | 60/min per client token **and** 5/min per visitor IP | — |
 
 Authentication is limited separately, by named limiters in
 `app/Providers/FortifyServiceProvider.php`:
