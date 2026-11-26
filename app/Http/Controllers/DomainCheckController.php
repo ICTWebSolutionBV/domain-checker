@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Concerns\StreamsServerSentEvents;
+use App\Http\Controllers\Concerns\StreamsDomainVerdicts;
 use App\Services\DomainAvailabilityService;
 use App\Services\TldRepository;
 use App\Support\DomainName;
@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DomainCheckController extends Controller
 {
-    use StreamsServerSentEvents;
+    use StreamsDomainVerdicts;
 
     public function __construct(
         private readonly DomainAvailabilityService $availability,
@@ -34,7 +34,7 @@ class DomainCheckController extends Controller
         ]);
 
         $request->validate([
-            'domain' => ['required', 'string', 'max:63', 'regex:/^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?$/'],
+            'domain' => ['required', 'string', 'max:63', 'regex:'.DomainName::LABEL_PATTERN],
             // The full IANA list is ~8 KB of comma-separated labels; anything an
             // order of magnitude past that is not a browser of ours.
             'tlds' => ['required', 'string', 'max:20000'],
@@ -48,28 +48,10 @@ class DomainCheckController extends Controller
             // column rejects it, throwing mid-stream.
             fn ($t) => strlen($t) <= 63 && preg_match('/^[a-z0-9][a-z0-9-]*$/', $t),
         );
-        // Dedupe before the cap, or a repeated TLD inflates 'total' and the
-        // progress bar never reaches the end.
-        $tlds = array_slice(array_values(array_unique($tlds)), 0, 1500);
+        // Dedupe before verdictStream() caps the list, or a repeated TLD
+        // inflates 'total' and the progress bar never reaches the end.
+        $tlds = array_values(array_unique($tlds));
 
-        if (empty($tlds)) {
-            return $this->sseStream(fn () => null);
-        }
-
-        return $this->sseStream(function () use ($domain, $tlds): void {
-            $total = count($tlds);
-            $checked = 0;
-
-            // streamCheck sends all RTR commands at once (pipelined), emitting each
-            // result via the callback as the server responds — no per-batch blocking.
-            $this->availability->streamCheck(
-                $domain,
-                $tlds,
-                function (string $tld, string $status) use (&$checked, $total): void {
-                    $checked++;
-                    $this->push('data: '.json_encode(['tld' => $tld, 'status' => $status, 'checked' => $checked, 'total' => $total]));
-                }
-            );
-        });
+        return $this->verdictStream($this->availability, $domain, $tlds);
     }
 }
